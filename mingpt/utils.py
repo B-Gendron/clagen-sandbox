@@ -8,7 +8,32 @@ from ast import literal_eval
 import numpy as np
 import torch
 
-# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------
+# General purpose auxiliary functions
+# -----------------------------------------------------------------------------------------
+
+def get_datetime():
+    '''
+        This function gets the current date time and returns it as a string.
+
+        @returns dt_string (str): current time formatted in a string
+    '''
+    now = datetime.now()
+    dt_string = now.strftime("%d%m%Y%H%M%S")
+    return dt_string
+
+def custom_flatten(ll):
+    '''
+        A function to flatten a list of lists where sub lists are of heterogeneous sizes.
+        @param ll (list): the input list of lists
+        @return l (list): the flattened list   
+    '''
+    l = []
+    for sl in ll:
+        if type(sl) is not list:
+            sl = [sl]
+        l.extend(sl)
+    return l
 
 def set_seed(seed):
     random.seed(seed)
@@ -27,6 +52,11 @@ def setup_logging(config):
     # log the config itself
     with open(os.path.join(work_dir, 'config.json'), 'w') as f:
         f.write(json.dumps(config.to_dict(), indent=4))
+
+
+# -----------------------------------------------------------------------------------------
+# A model config (to be explored)
+# -----------------------------------------------------------------------------------------
 
 class CfgNode:
     """ a lightweight configuration class inspired by yacs """
