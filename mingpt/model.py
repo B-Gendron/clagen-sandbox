@@ -31,6 +31,8 @@ class CausalSelfAttention(nn.Module):
     A vanilla multi-head masked self-attention layer with a projection at the end.
     It is possible to use torch.nn.MultiheadAttention here but I am including an
     explicit implementation here to show that there is nothing too scary here.
+
+    Possible de prendre nn.TransformerDecoder à la place (contient nn.MultiheadAttention)
     """
 
     def __init__(self, config):
@@ -85,6 +87,8 @@ class Block(nn.Module):
             dropout = nn.Dropout(config.resid_pdrop),
         ))
         m = self.mlp
+
+        # sorte de "pre-forward"
         self.mlpf = lambda x: m.dropout(m.c_proj(m.act(m.c_fc(x)))) # MLP forward
 
     def forward(self, x):
