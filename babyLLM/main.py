@@ -30,23 +30,28 @@ class WikiTalkDataset(Dataset):
           ## TODO add appropriate content
         }
         return item
-    
 
-# TODO put hyperparameters in a dictionary for better readability
-batch_size = 16 # how many independent sequences will we process in parallel?
-block_size = 32 # what is the maximum context length for predictions?
-max_iters = 5000
-eval_interval = 100
-learning_rate = 1e-3
-device = activate_gpu()
-eval_iters = 200
-n_embd = 64
-n_head = 4
-n_layer = 4
-dropout = 0.0
-# ------------
 
-torch.manual_seed(42)
+def get_vocab_size():
+    '''
+        To be implemented.
+    '''
+    pass
+
+args = {
+    'vocab_size':get_vocab_size(), # to be implemented
+    'batch_size':16, # how many independent sequences will we process in parallel?
+    'block_size':32, # what is the maximum context length for predictions?
+    'max_iters':5000,
+    'eval_interval':100,
+    'lr':1e-3,
+    'device':activate_gpu(),
+    'eval_iters':200,
+    'n_embd':64,
+    'n_head':4,
+    'n_layer':4,
+    'dropout':0.0
+}
 
 # wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
 with open('input.txt', 'r', encoding='utf-8') as f:
@@ -71,9 +76,9 @@ val_data = data[n:]
 def get_batch(split):
     # generate a small batch of data of inputs x and targets y
     data = train_data if split == 'train' else val_data
-    ix = torch.randint(len(data) - block_size, (batch_size,))
-    x = torch.stack([data[i:i+block_size] for i in ix])
-    y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+    ix = torch.randint(len(data) - args.block_size, (args.batch_size,))
+    x = torch.stack([data[i:i+args.block_size] for i in ix])
+    y = torch.stack([data[i+1:i+args.block_size+1] for i in ix])
     x, y = x.to(device), y.to(device)
     return x, y
 
@@ -82,8 +87,8 @@ def estimate_loss():
     out = {}
     model.eval()
     for split in ['train', 'val']:
-        losses = torch.zeros(eval_iters)
-        for k in range(eval_iters):
+        losses = torch.zeros(args.eval_iters)
+        for k in range(args.eval_iters):
             X, Y = get_batch(split)
             logits, loss = model(X, Y)
             losses[k] = loss.item()
@@ -93,17 +98,18 @@ def estimate_loss():
 
 
 model = BabyLanguageModel()
+device = args.device
 m = model.to(device)
 # print the number of parameters in the model
 print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
 
 # create a PyTorch optimizer
-optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 
-for iter in tqdm(range(max_iters)):
+for iter in tqdm(range(args.max_iters)):
 
     # every once in a while evaluate the loss on train and val sets
-    if iter % eval_interval == 0 or iter == max_iters - 1:
+    if iter % args.eval_interval == 0 or iter == args.max_iters - 1:
         losses = estimate_loss()
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
 
@@ -126,12 +132,44 @@ print(decode(m.generate(context, max_new_tokens=200)[0].tolist()))
 
 if __name__ == "__main__":
 
+    # hyperparameters default config
+    args = {
+        'vocab_size':get_vocab_size(), # to be implemented
+        'batch_size':16, # how many independent sequences will we process in parallel?
+        'block_size':32, # what is the maximum context length for predictions?
+        'max_iters':5000,
+        'eval_interval':100,
+        'lr':1e-3,
+        'device':activate_gpu(),
+        'eval_iters':200,
+        'n_embd':64,
+        'n_head':4,
+        'n_layer':4,
+        'dropout':0.0
+    }
+
+    torch.manual_seed(42)
+
     # instantiate parser and retrieve model hyperparameters
     # args dict contains (vocab_size, n_embd, block_size, n_head, n_layer, dropout, device) that have default values but are retrived from argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", "-vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
-    parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {n_embd}.", type=int, default=n_embd)
-    parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {block_size}.", type=int, default=block_size)
-    parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {n_head}.", type=int, default=n_head)
-    parser.add_argument("-l", "--layers", help=f"Number of Transformer decoder layers. Default is {n_layer}.", type=int, default=n_layer)
-    parser.add_argument("-d", "--dropout", help=f"The dropout rate. Default is {dropout}.", type=int, default=dropout)
+    parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {args.n_embd}.", type=int, default=args.n_embd)
+    parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {args.block_size}.", type=int, default=args.block_size)
+    parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {args.n_head}.", type=int, default=args.n_head)
+    parser.add_argument("-l", "--layers", help=f"Number of Transformer decoder layers. Default is {args.n_layer}.", type=int, default=args.n_layer)
+    parser.add_argument("-d", "--dropout", help=f"The dropout rate. Default is {args.dropout}.", type=int, default=args.dropout)
+
+    arg = parser.parse_args()
+
+    # update hyperparameters config
+    v, e, b, h, l, d = arg.vocab_size, arg.embedding_size, arg.block_size, arg.heads, arg.layers, arg.dropout
+    args.update = {
+        'vocab_size':v,
+        'block_size':b,
+        'device':activate_gpu(),
+        'n_embd':e,
+        'n_head':h,
+        'n_layer':l,
+        'dropout':d
+    }
