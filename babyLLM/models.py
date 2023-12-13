@@ -82,12 +82,21 @@ class DecoderBlock(nn.Module):
 class BabyLanguageModel(nn.Module):
     """ A basic and very small GPT-like model for fast training and inference."""
 
-    def __init__(self, vocab_size, n_embd, block_size, n_heads, n_layer, dropout, device):
+    def __init__(self, args):
         super(BabyLanguageModel, self).__init__()
+        # get all values from args dict
+        vocab_size = args['vocab_size']
+        n_embd = args['n_embd']
+        block_size = args['block_size']
+        n_heads = args['n_heads']
+        n_layers = args['n_layers']
+        dropout = args['dropout']
+        device = args['device']
+
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.blocks = nn.Sequential(*[DecoderBlock(n_embd, n_heads, block_size, dropout) for _ in range(n_layer)])
+        self.blocks = nn.Sequential(*[DecoderBlock(n_embd, n_heads, block_size, dropout) for _ in range(n_layers)])
         self.ln_f = nn.LayerNorm(n_embd) # final layer norm
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
