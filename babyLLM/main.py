@@ -7,14 +7,11 @@ import torch.nn.functional as F
 import numpy as np
 from datasets import load_dataset
 from tqdm import tqdm
-import nltk
-from gensim.models.phrases import Phrases, Phraser
-from nltk.tokenize import TreebankWordTokenizer, TweetTokenizer
+import argparse
 import pandas as pd
 from termcolor import colored
 from collections import Counter
 
-from sacrebleu.metrics import BLEU
 from torch.utils.data import Dataset
 import numpy as np
 
@@ -95,7 +92,7 @@ def estimate_loss():
     return out
 
 
-model = BabyLanguageModel(vocab_size, n_embd, block_size, n_head, n_layer, dropout, device)
+model = BabyLanguageModel()
 m = model.to(device)
 # print the number of parameters in the model
 print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
@@ -126,3 +123,15 @@ torch.save(m, 'babyllm-gptlike.pt')
 # context = torch.zeros((1, 1), dtype=torch.long, device=device)
 context = torch.tensor(encode("Hey! How are you?"), dtype=torch.long, device=device)
 print(decode(m.generate(context, max_new_tokens=200)[0].tolist()))
+
+if __name__ == "__main__":
+
+    # instantiate parser and retrieve model hyperparameters
+    # args dict contains (vocab_size, n_embd, block_size, n_head, n_layer, dropout, device) that have default values but are retrived from argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", "-vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
+    parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {n_embd}.", type=int, default=n_embd)
+    parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {block_size}.", type=int, default=block_size)
+    parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {n_head}.", type=int, default=n_head)
+    parser.add_argument("-l", "--layers", help=f"Number of Transformer decoder layers. Default is {n_layer}.", type=int, default=n_layer)
+    parser.add_argument("-d", "--dropout", help=f"The dropout rate. Default is {dropout}.", type=int, default=dropout)
