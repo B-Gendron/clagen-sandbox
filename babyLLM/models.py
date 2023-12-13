@@ -1,26 +1,15 @@
+# Inspired from: https://colab.research.google.com/drive/1JMLa53HDuA-i7ZBmqV7ZnA3c_fvtXnx-?usp=sharing#scrollTo=nql_1ER53oCf 
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-import numpy as np
-from datasets import load_dataset
-from tqdm import tqdm
-import pandas as pd
-from termcolor import colored
-from collections import Counter
-from tqdm import tqdm
-
-# imports from other scripts
-from utils import *
-
-
 
 
 class Head(nn.Module):
     """ one head of self-attention """
 
     def __init__(self, head_size, n_embd, block_size, dropout):
-        super().__init__()
+        super(Head, self).__init__()
         self.key = nn.Linear(n_embd, head_size, bias=False)
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
@@ -45,9 +34,10 @@ class Head(nn.Module):
 class MultiHeadAttention(nn.Module):
     """ multiple heads of self-attention in parallel """
 
-    def __init__(self, num_heads, head_size, n_embd, dropout):
-        super().__init__()
-        self.heads = nn.ModuleList([Head(head_size) for _ in range(num_heads)])
+    def __init__(self, num_heads, head_size, n_embd, block_size, dropout):
+        super(MultiHeadAttention, self).__init__()
+        # nn.ModuleList bc we don't want to run them here, just to define a list of attention heads
+        self.heads = nn.ModuleList([Head(head_size, n_embd, block_size, dropout) for _ in range(num_heads)])
         self.proj = nn.Linear(n_embd, n_embd)
         self.dropout = nn.Dropout(dropout)
 
@@ -57,10 +47,10 @@ class MultiHeadAttention(nn.Module):
         return out
 
 class FeedFoward(nn.Module):
-    """ a simple linear layer followed by a non-linearity """
+    """ A block following classic MLP architecture: Linear/ReLU/Linear/Dropout block """
 
     def __init__(self, n_embd, dropout):
-        super().__init__()
+        super(FeedFoward, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(n_embd, 4 * n_embd),
             nn.ReLU(),
@@ -71,15 +61,16 @@ class FeedFoward(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-class Block(nn.Module):
-    """ Transformer block: communication followed by computation """
+class DecoderBlock(nn.Module):
+    """ A simple decoder block """
 
-    def __init__(self, n_embd, n_head):
-        # n_embd: embedding dimension, n_head: the number of heads we'd like
-        super().__init__()
-        head_size = n_embd // n_head
-        self.sa = MultiHeadAttention(n_head, head_size)
-        self.ffwd = FeedFoward(n_embd)
+    def __init__(self, n_embd, n_heads, block_size, dropout):
+        # n_embd: embedding dimension
+        # n_head: the number of heads we'd like
+        super(DecoderBlock, self).__init__()
+        head_size = n_embd // n_heads
+        self.sa = MultiHeadAttention(n_heads, head_size, n_embd, block_size, dropout)
+        self.ffwd = FeedFoward(n_embd, dropout)
         self.ln1 = nn.LayerNorm(n_embd)
         self.ln2 = nn.LayerNorm(n_embd)
 
@@ -88,19 +79,27 @@ class Block(nn.Module):
         x = x + self.ffwd(self.ln2(x))
         return x
 
-# super simple bigram model
-class BigramLanguageModel(nn.Module):
+class BabyLanguageModel(nn.Module):
+    """ A basic and very small GPT-like model for fast training and inference."""
 
-    def __init__(self, vocab_size, n_embd, block_size, n_head, n_layer, device):
-        super().__init__()
+    def __init__(self, vocab_size, n_embd, block_size, n_heads, n_layer, dropout, device):
+        super(BabyLanguageModel, self).__init__()
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
+        self.blocks = nn.Sequential(*[DecoderBlock(n_embd, n_heads, block_size, dropout) for _ in range(n_layer)])
         self.ln_f = nn.LayerNorm(n_embd) # final layer norm
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
         self.device = device
+
+    def _init_weights(self, module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(self, idx, targets=None):
         B, T = idx.shape

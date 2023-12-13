@@ -1,3 +1,5 @@
+# Inspired from: https://colab.research.google.com/drive/1JMLa53HDuA-i7ZBmqV7ZnA3c_fvtXnx-?usp=sharing#scrollTo=nql_1ER53oCf 
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,7 +19,7 @@ from torch.utils.data import Dataset
 import numpy as np
 
 from utils import activate_gpu
-from models import BigramLanguageModel
+from models import BabyLanguageModel
 
 class WikiTalkDataset(Dataset):
     def __init__(self, data):
@@ -33,7 +35,7 @@ class WikiTalkDataset(Dataset):
         return item
     
 
-# hyperparameters
+# TODO put hyperparameters in a dictionary for better readability
 batch_size = 16 # how many independent sequences will we process in parallel?
 block_size = 32 # what is the maximum context length for predictions?
 max_iters = 5000
@@ -93,7 +95,7 @@ def estimate_loss():
     return out
 
 
-model = BigramLanguageModel()
+model = BabyLanguageModel(vocab_size, n_embd, block_size, n_head, n_layer, dropout, device)
 m = model.to(device)
 # print the number of parameters in the model
 print(sum(p.numel() for p in m.parameters())/1e6, 'M parameters')
@@ -118,7 +120,7 @@ for iter in tqdm(range(max_iters)):
     optimizer.step()
 
 # save model
-torch.save(m, 'babyllm.pt')
+torch.save(m, 'babyllm-gptlike.pt')
 
 # generate from the model
 # context = torch.zeros((1, 1), dtype=torch.long, device=device)
