@@ -123,7 +123,7 @@ for iter in tqdm(range(args.max_iters)):
     optimizer.step()
 
 # save model
-torch.save(m, 'babyllm-gptlike.pt')
+torch.save(m, './models/babyllm-gptlike.pt')
 
 # generate from the model
 # context = torch.zeros((1, 1), dtype=torch.long, device=device)
