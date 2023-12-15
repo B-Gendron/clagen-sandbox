@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from glob import glob
+import os
 import numpy as np
 from datasets import load_dataset
 from tqdm import tqdm
@@ -32,7 +34,23 @@ class WikiTalkDataset(Dataset):
           ## TODO add appropriate content
         }
         return item
+    
 
+# def read_tinyshakepeare():
+#     # wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
+#     with open('input.txt', 'r', encoding='utf-8') as f:
+#         text = f.read()
+#     return text
+
+def read_data(folder_name):
+    file_list = glob(os.path.join("../../../Data/", folder_name, "*.txt"))
+    print(f'Reading {len(file_list)} files...')
+    corpus = []
+    for file_path in tqdm(file_list):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            corpus.append(f.read())
+    print("Finished!")
+    return corpus
 
 def get_vocab_info(data):
     '''
@@ -126,9 +144,8 @@ def train_and_infer(model, args, optimizer, device):
 
 if __name__ == "__main__":
 
-    # wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
-    with open('input.txt', 'r', encoding='utf-8') as f:
-        text = f.read()
+    text = read_data('tinyshakespeare')
+    text = read_data('openwebtext')
 
     vocab_size, stoi, itos = get_vocab_info(text)
 
