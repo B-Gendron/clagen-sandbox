@@ -6,6 +6,7 @@ import torch.nn.functional as F
 
 from glob import glob
 import os
+import subprocess
 import numpy as np
 from datasets import load_dataset
 from tqdm import tqdm
@@ -43,7 +44,7 @@ class WikiTalkDataset(Dataset):
 #     return text
 
 def read_data(folder_name):
-    file_list = glob(os.path.join("../../../Data/", folder_name, "*.txt"))
+    file_list = glob(os.path.join("/data/", folder_name, "*.txt"))
     print(f'Reading {len(file_list)} files...')
     corpus = []
     for file_path in tqdm(file_list):
@@ -150,6 +151,9 @@ def train_and_infer(model, args, optimizer, device):
 
 
 if __name__ == "__main__":
+
+    if not os.path.isfile("../data/utterances.jsonl"): 
+        subprocess.call(['sh', 'download_openwebtext.sh'])
 
     # text = read_data('tinyshakespeare')
     text = read_data('openwebtext')
