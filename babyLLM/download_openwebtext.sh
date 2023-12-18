@@ -8,7 +8,7 @@ wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download
 
 # Unzip the .tar archive and go inside the data folder
 tar -xf $FILENAME
-cd data
+cd data/openwebtext
 
 # Process the first 50 archive files
 ls urlsf_subset00-{0..50}_data.xz |xargs -n1 tar -xf
@@ -19,3 +19,6 @@ echo "$NFILES has been processed"
 
 # Convert all data files in txt files
 for f in *; do case "$f" in *.txt) echo skipped $f;; *) mv "$f" "$f".txt; esac; done
+
+# Delete all .xz achives as we only want to keep the .txt files from the 50 first archives in this case (in order to alleviate training data and account for a reasonable amount of computation time)
+rm *.xz
