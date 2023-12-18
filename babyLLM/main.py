@@ -44,7 +44,7 @@ class WikiTalkDataset(Dataset):
 #     return text
 
 def read_data(folder_name):
-    file_list = glob(os.path.join("/data/", folder_name, "*.txt"))
+    file_list = glob(os.path.join(folder_name, "*.txt"))
     print(f'Reading {len(file_list)} files...')
     corpus = []
     for file_path in tqdm(file_list):
@@ -152,14 +152,13 @@ def train_and_infer(model, args, optimizer, device):
 
 if __name__ == "__main__":
 
-    if not os.path.isfile("../data/utterances.jsonl"): 
+    if not os.path.exists("./openwebtext/"): 
         subprocess.call(['sh', 'download_openwebtext.sh'])
 
     # text = read_data('tinyshakespeare')
     text = read_data('openwebtext')
 
     vocab_size, stoi, itos = get_vocab_info(text)
-    print(vocab_size)
 
     # hyperparameters default config
     args = {
