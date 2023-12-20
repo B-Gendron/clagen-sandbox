@@ -9,7 +9,7 @@ pip3 install -r requirements.txt
 ```
 - Launch data download if needed, then model training
 ```bash
-cd babyLLM/code
+cd babyLM/code
 python3 train.py
 ```
 
