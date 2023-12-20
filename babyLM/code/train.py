@@ -14,6 +14,9 @@ from termcolor import colored
 from collections import Counter
 import logging
 from torch.utils.tensorboard import SummaryWriter
+from torchtext.vocab import build_vocab_from_iterator, Vocab
+from torchtext.data import get_tokenizer
+tokenize = get_tokenizer("basic_english")
 
 from torch.utils.data import Dataset
 import numpy as np
@@ -41,47 +44,70 @@ class WikiTalkDataset(Dataset):
 #         text = f.read()
 #     return text
 
-def read_data(folder_name):
+
+def get_data(folder_name):
+    corpus = []
     file_list = glob(os.path.join(f'../{folder_name}', "*.txt"))
     print(f'Reading {len(file_list)} files...')
-    corpus = []
     for file_path in tqdm(file_list):
         with open(file_path, 'r', encoding='utf-8') as f:
             text = f.read()
             corpus.append(text)
-    print("Finished!")
 
     # gather all textual data in a big string
     text_data = " ".join(corpus)
     return text_data
 
 
-def get_vocab_info(data):
+def get_vocab(folder_name):
+    print("Yield vocabulary...")
+    file_list = glob(os.path.join(f'../{folder_name}', "*.txt"))
+    def yield_tokens():
+        for file_path in tqdm(file_list):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    # get initial words that are not empty words
+                    words = [ w for w in line.strip().split() if w != ' ']
+                    # make simple tokens by lowering words
+                    tokens = list(map(lambda x: x.lower(), words))
+                    yield tokens
+
+    token_generator = yield_tokens()
+    vocab = build_vocab_from_iterator(token_generator, specials=["<unk>"])
+    return vocab, token_generator
+
+def encode(vocab, text):
     '''
-        Create a vocabulary mapping with training data text processed as a bag of words. Default vocab_size is the number of different words in the whole dataset.
-        TODO change vocab size computation (use torch.vocab ?)
-        TODO add a feature to choose a vocab size (in order to alleviate data processing for bigger datasets). This might be required for open web corpus.
+        From token strings to indexes
+
+        @param vocab (torchtext.vocab.Vocab): the vocabulary object to use for stoi mapping
+        @param text (str): the text to encode
+
+        @return idxes (list of int): the list of indexes that correspond to the text encoding according to the underlying vocab
     '''
-    # here are all the unique characters that occur in this text
-    chars = sorted(list(set(data)))
-    # chars = sorted(list(set(data)))
-    vocab_size = len(chars)
-    # create a mapping from characters to integers
-    stoi = { ch:i for i,ch in enumerate(chars) }
-    itos = { i:ch for i,ch in enumerate(chars) }
-    return vocab_size, stoi, itos
+    # get toch vocab stoi method
+    stoi = vocab.get_stoi()
+    return [stoi[token.lower()] for token in text if token != ' ']
 
+def decode(vocab, idxes):
+    '''
+        From vocab indexes to token strings
 
-encode = lambda s: [stoi[c] for c in s] # encoder: take a string, output a list of integers
-decode = lambda l: ''.join([itos[i] for i in l]) # decoder: take a list of integers, output a string
+        @param vocab (torchtext.vocab.Vocab): the vocabulary object to use for itos mapping
+        @param idexes (list of int): the list of indexes to be mapped to their associated tokens
 
+        @return tokens (str): the concatenated tokens that form the encoded sentence
+    '''
+    # get torch vocab itos method
+    itos = vocab.get_itos()
+    return ' '.join([itos[i] for i in idxes])
 
 # Train and test splits
-def train_val_split(data, train_ratio=0.9):
+def train_val_split(vocab, data, train_ratio=0.9):
     '''
         Processes train/val split according to the given train_ratio (default = 90% of the dataset is used for training)
     '''
-    tensor_data = torch.tensor(encode(data), dtype=torch.long)
+    tensor_data = torch.tensor(encode(vocab, data), dtype=torch.long)
     n = int(train_ratio*len(tensor_data))
     train_data = tensor_data[:n]
     val_data = tensor_data[n:]
@@ -126,10 +152,16 @@ def estimate_loss(device):
     return out
 
 
-def train_and_infer(model, args, optimizer, device):
+def train_and_infer(model, args):
     '''
         To be documented.
     '''
+    device = args['device']
+    model.to(device)
+    # print the number of parameters in the model
+    print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'])
+
     max_iters = args['max_iters']
     for iter in tqdm(range(max_iters)):
 
@@ -148,19 +180,27 @@ def train_and_infer(model, args, optimizer, device):
         optimizer.step()
 
 
+def generate_from_prompt(prompt_text):
+    print(colored('Generating from a simple prompt', 'green'))
+    prompt = torch.tensor(encode(vocab, prompt_text), dtype=torch.long, device=args['device']).unsqueeze(-1)
+    print(f'Prompt: {prompt_text}')
+    print(decode(model.generate(prompt, max_new_tokens=200, block_size=args['block_size'])[0].tolist()))
+
+
 if __name__ == "__main__":
 
     if not os.path.exists("../openwebtext/"): 
         subprocess.call(['sh', 'download_openwebtext.sh'])
 
-    # text = read_data('tinyshakespeare')
-    text = read_data('openwebtext')
+    text = get_data('openwebtext')
+    vocab, _ = get_vocab('openwebtext')
 
-    vocab_size, stoi, itos = get_vocab_info(text)
+    vocab_size = len(vocab)
+    print(f'Vocab size: {vocab_size}')
 
     # hyperparameters default config
     args = {
-        'vocab_size':get_vocab_info(text)[0], # to be implemented
+        'vocab_size':len(vocab),
         'batch_size':16, # how many independent sequences will we process in parallel?
         'block_size':32, # what is the maximum context length for predictions?
         'max_iters':5000,
@@ -174,10 +214,7 @@ if __name__ == "__main__":
         'dropout':0.0
     }
 
-    torch.manual_seed(42)
-
     # instantiate parser and retrieve model hyperparameters
-    # args dict contains (vocab_size, n_embd, block_size, n_head, n_layer, dropout, device) that have default values but are retrived from argparse
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
     parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {args['n_embd']}.", type=int, default=args['n_embd'])
@@ -201,25 +238,16 @@ if __name__ == "__main__":
         'dropout':d
     })
 
-    train_data, val_data = train_val_split(text)
-
-    device = args['device']
+    # setup everything for training
+    torch.manual_seed(42)
+    train_data, val_data = train_val_split(vocab, text)
     model = BabyLanguageModel(args)
-    model.to(device)
-    # print the number of parameters in the model
-    print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
 
-    # create a PyTorch optimizer
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'])
-
-    train_and_infer(model, args, optimizer, device)
+    # perform training and inference
+    train_and_infer(model, args)
 
     # save model
     torch.save(model, '../models/babyllm-gptlike.pt')
 
     # generate from the model
-    print(colored('Generating from a simple prompt', 'green'))
-    prompt_text = "Hey! How are you?"
-    prompt = torch.tensor(encode(prompt_text), dtype=torch.long, device=device).unsqueeze(-1)
-    print(f'Prompt: {prompt_text}')
-    print(decode(model.generate(prompt, max_new_tokens=200, block_size=args['block_size'])[0].tolist()))
+    generate_from_prompt("Hey! How are you?")
