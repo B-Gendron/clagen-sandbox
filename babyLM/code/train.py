@@ -151,7 +151,7 @@ def train_and_infer(model, args, optimizer, device):
 if __name__ == "__main__":
 
     if not os.path.exists("../openwebtext/"): 
-        subprocess.call(['sh', 'download_openwebtext.sh'])
+        subprocess.call(['sh', '../download_openwebtext.sh'])
 
     # text = read_data('tinyshakespeare')
     text = read_data('openwebtext')
