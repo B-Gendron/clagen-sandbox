@@ -22,3 +22,12 @@ for f in *; do case "$f" in *.txt) echo skipped $f;; *) mv "$f" "$f".txt; esac; 
 # Delete all .xz achives as we only want to keep the .txt files from the 50 first archives in this case (in order to alleviate training data and account for a reasonable amount of computation time)
 echo Delete unused files...
 rm *.xz.txt
+rm ../$FILENAME
+
+# Merge all txt files into a big one
+cat *.txt >> data.txt
+rm 0*.txt 
+
+# Move data to the right location
+cd ..
+mv ./openwebtext ..
