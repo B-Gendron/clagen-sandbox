@@ -180,6 +180,7 @@ if __name__ == "__main__":
     vocab = build_vocab_from_iterator(token_generator(), specials=["<unk>"], special_first=True)
     vocab_size = len(vocab)
     print(f'Vocab size: {vocab_size}')
+    exit()
 
     # hyperparameters default config
     args = {
