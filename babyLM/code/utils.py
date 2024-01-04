@@ -75,9 +75,9 @@ def concatenate(iterable, sep=""):
 
 
 def activate_gpu(force_cpu=False):
-    """
-        return the right device depending on GPU availability
-    """
+    '''
+        A function to return the right device depending on GPU availability
+    '''
     device = "cpu"
     if not force_cpu:
         if torch.cuda.is_available():
