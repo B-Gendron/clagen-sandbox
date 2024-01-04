@@ -37,44 +37,26 @@ class WikiTalkDataset(Dataset):
         }
         return item
     
-
-# def read_tinyshakepeare():
-#     # wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
-#     with open('input.txt', 'r', encoding='utf-8') as f:
-#         text = f.read()
-#     return text
-
-
+    
 def get_data(folder_name):
-    corpus = []
-    file_list = glob(os.path.join(f'../{folder_name}', "*.txt"))
-    print(f'Reading {len(file_list)} files...')
-    for file_path in tqdm(file_list):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            text = f.read()
-            corpus.append(text)
+    file_path = os.path.join(f'../{folder_name}', "data.txt")
+    text_data = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        # yield tokens from each line
+        for line in f:
+            # get initial words that are not empty words
+            words = [ w for w in line.strip().split() if w != ' ']
+            # make simple tokens by lowering words
+            tokens = list(map(lambda x: x.lower(), words))
+            text_data.extend(tokens)
 
-    # gather all textual data in a big string
-    text_data = " ".join(corpus)
     return text_data
 
 
-def get_vocab(folder_name):
-    print("Yield vocabulary...")
-    file_list = glob(os.path.join(f'../{folder_name}', "*.txt"))
-    def yield_tokens():
-        for file_path in tqdm(file_list):
-            with open(file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    # get initial words that are not empty words
-                    words = [ w for w in line.strip().split() if w != ' ']
-                    # make simple tokens by lowering words
-                    tokens = list(map(lambda x: x.lower(), words))
-                    yield tokens
+def token_generator():
+    for token in all_tokens:
+        yield [token] # put the token inside a list so the vocab is not character-wise
 
-    token_generator = yield_tokens()
-    vocab = build_vocab_from_iterator(token_generator, specials=["<unk>"])
-    return vocab, token_generator
 
 def encode(vocab, text):
     '''
@@ -85,9 +67,9 @@ def encode(vocab, text):
 
         @return idxes (list of int): the list of indexes that correspond to the text encoding according to the underlying vocab
     '''
-    # get toch vocab stoi method
     stoi = vocab.get_stoi()
-    return [stoi[token.lower()] for token in text if token != ' ']
+    # print(f"Token index: {stoi}")
+    return [stoi[token.lower()] for token in text if token not in (' ', '\n')]
 
 def decode(vocab, idxes):
     '''
@@ -100,6 +82,7 @@ def decode(vocab, idxes):
     '''
     # get torch vocab itos method
     itos = vocab.get_itos()
+    print(f"Token string: {itos}")
     return ' '.join([itos[i] for i in idxes])
 
 # Train and test splits
@@ -192,15 +175,15 @@ if __name__ == "__main__":
     if not os.path.exists("../openwebtext/"): 
         subprocess.call(['sh', 'download_openwebtext.sh'])
 
-    text = get_data('openwebtext')
-    vocab, _ = get_vocab('openwebtext')
-
+    all_tokens = get_data('openwebtext')
+    print(f"Number of tokens: {len(all_tokens)}")
+    vocab = build_vocab_from_iterator(token_generator(), specials=["<unk>"], special_first=True)
     vocab_size = len(vocab)
     print(f'Vocab size: {vocab_size}')
 
     # hyperparameters default config
     args = {
-        'vocab_size':len(vocab),
+        'vocab_size':vocab_size,
         'batch_size':16, # how many independent sequences will we process in parallel?
         'block_size':32, # what is the maximum context length for predictions?
         'max_iters':5000,
@@ -240,7 +223,7 @@ if __name__ == "__main__":
 
     # setup everything for training
     torch.manual_seed(42)
-    train_data, val_data = train_val_split(vocab, text)
+    train_data, val_data = train_val_split(vocab, all_tokens)
     model = BabyLanguageModel(args)
 
     # perform training and inference
@@ -251,3 +234,48 @@ if __name__ == "__main__":
 
     # generate from the model
     generate_from_prompt("Hey! How are you?")
+
+
+
+
+
+
+
+
+
+# --------- to put in drafts
+    
+# def get_vocab(folder_name):
+# '''
+#     This fuction works, but has been replaced by a more optimized way to both build vocabulary and tokenize data.
+    
+#     Build a vocabulary of type torch.Vocab from the text dataset stored in folder_name folder.
+    
+#     @param folder_name (str): the name of the folder where data is stored. Expects a data.txt file.
+
+#     @return vocab (torch.Vocab): the inferred vocabulary, with lowercase tokens, excluding empty tokens
+# '''
+# file_path = os.path.join(f'../{folder_name}', "data.txt")
+
+# def yield_tokens():
+#     with open(file_path, 'r', encoding='utf-8') as f:
+#         # yield tokens from each line
+#         for line in f:
+#             # get initial words that are not empty words
+#             words = [ w for w in line.strip().split() if w != ' ']
+#             # make simple tokens by lowering words
+#             tokens = list(map(lambda x: x.lower(), words))
+#             yield tokens
+
+# # build the vocab using the generator
+# token_generator = yield_tokens()
+# print(type(token_generator))
+# vocab = build_vocab_from_iterator(token_generator, specials=["<unk>"])
+
+# return vocab
+    
+# def read_tinyshakepeare():
+#     # wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
+#     with open('input.txt', 'r', encoding='utf-8') as f:
+#         text = f.read()
+#     return text
