@@ -92,14 +92,11 @@ def activate_gpu(force_cpu=False):
     return device
 
 
-def set_logger(experiment):
+def set_logger(target):
     '''
-        -------------------------------- /!\ WARNING /!\ --------------------------------
-        Please note that the logger is not yet completetly handled in the main file, therefore you should consider using this function only if you properly define the logger usage in the desired functions.
-        ------------------------------------------------------------------------------------
-
         Set a logger to be used when running experiments. 
     '''
+    experiment = f'{target}_{get_datetime()}'
     logging.getLogger(__name__).setLevel(logging.INFO)
     formatter = logging.Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
     fh = logging.FileHandler(f'./logs/{experiment}.log', mode="w")
