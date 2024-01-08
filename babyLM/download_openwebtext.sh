@@ -13,21 +13,25 @@ cd openwebtext
 
 # Process the first 50 archive files
 echo Process the first 50 archive files...
-ls urlsf_subset00-{0..50}_data.xz |xargs -n1 tar -xf
-
-# Convert all data files in txt files
-echo Convert archive files into .txt files...
-for f in *; do case "$f" in *.txt) echo skipped $f;; *) mv "$f" "$f".txt; esac; done
+i=0
+while [ $i -le 50 ]; do
+  find . -maxdepth 1 -name "urlsf_subset00-${i}_data.xz" -exec tar -xf {} \;
+  i=$((i + 1))
+done
 
 # Delete all .xz achives as we only want to keep the .txt files from the 50 first archives in this case (in order to alleviate training data and account for a reasonable amount of computation time)
 echo Delete unused files...
-rm *.xz.txt
+rm *.xz
 rm ../$FILENAME
 
 # Merge all txt files into a big one
+echo Merge all .txt files in one...
 cat *.txt >> data.txt
 rm 0*.txt 
 
 # Move data to the right location
+echo Move data to the right location...
 cd ..
 mv ./openwebtext ..
+
+echo Downloading and processing openwebtext data finished.
