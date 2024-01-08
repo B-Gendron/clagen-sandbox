@@ -161,6 +161,9 @@ if __name__ == "__main__":
     vocab_size = len(vocab)
     print(f'Vocab size: {vocab_size}')
 
+    # save vocab in a pytorch object to use it for generation
+    torch.save(vocab, '../objects/vocab.pt') 
+
     # hyperparameters default config
     args = {
         'vocab_size':vocab_size,
