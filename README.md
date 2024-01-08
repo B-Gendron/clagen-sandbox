@@ -5,6 +5,7 @@ The code for babyLLM is inspired from [this tutorial](https://colab.research.goo
 - Setup
 ```bash 
 git clone https://github.com/B-Gendron/OntoGPT.git
+cd OntoGPT
 pip3 install -r requirements.txt
 ```
 - Launch data download if needed, then model training
