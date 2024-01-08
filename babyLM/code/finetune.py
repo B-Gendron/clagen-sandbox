@@ -1,7 +1,10 @@
+# torch utils
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import Dataset
 
+# general purpose modules
 from glob import glob
 import os
 import subprocess
@@ -15,9 +18,7 @@ from collections import Counter
 import logging
 from torch.utils.tensorboard import SummaryWriter
 
-from torch.utils.data import Dataset
-import numpy as np
-
+# from other scripts
 from utils import activate_gpu
 from models import BabyLanguageModel
 
