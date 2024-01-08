@@ -162,13 +162,6 @@ def train_and_infer(model, args):
         optimizer.step()
 
 
-def generate_from_prompt(prompt_text):
-    print(colored('Generating from a simple prompt', 'green'))
-    prompt = torch.tensor(encode(vocab, prompt_text), dtype=torch.long, device=args['device']).unsqueeze(-1)
-    print(f'Prompt: {prompt_text}')
-    print(decode(model.generate(prompt, max_new_tokens=200, block_size=args['block_size'])[0].tolist()))
-
-
 if __name__ == "__main__":
 
     if not os.path.exists("../openwebtext/"): 
@@ -179,7 +172,6 @@ if __name__ == "__main__":
     vocab = build_vocab_from_iterator(token_generator(), specials=["<unk>"], special_first=True)
     vocab_size = len(vocab)
     print(f'Vocab size: {vocab_size}')
-    exit()
 
     # hyperparameters default config
     args = {
@@ -231,6 +223,3 @@ if __name__ == "__main__":
 
     # save model
     torch.save(model, '../models/babyllm-gptlike.pt')
-
-    # generate from the model
-    generate_from_prompt("Hey! How are you?")
