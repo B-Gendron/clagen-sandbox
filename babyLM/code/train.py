@@ -1,7 +1,10 @@
+# torch utils
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.data import Dataset
 
+# general purpose modules
 from glob import glob
 import os
 import subprocess
@@ -18,24 +21,9 @@ from torchtext.vocab import build_vocab_from_iterator, Vocab
 from torchtext.data import get_tokenizer
 tokenize = get_tokenizer("basic_english")
 
-from torch.utils.data import Dataset
-import numpy as np
-
+# from other scripts
 from utils import activate_gpu
 from models import BabyLanguageModel
-
-class WikiTalkDataset(Dataset):
-    def __init__(self, data):
-        self.data = data
-
-    def __len__(self):
-        return len(self.data)
-    
-    def __getitem__(self, idx):
-        item = {
-          ## TODO add appropriate content
-        }
-        return item
     
     
 def get_data(folder_name):
