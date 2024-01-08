@@ -44,11 +44,10 @@ def get_data(folder_name):
     with open(file_path, 'r', encoding='utf-8') as f:
         # yield tokens from each line
         for line in f:
-            # get initial words that are not empty words
-            words = [ w for w in line.strip().split() if w != ' ']
-            # make simple tokens by lowering words
-            tokens = list(map(lambda x: x.lower(), words))
-            text_data.extend(tokens)
+            # apply tokenizer
+            tokens = tokenize(line)
+            if tokens != []:
+                text_data.extend(tokens)
 
     return text_data
 
