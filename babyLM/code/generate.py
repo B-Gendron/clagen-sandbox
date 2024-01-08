@@ -4,7 +4,9 @@ import torch.nn.functional as F
 
 import numpy as np
 from tqdm import tqdm
+import pickle
 import argparse
+import io
 import pandas as pd
 from termcolor import colored
 from torchtext.vocab import build_vocab_from_iterator
@@ -12,6 +14,17 @@ from torchtext.data import get_tokenizer
 tokenize = get_tokenizer("basic_english")
 
 from train import *
+
+class CPU_Unpickler(pickle.Unpickler):
+    """
+        This class is supposed to help running something on CPU when it is based on objects computed on GPU. 
+        From: https://github.com/pytorch/pytorch/issues/16797#issuecomment-633423219 
+    """
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else: return super().find_class(module, name)
+
 
 
 def generate_from_prompt(prompt_text, model, device='cpu', block_size=32):
@@ -23,6 +36,10 @@ def generate_from_prompt(prompt_text, model, device='cpu', block_size=32):
 
 if __name__ == '__main__':
 
-    vocab = torch.load('../objects/vocab.pt', map_location=torch.device('cpu'))
-    model = torch.load('../models/babyllm-gptlike.pt', map_location=torch.device('cpu'))
+    with open('../objects/vocab.pt', 'rb') as f:
+        vocab = CPU_Unpickler(f).load()
+    model = CPU_Unpickler('../models/babyllm-gptlike.pt').load()
+
+    # vocab = torch.load('../objects/vocab.pt', map_location=torch.device('cpu'))
+    # model = torch.load('../models/babyllm-gptlike.pt', map_location=torch.device('cpu'))
     generate_from_prompt("Hey, how are you?", model=model)

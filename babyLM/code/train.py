@@ -13,6 +13,7 @@ from datasets import load_dataset
 from tqdm import tqdm
 import argparse
 import pandas as pd
+import pickle 
 from termcolor import colored
 from collections import Counter
 import logging
@@ -162,7 +163,7 @@ if __name__ == "__main__":
     print(f'Vocab size: {vocab_size}')
 
     # save vocab in a pytorch object to use it for generation
-    torch.save(vocab, '../objects/vocab.pt') 
+    torch.save(vocab, '../objects/vocab.pt', _use_new_zipfile_serialization=False) 
 
     # hyperparameters default config
     args = {
@@ -213,4 +214,4 @@ if __name__ == "__main__":
     train_and_infer(model, args)
 
     # save model
-    torch.save(model, '../models/babyllm-gptlike.pt')
+    torch.save(model, '../models/babyllm-gptlike.pt', _use_new_zipfile_serialization=False)
