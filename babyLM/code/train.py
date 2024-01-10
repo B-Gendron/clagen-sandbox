@@ -59,18 +59,17 @@ def encode(vocab, text):
     # print(f"Token index: {stoi}")
     return [stoi[token.lower()] for token in text if token not in (' ', '\n')]
 
-def decode(vocab, idxes):
+def decode(idxes, vocab):
     '''
         From vocab indexes to token strings
 
-        @param vocab (torchtext.vocab.Vocab): the vocabulary object to use for itos mapping
         @param idexes (list of int): the list of indexes to be mapped to their associated tokens
+        @param vocab (torchtext.vocab.Vocab): the vocabulary object to use for itos mapping
 
         @return tokens (str): the concatenated tokens that form the encoded sentence
     '''
     # get torch vocab itos method
     itos = vocab.get_itos()
-    print(f"Token string: {itos}")
     return ' '.join([itos[i] for i in idxes])
 
 # Train and test splits
@@ -169,16 +168,16 @@ if __name__ == "__main__":
     args = {
         'vocab_size':vocab_size,
         'batch_size':16, # how many independent sequences will we process in parallel?
-        'block_size':32, # what is the maximum context length for predictions?
+        'block_size':64, # what is the maximum context length for predictions?
         'max_iters':5000,
         'eval_interval':100,
         'lr':1e-3,
         'device':activate_gpu(),
-        'eval_iters':200,
+        'eval_iters':1000,
         'n_embd':64,
-        'n_heads':4,
-        'n_layers':4,
-        'dropout':0.0
+        'n_heads':8,
+        'n_layers':24,
+        'dropout':0.3
     }
 
     # instantiate parser and retrieve model hyperparameters
