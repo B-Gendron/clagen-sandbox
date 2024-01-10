@@ -23,7 +23,7 @@ from torchtext.data import get_tokenizer
 tokenize = get_tokenizer("basic_english")
 
 # from other scripts
-from utils import activate_gpu
+from utils import activate_gpu, get_datetime, args2filename
 from models import BabyLanguageModel
     
     
@@ -128,6 +128,7 @@ def train_and_infer(model, args):
         To be documented.
     '''
     device = args['device']
+    writer = args['writer']
     model.to(device)
     # print the number of parameters in the model
     print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
@@ -140,6 +141,13 @@ def train_and_infer(model, args):
         if iter % args['eval_interval'] == 0 or iter == max_iters - 1:
             losses = estimate_loss(device)
             print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+
+            # 🛑 add some metrics to keep with a label and the epoch index
+            writer.add_scalar("Loss/train", losses['train'], iter)
+            writer.add_scalar("Loss/val", losses['val'], iter)
+
+        # 🛑 flush to perform all remaining operations
+        writer.flush()
 
         # sample a batch of data
         xb, yb = get_batch('train', device)
@@ -180,6 +188,10 @@ if __name__ == "__main__":
         'n_layers':4,
         'dropout':0.0
     }
+
+    args.update({
+        'writer':SummaryWriter(f"../logs/{get_datetime()}", comment=args2filename(args))
+    })
 
     # instantiate parser and retrieve model hyperparameters
     parser = argparse.ArgumentParser(add_help=False)
