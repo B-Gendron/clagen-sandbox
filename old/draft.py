@@ -51,3 +51,11 @@
 #     with open('input.txt', 'r', encoding='utf-8') as f:
 #         text = f.read()
 #     return text
+
+
+# TENTATIVE DE FAIRE TOURNER SUR CPU ALORS QUE L'ENTRAINEMENT A LIEU SUR GPU, MAIS C'EST PAS ENCORE ÇA
+# with open('../objects/vocab.pt', 'rb') as f:
+#     vocab = CPU_Unpickler(f).load()
+
+# with open('../models/babyllm-gptlike.pt', 'rb') as f:
+#     model = CPU_Unpickler(f).load()

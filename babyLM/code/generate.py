@@ -36,10 +36,6 @@ def generate_from_prompt(prompt_text, model, device='cpu', block_size=32):
 
 if __name__ == '__main__':
 
-    with open('../objects/vocab.pt', 'rb') as f:
-        vocab = CPU_Unpickler(f).load()
-    model = CPU_Unpickler('../models/babyllm-gptlike.pt').load()
-
-    # vocab = torch.load('../objects/vocab.pt', map_location=torch.device('cpu'))
-    # model = torch.load('../models/babyllm-gptlike.pt', map_location=torch.device('cpu'))
+    vocab = torch.load('../objects/vocab.pt')
+    model = torch.load('../models/babyllm-gptlike.pt')
     generate_from_prompt("Hey, how are you?", model=model)
