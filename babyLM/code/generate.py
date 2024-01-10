@@ -27,15 +27,31 @@ class CPU_Unpickler(pickle.Unpickler):
 
 
 
-def generate_from_prompt(prompt_text, model, device='cpu', block_size=32):
+def generate_from_prompt(prompt_text, model, vocab, args):
+    device = args['device']
+    block_size = args['block_size']
     print(colored('Generating from a simple prompt', 'green'))
     prompt = torch.tensor(encode(vocab, prompt_text), dtype=torch.long, device=device).unsqueeze(-1)
+    prompt.to(device)
     print(f'Prompt: {prompt_text}')
-    print(decode(model.generate(prompt, max_new_tokens=200, block_size=block_size)[0].tolist()))
+    print(f'Encoded prompt: {prompt}')
+    output = model.generate(prompt, max_new_tokens=200, block_size=block_size)[0].tolist()
+    print(f'Encoded output: {output}')
+    output_text = decode(output, vocab)
+    print(f'Output text: {output_text}')
 
 
 if __name__ == '__main__':
 
+    args = {
+        'device':'cuda',
+        'block_size':32
+    }
+
+    print("Getting vocabulary...")
     vocab = torch.load('../objects/vocab.pt')
+    print("Getting model...")
     model = torch.load('../models/babyllm-gptlike.pt')
-    generate_from_prompt("Hey, how are you?", model=model)
+
+    print("Start generation")
+    generate_from_prompt("Once upon a time", model, vocab, args)
