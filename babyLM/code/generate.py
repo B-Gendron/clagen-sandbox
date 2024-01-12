@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
-from tqdm import tqdm
+import json
 import pickle
 import argparse
 import io
@@ -27,31 +27,38 @@ class CPU_Unpickler(pickle.Unpickler):
 
 
 
-def generate_from_prompt(prompt_text, model, vocab, args):
+def generate_from_prompt(prompt_text, model, stoi, itos, args):
     device = args['device']
     block_size = args['block_size']
     print(colored('Generating from a simple prompt', 'green'))
-    prompt = torch.tensor(encode(vocab, prompt_text), dtype=torch.long, device=device).unsqueeze(-1)
+    prompt = torch.tensor(encode(stoi, prompt_text), dtype=torch.long, device=device).unsqueeze(-1)
     prompt.to(device)
     print(f'Prompt: {prompt_text}')
     print(f'Encoded prompt: {prompt}')
     output = model.generate(prompt, max_new_tokens=200, block_size=block_size)[0].tolist()
     print(f'Encoded output: {output}')
-    output_text = decode(output, vocab)
+    output_text = decode(output, itos)
     print(f'Output text: {output_text}')
 
 
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-n", "--model_name", help="The name of the model to load for generation.", type=str, required=True)
+    arguments = parser.parse_args()
+    model_name = arguments.model_name
+
     args = {
         'device':'cuda',
-        'block_size':32
+        'block_size':64
     }
 
-    print("Getting vocabulary...")
-    vocab = torch.load('../objects/vocab.pt')
+    print("Getting stoi and itos dicts...")
+    stoi = json.load("../objects/vocab_stoi.json")
+    itos = json.load("../objects/vocab_itos.json")
+
     print("Getting model...")
-    model = torch.load('../models/babyllm-gptlike.pt')
+    model = torch.load(f'../models/{model_name}.pt')
 
     print("Start generation")
     generate_from_prompt("Once upon a time", model, vocab, args)
