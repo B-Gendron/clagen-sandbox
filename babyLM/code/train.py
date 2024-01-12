@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
+torch.manual_seed(42)
 
 # general purpose modules
 from glob import glob
@@ -26,7 +27,7 @@ tokenize = get_tokenizer("basic_english")
 # tokenize = BertTokenizer.from_pretrained("bert-base-uncased") # changer max_length à plus de 512
 
 # from other scripts
-from utils import activate_gpu, get_datetime, args2filename, dump_vocab_dicts
+from utils import activate_gpu, get_datetime, args2filename, vocab_dicts
 from models import BabyLanguageModel
     
     
@@ -72,11 +73,11 @@ def decode(idxes, itos):
     return ' '.join([itos[i] for i in idxes])
 
 # Train and test splits
-def train_val_split(vocab, data, train_ratio=0.9):
+def train_val_split(stoi, data, train_ratio=0.9):
     '''
         Processes train/val split according to the given train_ratio (default = 90% of the dataset is used for training)
     '''
-    tensor_data = torch.tensor(encode(vocab, data), dtype=torch.long)
+    tensor_data = torch.tensor(encode(stoi, data), dtype=torch.long)
     n = int(train_ratio*len(tensor_data))
     train_data = tensor_data[:n]
     val_data = tensor_data[n:]
@@ -157,6 +158,35 @@ def train_and_infer(model, args):
         optimizer.step()
 
 
+def parse_and_update_args(args):
+    # instantiate parser and retrieve model hyperparameters
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-v", "--vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
+    parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {args['n_embd']}.", type=int, default=args['n_embd'])
+    parser.add_argument("-s", "--batch_size", help=f"The batch size for the model training. Default is {args['batch_size']}.", type=int, default=args['batch_size'])
+    parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {args['block_size']}.", type=int, default=args['block_size'])
+    parser.add_argument("-i", "--iters", help=f"The number of iterations (=epochs) for training. Default is {args['max_iters']}.", type=int, default=args['max_iters'])
+    parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {args['n_heads']}.", type=int, default=args['n_heads'])
+    parser.add_argument("-l", "--layers", help=f"Number of Transformer decoder layers. Default is {args['n_layers']}.", type=int, default=args['n_layers'])
+    parser.add_argument("-d", "--dropout", help=f"The dropout rate. Default is {args['dropout']}.", type=int, default=args['dropout'])
+    arg = parser.parse_args()
+
+    # update hyperparameters config
+    args.update({
+        'vocab_size':arg.vocab_size,
+        'batch_size':arg.batch_size,
+        'n_embd':arg.embedding_size,
+        'block_size':arg.block_size,
+        'max_iters':arg.iters,
+        'n_heads':arg.heads,
+        'n_layers':arg.layers,
+        'dropout':arg.dropout,
+        'writer':SummaryWriter(f"../logs/{get_datetime()}_{arg.batch_size}")
+    })
+
+    return args
+
+
 if __name__ == "__main__":
 
     if not os.path.exists("../openwebtext/"): 
@@ -170,21 +200,16 @@ if __name__ == "__main__":
     print(f'Vocab size: {vocab_size}')
 
     # save vocab in a pytorch object to use it for generation
-    torch.save(vocab, '../objects/vocab.pt', _use_new_zipfile_serialization=False) 
+    # torch.save(vocab, '../objects/vocab.pt', _use_new_zipfile_serialization=False) 
 
     # save stoi and itos dicts
-    stoi, itos = vocab.get_stoi(), vocab.get_itos()
-    with open("../objects/vocab_stoi.json", "w") as f:
-        json.dump(stoi, f)
-
-    with open("../objects/vocab_itos.json", "w") as f:
-        json.dump(stoi, f)
+    stoi, itos = vocab_dicts(vocab)
 
     # hyperparameters default config
     args = {
         'vocab_size':vocab_size,
         'batch_size':16, # should be bigger that 16 to accelerate training (but avoid memory errors)
-        'block_size':64, # what is the maximum context length for predictions?
+        'block_size':64, 
         'max_iters':5000,
         'eval_interval':100,
         'lr':1e-3,
@@ -196,45 +221,14 @@ if __name__ == "__main__":
         'dropout':0.3
     }
 
-    args.update({
-        'writer':SummaryWriter(f"../logs/{get_datetime()}", comment=args2filename(args))
-    })
+    # update params depending of the arguments
+    args = parse_and_update_args(args)
 
-    # instantiate parser and retrieve model hyperparameters
-    parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-v", "--vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
-    parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {args['n_embd']}.", type=int, default=args['n_embd'])
-    parser.add_argument("-s", "--batch_size", help=f"The batch size for the model training. Default is {args['batch_size']}.", type=int, default=args['batch_size'])
-    parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {args['block_size']}.", type=int, default=args['block_size'])
-    parser.add_argument("-i", "--iters", help=f"The number of iterations (=epochs) for training. Default is {args['max_iters']}.", type=int, default=args['max_iters'])
-    parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {args['n_heads']}.", type=int, default=args['n_heads'])
-    parser.add_argument("-l", "--layers", help=f"Number of Transformer decoder layers. Default is {args['n_layers']}.", type=int, default=args['n_layers'])
-    parser.add_argument("-d", "--dropout", help=f"The dropout rate. Default is {args['dropout']}.", type=int, default=args['dropout'])
-
-    arg = parser.parse_args()
-
-    # update hyperparameters config
-    v, e, b, i, h, l, d = arg.vocab_size, arg.embedding_size, arg.block_size, arg.iters, arg.heads, arg.layers, arg.dropout
-    args.update({
-        'vocab_size':v,
-        'n_embd':e,
-        'block_size':b,
-        'max_iters':i,
-        'n_heads':h,
-        'n_layers':l,
-        'dropout':d
-    })
-
-    # setup everything for training
-    torch.manual_seed(42)
-    train_data, val_data = train_val_split(vocab, all_tokens)
+    # train
+    train_data, val_data = train_val_split(stoi, all_tokens)
     model = BabyLanguageModel(args)
-
-    # perform training and inference
     train_and_infer(model, args)
 
-    # save model
+    # save model + params dict
     torch.save(model, f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}.pt")
-
-    # save model state dict (should be better to be used on multiple devices)
     torch.save(model.state_dict(), f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}_params.pt")
