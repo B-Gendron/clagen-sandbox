@@ -177,6 +177,20 @@ def get_labels_weights(training_set, device, num_labels=7, index=0, penalty=1e9,
     return weights
 
 
+def vocab_dicts(vocab):
+    stoi, itos = vocab.get_stoi(), vocab.get_itos()
+
+    # dump stoi dict
+    with open("../objects/vocab_stoi.json", "w") as f:
+        json.dump(stoi, f)
+
+    # dump itos dict
+    with open("../objects/vocab_itos.json", "w") as f:
+        json.dump(itos, f)
+
+    # return dicts to be used in training (encode function)
+    return stoi, itos
+
 # -----------------------------------------------------------------------------------------
 # Display utils
 # -----------------------------------------------------------------------------------------
