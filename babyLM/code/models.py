@@ -92,6 +92,7 @@ class BabyLanguageModel(nn.Module):
         n_layers = args['n_layers']
         dropout = args['dropout']
         device = args['device']
+        quantization = args['quantization']
 
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
@@ -116,6 +117,10 @@ class BabyLanguageModel(nn.Module):
         # idx and targets are both (B,T) tensor of integers
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=self.device)) # (T,C)
+
+        if self.quantization:
+            tok_emb, pos_emb = tok_emb.half(), pos_emb.half()
+
         x = tok_emb + pos_emb # (B,T,C)
         x = self.blocks(x) # (B,T,C)
         x = self.ln_f(x) # (B,T,C)
