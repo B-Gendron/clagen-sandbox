@@ -13,17 +13,20 @@ from datasets import load_dataset
 from tqdm import tqdm
 import argparse
 import pandas as pd
-import pickle 
+import json
 from termcolor import colored
 from collections import Counter
 import logging
 from torch.utils.tensorboard import SummaryWriter
 from torchtext.vocab import build_vocab_from_iterator, Vocab
 from torchtext.data import get_tokenizer
+from transformers import BertTokenizer, BertTokenizerFast
+
 tokenize = get_tokenizer("basic_english")
+# tokenize = BertTokenizer.from_pretrained("bert-base-uncased") # changer max_length à plus de 512
 
 # from other scripts
-from utils import activate_gpu, get_datetime, args2filename
+from utils import activate_gpu, get_datetime, args2filename, dump_vocab_dicts
 from models import BabyLanguageModel
     
     
@@ -32,7 +35,7 @@ def get_data(folder_name):
     text_data = []
     with open(file_path, 'r', encoding='utf-8') as f:
         # yield tokens from each line
-        for line in f:
+        for line in tqdm(f):
             # apply tokenizer
             tokens = tokenize(line)
             if tokens != []:
@@ -46,30 +49,26 @@ def token_generator():
         yield [token] # put the token inside a list so the vocab is not character-wise
 
 
-def encode(vocab, text):
+def encode(stoi, text):
     '''
         From token strings to indexes
 
-        @param vocab (torchtext.vocab.Vocab): the vocabulary object to use for stoi mapping
-        @param text (str): the text to encode
+        @param stoi (dict):             string to index mapping from the vocab
+        @param text (str):              the text to encode
 
-        @return idxes (list of int): the list of indexes that correspond to the text encoding according to the underlying vocab
+        @return idxes (list of int):    the list of indexes that correspond to the text encoding according to the underlying vocab
     '''
-    stoi = vocab.get_stoi()
-    # print(f"Token index: {stoi}")
     return [stoi[token.lower()] for token in text if token not in (' ', '\n')]
 
-def decode(idxes, vocab):
+def decode(idxes, itos):
     '''
         From vocab indexes to token strings
 
         @param idexes (list of int): the list of indexes to be mapped to their associated tokens
-        @param vocab (torchtext.vocab.Vocab): the vocabulary object to use for itos mapping
+        @param itos (dict): index to string mapping from the vocab
 
         @return tokens (str): the concatenated tokens that form the encoded sentence
     '''
-    # get torch vocab itos method
-    itos = vocab.get_itos()
     return ' '.join([itos[i] for i in idxes])
 
 # Train and test splits
@@ -163,6 +162,7 @@ if __name__ == "__main__":
     if not os.path.exists("../openwebtext/"): 
         subprocess.call(['sh', '../download_openwebtext.sh'])
 
+    print("Load data and tokenization...")
     all_tokens = get_data('openwebtext')
     print(f"Number of tokens: {len(all_tokens)}")
     vocab = build_vocab_from_iterator(token_generator(), specials=["<unk>"], special_first=True)
@@ -172,10 +172,18 @@ if __name__ == "__main__":
     # save vocab in a pytorch object to use it for generation
     torch.save(vocab, '../objects/vocab.pt', _use_new_zipfile_serialization=False) 
 
+    # save stoi and itos dicts
+    stoi, itos = vocab.get_stoi(), vocab.get_itos()
+    with open("../objects/vocab_stoi.json", "w") as f:
+        json.dump(stoi, f)
+
+    with open("../objects/vocab_itos.json", "w") as f:
+        json.dump(stoi, f)
+
     # hyperparameters default config
     args = {
         'vocab_size':vocab_size,
-        'batch_size':16, # how many independent sequences will we process in parallel?
+        'batch_size':16, # should be bigger that 16 to accelerate training (but avoid memory errors)
         'block_size':64, # what is the maximum context length for predictions?
         'max_iters':5000,
         'eval_interval':100,
@@ -196,6 +204,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-v", "--vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
     parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {args['n_embd']}.", type=int, default=args['n_embd'])
+    parser.add_argument("-s", "--batch_size", help=f"The batch size for the model training. Default is {args['batch_size']}.", type=int, default=args['batch_size'])
     parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {args['block_size']}.", type=int, default=args['block_size'])
     parser.add_argument("-i", "--iters", help=f"The number of iterations (=epochs) for training. Default is {args['max_iters']}.", type=int, default=args['max_iters'])
     parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {args['n_heads']}.", type=int, default=args['n_heads'])
@@ -225,4 +234,7 @@ if __name__ == "__main__":
     train_and_infer(model, args)
 
     # save model
-    torch.save(model, '../models/babyllm-gptlike.pt', _use_new_zipfile_serialization=False)
+    torch.save(model, f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}.pt")
+
+    # save model state dict (should be better to be used on multiple devices)
+    torch.save(model.state_dict(), f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}_params.pt")
