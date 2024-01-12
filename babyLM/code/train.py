@@ -98,6 +98,7 @@ def get_batch(split, device):
     # deduce corresponding data
     x = torch.stack([data[i:i+block_size] for i in ix])
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
+
     # send data to device
     x, y = x.to(device), y.to(device)
     return x, y
@@ -169,6 +170,7 @@ def parse_and_update_args(args):
     parser.add_argument("-h", "--heads", help=f"Number of attention heads. Default is {args['n_heads']}.", type=int, default=args['n_heads'])
     parser.add_argument("-l", "--layers", help=f"Number of Transformer decoder layers. Default is {args['n_layers']}.", type=int, default=args['n_layers'])
     parser.add_argument("-d", "--dropout", help=f"The dropout rate. Default is {args['dropout']}.", type=int, default=args['dropout'])
+    parser.add_argument("-q", "--quantization", help=f"Indicates whether the embeddings should be stored in half precision or not. Default is False.", action="store_true")
     arg = parser.parse_args()
 
     # update hyperparameters config
@@ -181,7 +183,8 @@ def parse_and_update_args(args):
         'n_heads':arg.heads,
         'n_layers':arg.layers,
         'dropout':arg.dropout,
-        'writer':SummaryWriter(f"../logs/{get_datetime()}_{arg.batch_size}")
+        'writer':SummaryWriter(f"../logs/{get_datetime()}_{arg.batch_size}"),
+        'quantization': arg.quantization,
     })
 
     return args
@@ -218,7 +221,8 @@ if __name__ == "__main__":
         'n_embd':64,
         'n_heads':8,
         'n_layers':24,
-        'dropout':0.3
+        'dropout':0.3,
+        'quantization':False,
     }
 
     # update params depending of the arguments
