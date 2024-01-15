@@ -132,6 +132,7 @@ def train_and_infer(model, args):
     model.to(device)
     # print the number of parameters in the model
     print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
+    print(f"Quantization: {args['quantization']}")
     optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'])
 
     max_iters = args['max_iters']
@@ -234,5 +235,5 @@ if __name__ == "__main__":
     train_and_infer(model, args)
 
     # save model + params dict
-    torch.save(model, f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}.pt")
-    torch.save(model.state_dict(), f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}_params.pt")
+    torch.save(model, f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}_{'q' if args['quantization'] else 'nq'}.pt")
+    torch.save(model.state_dict(), f"../models/babyllm-gptlike_{args['batch_size']}_{get_datetime()}_{'q' if args['quantization'] else 'nq'}_params.pt")
