@@ -5,6 +5,9 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 torch.manual_seed(42)
 
+# set floats to half precision for the whole script
+torch.set_default_dtype(torch.float16)
+
 # general purpose modules
 from glob import glob
 import os

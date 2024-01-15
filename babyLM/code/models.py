@@ -4,6 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+# set floats to half precision for the whole script
+torch.set_default_dtype(torch.float16)
+
 
 class Head(nn.Module):
     """ one head of self-attention """
@@ -100,7 +103,7 @@ class BabyLanguageModel(nn.Module):
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
         self.device = args['device']
-        self. quantization = args['quantization']
+        self.quantization = args['quantization']
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
@@ -117,8 +120,8 @@ class BabyLanguageModel(nn.Module):
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=self.device)) # (T,C)
 
-        if self.quantization:
-            tok_emb, pos_emb = tok_emb.half(), pos_emb.half()
+        # if self.quantization:
+        #     tok_emb, pos_emb = tok_emb.half(), pos_emb.half()
 
         x = tok_emb + pos_emb # (B,T,C)
         x = self.blocks(x) # (B,T,C)
