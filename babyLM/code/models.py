@@ -91,8 +91,6 @@ class BabyLanguageModel(nn.Module):
         n_heads = args['n_heads']
         n_layers = args['n_layers']
         dropout = args['dropout']
-        device = args['device']
-        quantization = args['quantization']
 
         # each token directly reads off the logits for the next token from a lookup table
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
@@ -101,7 +99,8 @@ class BabyLanguageModel(nn.Module):
         self.ln_f = nn.LayerNorm(n_embd) # final layer norm
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
-        self.device = device
+        self.device = args['device']
+        self. quantization = args['quantization']
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
