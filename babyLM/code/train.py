@@ -136,7 +136,7 @@ def train_and_infer(model, args):
     # print the number of parameters in the model
     print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
     print(f"Quantization: {args['quantization']}")
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'])
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'], foreach=False)
 
     max_iters = args['max_iters']
     for iter in tqdm(range(max_iters)):
@@ -226,7 +226,7 @@ if __name__ == "__main__":
         'n_heads':8,
         'n_layers':24,
         'dropout':0.3,
-        'quantization':False,
+        'quantization':True,
     }
 
     # update params depending of the arguments
