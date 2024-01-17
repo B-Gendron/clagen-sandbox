@@ -4,8 +4,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# set floats to half precision for the whole script
-torch.set_default_dtype(torch.float16)
 
 
 class Head(nn.Module):
