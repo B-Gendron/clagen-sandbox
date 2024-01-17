@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 torch.manual_seed(42)
 
-# set floats to half precision for the whole script
-torch.set_default_dtype(torch.float16)
+# BAD PRACTICE set floats to half precision for the whole script
+# torch.set_default_dtype(torch.float16)
 
 # general purpose modules
 from glob import glob
@@ -93,6 +93,7 @@ def get_batch(split, device):
         This function is a kind of manual dataloader.
     '''
     block_size = args['block_size']
+    quantization = args['quantization']
 
     # get the desired data split
     data = train_data if split == 'train' else val_data
@@ -118,9 +119,10 @@ def estimate_loss(device):
     for split in ['train', 'val']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
-            X, Y = get_batch(split, device)
-            logits, loss = model(X, Y)
-            losses[k] = loss.item()
+            with torch.autocast(device_type=device, dtype=torch.float16):
+                X, Y = get_batch(split, device)
+                logits, loss = model(X, Y)
+                losses[k] = loss.item()
         out[split] = losses.mean()
     model.train()
     return out
