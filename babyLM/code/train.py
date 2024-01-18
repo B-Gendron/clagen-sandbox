@@ -159,7 +159,8 @@ def train_and_infer(model, args):
         xb, yb = get_batch('train', device)
 
         # evaluate the loss
-        logits, loss = model(xb, yb)
+        with torch.autocast(device_type=device, dtype=torch.float16):
+            logits, loss = model(xb, yb)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
