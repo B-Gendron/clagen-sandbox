@@ -93,6 +93,23 @@ def train_isolated(args, model, train_loader, optimizer, epoch):
         batch = {'dial_id': batch['dial_id'].to(device), 'utt_id': batch['utt_id'].to(device), 'embedding' : batch['embedding'].to(device)}
         optimizer.zero_grad()
 
+        # remove padded part
+        for idx in batch:
+            # get the dialog data 
+            encoded_dialog = batch[idx]['embedding']
+            dialog_without_pad = []
+            for utterance in encoded_dialog:
+                # select token indexes only
+                utt_list = utterance.tolist()
+                utterance_without_pad = [utt[:utt.index(-1) if -1 in utt else len(utt)] for utt in utt_list]
+                # naturally remove the utterances full of pad
+                if utterance_without_pad != []:
+                    dialog_without_pad.append(torch.tensor(utterance_without_pad))
+
+            batch[idx]['embedding'] = torch.stack(dialog_without_pad)
+
+    ### NEXT LINES ARE TO BE ADAPTED
+
         # perform training
         classes_probas = model(batch['embedding'])
         loss = ce_loss(A, P, N)
