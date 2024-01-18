@@ -8,6 +8,8 @@ import logging
 from datasets import Dataset, DatasetDict
 from collections import Counter
 import json
+import random
+from math import sqrt
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, roc_auc_score, f1_score
 
@@ -123,7 +125,7 @@ def load_dataset(dataset_name):
     '''
     path = f"./data/{dataset_name}"
     if os.path.isdir(path):
-        dataset = DatasetDict.load_from_disk(f"./data/{dataset_name}")
+        dataset = DatasetDict.load_from_disk(f"../data/{dataset_name}")
     else: 
         raise Exception("No folder with the such name found in the data folder.")
 
@@ -139,7 +141,7 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
         @param output_format (str):        either 'huggingface' or 'json'. Default is 'huggingface'.
     '''
     if output_format == "huggingface":
-        dataset.save_to_disk(f'./data/{dataset_name}')
+        dataset.save_to_disk(f'../data/{dataset_name}')
     elif output_format == "json":
         with open(f"data/{dataset_name}.json", 'w') as f:
             json.dump(dataset, f)
@@ -190,6 +192,25 @@ def vocab_dicts(vocab):
 
     # return dicts to be used in training (encode function)
     return stoi, itos
+
+# -----------------------------------------------------------------------------------------
+# Preprocessing utils
+# -----------------------------------------------------------------------------------------
+
+def add_sentencebert_random_vectors(embedding, size, max_length):
+    '''
+        This auxiliary function is to be used for Sentence BERT preprocessing. It adds the number of max_length-sized random vectors defined by the parameter size.
+
+        @param size (int):              the number of random vectors to generate.
+
+        @return vectors (list):         the list of length size of generated random vectors.
+    '''
+    # DescribeResult(nobs=3840, minmax=(-0.20482617616653442, 0.17243704199790955), mean=0.00021893562853630052, variance=0.0026047970850628303, skewness=-0.06372909078235393, kurtosis=-0.001260392396507104)
+    mean = 0.00021893562853630052
+    variance = 0.0026047970850628303
+    for _ in range(size):
+        embedding.append([random.gauss(mu=mean, sigma=sqrt(variance)) for _ in range(max_length)])
+    return embedding
 
 # -----------------------------------------------------------------------------------------
 # Display utils
