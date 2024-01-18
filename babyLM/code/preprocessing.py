@@ -8,9 +8,6 @@ import argparse
 
 from utils import *
 
-# To be used after: check if the individuals (rdf) has been created
-    # if os.path.exists("../../../OntoUttPreprocessing/rdf/wikitalk")
-
 
 def apply_sentence_bert(entry, sentence_model, max_length):
     '''
@@ -27,6 +24,12 @@ def apply_sentence_bert(entry, sentence_model, max_length):
     dial_id = entry['dial_id']
     utt_id = entry['utt_id']
     embedding = sentence_model.encode(text, device=args['device']).tolist()
+
+    # pad utterance ids
+    if len(utt_id) < utterance_limit:
+        utt_id.extend([-1 for _ in range(utterance_limit-len(utt_id))])
+    elif len(utt_id) > utterance_limit:
+        utt_id = utt_id[:utterance_limit]
 
     # pad embeddings
     if len(embedding) < utterance_limit:
