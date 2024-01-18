@@ -66,7 +66,17 @@ def encode(stoi, text):
 
         @return idxes (list of int):    the list of indexes that correspond to the text encoding according to the underlying vocab
     '''
-    return [stoi[token.lower()] for token in text if token not in (' ', '\n')]
+    encoding = []
+    for token in text:
+        if token not in (' ', '\n'):
+            try:
+                stoi[token.lower()]
+            except KeyError:
+                encoding.append(stoi['<unk>']) 
+            else:
+                encoding.append(stoi[token.lower()])
+                
+    return encoding
 
 def decode(idxes, itos):
     '''
