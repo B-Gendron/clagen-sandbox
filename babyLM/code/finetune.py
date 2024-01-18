@@ -71,6 +71,47 @@ def get_args_and_dataloaders(dataset, dataset_class):
     return args, train_loader, val_loader, test_loader
 
 
+def train_isolated(args, model, train_loader, optimizer, epoch):
+    '''
+        Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
+
+        @param args (str):                 the hyperparameters for the training
+        @param model:                      the model to train
+        @param train_loader (DataLoader):  the dataloader that contains the training samples
+        @param optimizer:                  the optimizer to use for training
+        @param epoch (int):                the index of the current epoch
+
+        @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
+    '''
+    model.train()
+    device = args['device']
+    writer = args['writer']
+    loss_it = []
+    ce_loss = nn.CrossEntropyLoss()
+
+    for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (epoch+1), total=train_loader.__len__()):
+        batch = {'dial_id': batch['dial_id'].to(device), 'utt_id': batch['utt_id'].to(device), 'embedding' : batch['embedding'].to(device)}
+        optimizer.zero_grad()
+
+        # perform training
+        classes_probas = model(batch['embedding'])
+        loss = ce_loss(A, P, N)
+        loss.backward()
+        optimizer.step()
+
+        # store loss history
+        loss_it.append(loss.item())
+
+    loss_it_avg = sum(loss_it)/len(loss_it)
+
+    # print useful information about the training progress and scores on this training set's full pass
+    print("Epoch %s/%s - %s : (%s %s)" % (colored(str(epoch+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), sum(loss_it)/len(loss_it)))
+
+	# 🛑 add some metrics to keep with a label and the epoch index
+    writer.add_scalar("Loss/train", loss_it_avg, epoch)
+
+    return loss_it_avg
+
 if __name__ == "__main__":
 
     wikitalk = load_from_disk("../wikitalk")
