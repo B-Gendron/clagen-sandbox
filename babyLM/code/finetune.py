@@ -112,6 +112,8 @@ def train(args, model, train_loader, optimizer, epoch):
                 json.dump({'dial_id':batch['dial_id'][idx].item(), 'dial_encoding':dialog_without_pad}, f, indent=2)
 
     ### NEXT LINES ARE TO BE ADAPTED
+                
+    # build a prompt around the dialog encoding to give the instruction to the model
 
     # perform training
     classes_probas = model(batch['embedding'])
