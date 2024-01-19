@@ -229,16 +229,14 @@ def parse_indexes(levels_dict):
 
     # iterate through the input dict
     for k in levels_dict.keys():
-        indexes_list = []
         for v in levels_dict[k]:
             # parse the utterance full name to retrieve its index
             splitted_v = v.split('_')
             index = splitted_v[2] # the third element when individual_592.592_598_utt_21271711 is splitted this way is 598, which is the utterance index
-            indexes_list.append(index)
-        # store the indexes in the right class
-        levels_indexes_dict[k] = indexes_list
+            # store the readability class for the current index
+            levels_indexes_dict[int(index)] = k
 
-    return levels_indexes_dict
+    return dict(sorted(levels_indexes_dict.items()))
 
 
 def get_prompt_and_label(dialog_file, split, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
@@ -266,6 +264,7 @@ def get_prompt_and_label(dialog_file, split, onto_path="../../../OntoUttPreproce
         'hard':     [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
+    print(dial_id)
     print(utterance_levels)
 
 
