@@ -71,6 +71,8 @@ def apply_sentence_bert(entry, stoi, max_length):
     n = len(encoded_dialog)
     if n < utterance_limit:
         encoded_dialog.extend([[-1 for _ in range(max_length)] for _ in range(utterance_limit-n)])
+    elif n > utterance_limit:
+        encoded_dialog = encoded_dialog[:utterance_limit]
 
     result = {'dial_id': dial_id, 'utt_id': utt_id, 'embedding': encoded_dialog}
     return result
