@@ -232,7 +232,7 @@ def parse_indexes(levels_dict):
         for v in levels_dict[k]:
             # parse the utterance full name to retrieve its index
             splitted_v = v.split('_')
-            index = splitted_v[2] # the third element when individual_592.592_598_utt_21271711 is splitted this way is 598, which is the utterance index
+            index = splitted_v[2] # the 3rd element when individual_592.592_598_utt_21271711 is splitted by _ is 598, which is the utterance index
             # store the readability class for the current index
             levels_indexes_dict[int(index)] = k
 
@@ -259,9 +259,9 @@ def get_prompt_and_label(dialog_file, split, onto_path="../../../OntoUttPreproce
     individual = get_ontology(indiv_path).load()
     # crop first element as it simply corresponds to the class occurence
     utterance_levels = {
-        'easy':     [str(i) for i in individual.search(is_a=individual.EasilyReadableText)[1:]],
-        'standard': [str(i) for i in individual.search(is_a=individual.StandardReadableText)[1:]],
-        'hard':     [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
+        'EasilyReadableText':       [str(i) for i in individual.search(is_a=individual.EasilyReadableText)[1:]],
+        'StandardReadableText':     [str(i) for i in individual.search(is_a=individual.StandardReadableText)[1:]],
+        'HardlyReadableText':       [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
     print(dial_id)
