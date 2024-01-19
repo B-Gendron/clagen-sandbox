@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from glob import glob
 import os
 import subprocess
+import json
 import numpy as np
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import Dataset, DataLoader
@@ -71,7 +72,7 @@ def get_args_and_dataloaders(dataset, dataset_class):
     return args, train_loader, val_loader, test_loader
 
 
-def train_isolated(args, model, train_loader, optimizer, epoch):
+def train(args, model, train_loader, optimizer, epoch):
     '''
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
@@ -84,7 +85,7 @@ def train_isolated(args, model, train_loader, optimizer, epoch):
         @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
     '''
     model.train()
-    device = args['device']
+    device = 'cpu'
     writer = args['writer']
     loss_it = []
     ce_loss = nn.CrossEntropyLoss()
@@ -94,30 +95,32 @@ def train_isolated(args, model, train_loader, optimizer, epoch):
         optimizer.zero_grad()
 
         # remove padded part
-        for idx in batch:
+        for idx in range(args['train_bsize']):
             # get the dialog data 
-            encoded_dialog = batch[idx]['embedding']
+            encoded_dialog = batch['embedding'][idx]
             dialog_without_pad = []
             for utterance in encoded_dialog:
                 # select token indexes only
-                utt_list = utterance.tolist()
-                utterance_without_pad = [utt[:utt.index(-1) if -1 in utt else len(utt)] for utt in utt_list]
+                utt = utterance.tolist()
+                utterance_without_pad = utt[:utt.index(-1) if -1 in utt else len(utt)]
                 # naturally remove the utterances full of pad
                 if utterance_without_pad != []:
-                    dialog_without_pad.append(torch.tensor(utterance_without_pad))
+                    dialog_without_pad.append(utterance_without_pad)
 
-            batch[idx]['embedding'] = torch.stack(dialog_without_pad)
+            # dump dialog encoding without padding in a json file
+            with open(f'../objects/batch_{idx}.json', 'w') as f:
+                json.dump({'dial_id':batch['dial_id'][idx].item(), 'dial_encoding':dialog_without_pad}, f, indent=2)
 
     ### NEXT LINES ARE TO BE ADAPTED
 
-        # perform training
-        classes_probas = model(batch['embedding'])
-        loss = ce_loss(A, P, N)
-        loss.backward()
-        optimizer.step()
+    # perform training
+    classes_probas = model(batch['embedding'])
+    loss = ce_loss(A, P, N)
+    loss.backward()
+    optimizer.step()
 
-        # store loss history
-        loss_it.append(loss.item())
+    # store loss history
+    loss_it.append(loss.item())
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
@@ -133,4 +136,6 @@ if __name__ == "__main__":
 
     wikitalk = load_from_disk("../wikitalk")
     args, train_loader, val_loader, test_loader = get_args_and_dataloaders(wikitalk, WikiTalkDataset)
-    print(next(iter(train_loader)))
+    # model = BabyLanguageModel(args)
+    # optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'], foreach=False)
+    train(args, train_loader, 0)
