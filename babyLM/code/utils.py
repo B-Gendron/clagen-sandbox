@@ -8,6 +8,7 @@ import logging
 from datasets import Dataset, DatasetDict
 from collections import Counter
 import json
+import re
 import random
 from math import sqrt
 import matplotlib.pyplot as plt
@@ -211,6 +212,68 @@ def add_sentencebert_random_vectors(embedding, size, max_length):
     for _ in range(size):
         embedding.append([random.gauss(mu=mean, sigma=sqrt(variance)) for _ in range(max_length)])
     return embedding
+
+# -----------------------------------------------------------------------------------------
+# Prompt utils
+# -----------------------------------------------------------------------------------------
+
+def parse_indexes(levels_dict):
+    '''
+        This auxiliary function parses and retrieves the utterance indexes from the readability level dictionnary when an utterance is reffered to using the ontology identifier. It return a dictionary with the same format than the input, containing only the indexes instead of the complete identifier.
+
+        @param levels_dict (dict):          the dict from the ontology individual search.
+        
+        @return levels_indexes_dict (dict): a dict that maps the readability levels to the associated utterance indexes in the current dialog.
+    '''
+    levels_indexes_dict = {}
+
+    # iterate through the input dict
+    for k in levels_dict.keys():
+        indexes_list = []
+        for v in levels_dict[k]:
+            # parse the utterance full name to retrieve its index
+            splitted_v = v.split('_')
+            index = splitted_v[2] # the third element when individual_592.592_598_utt_21271711 is splitted this way is 598, which is the utterance index
+            indexes_list.append(index)
+        # store the indexes in the right class
+        levels_indexes_dict[k] = indexes_list
+
+    return levels_indexes_dict
+
+
+def get_prompt_and_label(dialog_file, split, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
+    '''
+        This function outputs a prompt encoded with respect to the right vocab, containing the dialog stored in the .json file dialog_file.
+
+        @param dialog_file (str):       the name of the (temp) json file where the dialog information is stored
+        @param split (str):             the dataset split from which the dialog comes from
+        @param onto_path (str):         
+    '''
+    # load the encoded dialog file
+    with open(f"../objects/{dialog_file}.json", 'r') as f:
+        dial_descr = json.load(f)
+
+    dial_id = dial_descr['dial_id']
+    dial_enc = dial_descr['dial_encoding']
+
+    # retrieve the corresponding ontology individual
+    indiv_path = os.path.join(onto_path, split, f'individual_{dial_id}.rdf')
+    individual = get_ontology(indiv_path).load()
+    # crop first element as it simply corresponds to the class occurence
+    utterance_levels = {
+        'easy':     [str(i) for i in individual.search(is_a=individual.EasilyReadableText)[1:]],
+        'standard': [str(i) for i in individual.search(is_a=individual.StandardReadableText)[1:]],
+        'hard':     [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
+    }
+    utterance_levels = parse_indexes(utterance_levels)
+    print(utterance_levels)
+
+
+    # no header and no footer since the model is not instruction fine-tuned
+
+    # remove last utterance
+
+get_prompt_and_label('batch_0', 'train')
 
 # -----------------------------------------------------------------------------------------
 # Display utils
