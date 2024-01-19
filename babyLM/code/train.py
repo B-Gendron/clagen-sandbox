@@ -132,10 +132,10 @@ def estimate_loss(device):
     for split in ['train', 'val']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
-            with torch.autocast(device_type=device, dtype=torch.float16):
-                X, Y = get_batch(split, device)
-                logits, loss = model(X, Y)
-                losses[k] = loss.item()
+            # with torch.autocast(device_type=device, dtype=torch.float16):
+            X, Y = get_batch(split, device)
+            logits, loss = model(X, Y)
+            losses[k] = loss.item()
         out[split] = losses.mean()
     model.train()
     return out
@@ -171,8 +171,8 @@ def train_and_infer(model, args):
         xb, yb = get_batch('train', device)
 
         # evaluate the loss
-        with torch.autocast(device_type=device, dtype=torch.float16):
-            logits, loss = model(xb, yb)
+        # with torch.autocast(device_type=device, dtype=torch.float16):q
+        logits, loss = model(xb, yb)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
