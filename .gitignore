@@ -3,3 +3,5 @@ babyLM/openwebtext
 /plots
 babyLM/objects/
 babyLM/models/
+babyLM/wikitalk/
+babyLM/wikitalk_sentencebert/

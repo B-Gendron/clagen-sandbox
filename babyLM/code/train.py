@@ -24,10 +24,12 @@ import logging
 from torch.utils.tensorboard import SummaryWriter
 from torchtext.vocab import build_vocab_from_iterator, Vocab
 from torchtext.data import get_tokenizer
+from nltk.tokenize import TweetTokenizer
 from transformers import BertTokenizer, BertTokenizerFast
 
-tokenize = get_tokenizer("basic_english")
-# tokenize = BertTokenizer.from_pretrained("bert-base-uncased") # changer max_length à plus de 512
+# tokenize = get_tokenizer("basic_english")
+# tokenize = BertTokenizerFast.from_pretrained("bert-base-uncased") # changer max_length à plus de 512
+tokenizer = TweetTokenizer()
 
 # from other scripts
 from utils import activate_gpu, get_datetime, args2filename, vocab_dicts
@@ -41,7 +43,9 @@ def get_data(folder_name):
         # yield tokens from each line
         for line in tqdm(f):
             # apply tokenizer
-            tokens = tokenize(line)
+            # tokens = tokenize(line, padding="max_length", max_length=512, truncation=True)
+            # tokens = tokens['input_ids'] # retrieve only input_ids from the pretrained bert tokenizer
+            tokens = tokenizer.tokenize(line.lower())
             if tokens != []:
                 text_data.extend(tokens)
 
@@ -62,7 +66,17 @@ def encode(stoi, text):
 
         @return idxes (list of int):    the list of indexes that correspond to the text encoding according to the underlying vocab
     '''
-    return [stoi[token.lower()] for token in text if token not in (' ', '\n')]
+    encoding = []
+    for token in text:
+        if token not in (' ', '\n'):
+            try:
+                stoi[token.lower()]
+            except KeyError:
+                encoding.append(stoi['<unk>']) 
+            else:
+                encoding.append(stoi[token.lower()])
+                
+    return encoding
 
 def decode(idxes, itos):
     '''
@@ -93,7 +107,6 @@ def get_batch(split, device):
         This function is a kind of manual dataloader.
     '''
     block_size = args['block_size']
-    quantization = args['quantization']
 
     # get the desired data split
     data = train_data if split == 'train' else val_data
@@ -119,10 +132,10 @@ def estimate_loss(device):
     for split in ['train', 'val']:
         losses = torch.zeros(eval_iters)
         for k in range(eval_iters):
-            with torch.autocast(device_type=device, dtype=torch.float16):
-                X, Y = get_batch(split, device)
-                logits, loss = model(X, Y)
-                losses[k] = loss.item()
+            # with torch.autocast(device_type=device, dtype=torch.float16):
+            X, Y = get_batch(split, device)
+            logits, loss = model(X, Y)
+            losses[k] = loss.item()
         out[split] = losses.mean()
     model.train()
     return out
@@ -137,7 +150,6 @@ def train_and_infer(model, args):
     model.to(device)
     # print the number of parameters in the model
     print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters')
-    print(f"Quantization: {args['quantization']}")
     optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'], foreach=False)
 
     max_iters = args['max_iters']
@@ -159,8 +171,8 @@ def train_and_infer(model, args):
         xb, yb = get_batch('train', device)
 
         # evaluate the loss
-        with torch.autocast(device_type=device, dtype=torch.float16):
-            logits, loss = model(xb, yb)
+        # with torch.autocast(device_type=device, dtype=torch.float16):q
+        logits, loss = model(xb, yb)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
