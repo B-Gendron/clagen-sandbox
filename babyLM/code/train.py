@@ -123,24 +123,29 @@ def train_and_infer(model, args):
     max_iters = args['max_iters']
     for iter in tqdm(range(max_iters)):
 
-        # every once in a while evaluate the loss on train and val sets
-        if iter % args['eval_interval'] == 0 or iter == max_iters - 1:
-            losses = estimate_loss(device)
-            print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
+        # sample a batch of data
+        xb, yb = get_batch('train', device)
+        logits, loss = model(xb, yb)
 
+        # evaluate the loss on train and val at each defined interval
+        if iter % args['eval_interval'] == 0 or iter == max_iters - 1:
+            train_loss = loss.item()
+            xb_val, yb_val = get_batch('val', device)
+            # evaluate the model on validation set
+            model.eval()
+            _, val_loss = model(xb_val, yb_val)
+            val_loss = val_loss.item()
+            # back to training mode to backpropagate the loss
+            model.train()
+
+            print(f"step {iter}: train loss {train_loss:.4f}, val loss {val_loss:.4f}")
             # 🛑 add some metrics to keep with a label and the epoch index
-            writer.add_scalar("Loss/train", losses['train'], iter)
-            writer.add_scalar("Loss/val", losses['val'], iter)
+            writer.add_scalar("Loss/train", train_loss, iter)
+            writer.add_scalar("Loss/val", val_loss, iter)
 
         # 🛑 flush to perform all remaining operations
         writer.flush()
 
-        # sample a batch of data
-        xb, yb = get_batch('train', device)
-
-        # evaluate the loss
-        # with torch.autocast(device_type=device, dtype=torch.float16):q
-        logits, loss = model(xb, yb)
         optimizer.zero_grad(set_to_none=True)
         loss.backward()
         optimizer.step()
