@@ -315,6 +315,8 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
     }
     utterance_levels = parse_indexes(utterance_levels)
     idx = 0
+    # TODO corriger l'aspect cumulatif sur les dico des utterances
+    print(utterance_levels)
     for k in utterance_levels.keys():
         # concatenate the readability level information to the prompt
         readability_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})")) if idx < len(utterance_levels)-1 else encode(stoi, tokenizer.tokenize("(ReadabilityLevel: "))

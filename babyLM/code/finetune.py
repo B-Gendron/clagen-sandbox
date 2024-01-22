@@ -89,6 +89,13 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
     writer = args['writer']
     loss_it = []
     mse_loss = nn.MSELoss()
+    # la MSE c'est n'importe quoi dans ce cas !! On peut toujours faire une CE ! c.f. doc PyTorch :
+        # >>> # Example of target with class indices
+        # >>> loss = nn.CrossEntropyLoss()
+        # >>> input = torch.randn(3, 5, requires_grad=True)
+        # >>> target = torch.empty(3, dtype=torch.long).random_(5)
+        # >>> output = loss(input, target)
+        # >>> output.backward()
     trues, preds = [], []
 
     for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (epoch+1), total=train_loader.__len__()):
