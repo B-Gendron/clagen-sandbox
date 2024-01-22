@@ -10,7 +10,6 @@ from nltk.tokenize import TweetTokenizer
 tokenizer = TweetTokenizer()
 
 from utils import *
-from train import encode, decode, load_vocab_mappings
 
 # ce n'est pas ce qu'on veut ! On veut encoder avec le vocabulaire qui a servi pour le préentrainement de babyLM, comme ça ensuite on peut décoder et fournir le texte en prompt au modèle.
 # on prend les entrées 1 par 1
