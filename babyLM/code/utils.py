@@ -227,6 +227,7 @@ def encode(stoi, text):
     '''
     encoding = []
     for token in text:
+        print(token)
         if token not in (' ', '\n'):
             try:
                 stoi[token.lower()]
@@ -332,8 +333,8 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
 
     return soft_prompt, label
 
-_, stoi = load_vocab_mappings()
-get_prompt_and_label('batch_0', 'train', stoi)
+# _, stoi = load_vocab_mappings()
+# get_prompt_and_label('batch_0', 'train', stoi)
 
 # -----------------------------------------------------------------------------------------
 # Display utils

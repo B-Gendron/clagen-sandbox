@@ -25,6 +25,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torchtext.vocab import build_vocab_from_iterator, Vocab
 from torchtext.data import get_tokenizer
 from nltk.tokenize import TweetTokenizer
+# import nltk
+# nltk.download('punkt')
 from transformers import BertTokenizer, BertTokenizerFast
 
 # tokenize = get_tokenizer("basic_english")
@@ -39,13 +41,13 @@ from models import BabyLanguageModel
 def get_data(folder_name):
     file_path = os.path.join(f'../{folder_name}', "data.txt")
     text_data = []
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, 'r', encoding='latin-1') as f:
         # yield tokens from each line
         for line in tqdm(f):
             # apply tokenizer
             # tokens = tokenize(line, padding="max_length", max_length=512, truncation=True)
             # tokens = tokens['input_ids'] # retrieve only input_ids from the pretrained bert tokenizer
-            tokens = tokenizer.tokenize(line.lower())
+            tokens = tokenizer(line.lower())
             if tokens != []:
                 text_data.extend(tokens)
 

@@ -10,8 +10,7 @@ import io
 import pandas as pd
 from termcolor import colored
 from torchtext.vocab import build_vocab_from_iterator
-from torchtext.data import get_tokenizer
-tokenize = get_tokenizer("basic_english")
+from nltk.tokenize import TweetTokenizer
 
 from train import *
 from utils import encode, decode
@@ -28,11 +27,14 @@ class CPU_Unpickler(pickle.Unpickler):
 
 
 
-def generate_from_prompt(prompt_text, model, stoi, itos, args):
+def generate_from_prompt(prompt_text, tokenizer, model, stoi, itos, args):
     device = args['device']
     block_size = args['block_size']
+
+    # we need to tokenize the prompt before !!!
+    prompt = tokenizer.tokenize(prompt_text)
     print(colored('Generating from a simple prompt', 'green'))
-    prompt = torch.tensor(encode(stoi, prompt_text), dtype=torch.long, device=device).unsqueeze(-1)
+    prompt = torch.tensor(encode(stoi, prompt), dtype=torch.long, device=device).unsqueeze(-1)
     prompt.to(device)
     print(f'Prompt: {prompt_text}')
     print(f'Encoded prompt: {prompt}')
@@ -55,11 +57,13 @@ if __name__ == '__main__':
     }
 
     print("Getting stoi and itos dicts...")
-    stoi = json.load("../objects/vocab_stoi.json")
-    itos = json.load("../objects/vocab_itos.json")
+    with open("../objects/vocab_stoi.json", "r") as f:
+        stoi = json.load(f)
+    with open("../objects/vocab_itos.json", "r") as f:
+        itos = json.load(f)
 
     print("Getting model...")
     model = torch.load(f'../models/{model_name}.pt')
 
     print("Start generation")
-    generate_from_prompt("Once upon a time", model, vocab, args)
+    generate_from_prompt("hey!", TweetTokenizer(), model, stoi, itos, args)
