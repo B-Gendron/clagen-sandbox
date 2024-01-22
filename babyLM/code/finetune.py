@@ -21,7 +21,7 @@ import logging
 from torch.utils.tensorboard import SummaryWriter
 
 # from other scripts
-from utils import activate_gpu, get_prompt_and_label
+from utils import *
 from models import BabyLanguageModel
 
 
@@ -72,7 +72,7 @@ def get_args_and_dataloaders(dataset, dataset_class):
     return args, train_loader, val_loader, test_loader
 
 
-def train(args, model, train_loader, stoi, optimizer, epoch):
+def train(args, model, train_loader, stoi, itos, optimizer, epoch):
     '''
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
@@ -88,11 +88,14 @@ def train(args, model, train_loader, stoi, optimizer, epoch):
     device = 'cpu'
     writer = args['writer']
     loss_it = []
-    ce_loss = nn.CrossEntropyLoss()
+    mse_loss = nn.MSELoss()
+    trues, preds = [], []
 
     for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (epoch+1), total=train_loader.__len__()):
         batch = {'dial_id': batch['dial_id'].to(device), 'utt_id': batch['utt_id'].to(device), 'embedding' : batch['embedding'].to(device)}
         optimizer.zero_grad()
+
+        batch_trues, batch_preds = [], []
 
         # remove padded part
         for idx in range(args['train_bsize']):
@@ -112,20 +115,24 @@ def train(args, model, train_loader, stoi, optimizer, epoch):
                 json.dump({'dial_id':batch['dial_id'][idx].item(), 'dial_encoding':dialog_without_pad}, f, indent=2)
 
         # make a list with all the file names
-        files_list = []
-        for f in files_list:
-            prompt, label = get_prompt_and_label(f, 'train', stoi) # define stoi
+        file_list = [os.path.join("../objects/", filename) for filename in [f"batch_{i}.json" for i in range(args['train_bsize'])]]
+        for f in file_list:
+            prompt, label = get_prompt_and_label(f, 'train', stoi)
+            output = pretrained_model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])
+            predicted_class = parse_output_and_deduce_class(output, itos)
 
-    ### NEXT LINES ARE TO BE ADAPTED
-    # create a new model class that encapsulates the GPT-like model and adds some extra layers for classification. Copy and paste class and 
+            # update batch lists
+            batch_trues.append(label)
+            batch_preds.append(predicted_class)
 
-    # perform training
-    classes_probas = model(batch['embedding'])
-    loss.backward()
-    optimizer.step()
-
-    # store loss history
-    loss_it.append(loss.item())
+        # compute and backpropagate MSE loss on batch predictions
+        loss = mse_loss(torch.tensor(batch_preds, requires_grad=True), torch.tensor(batch_trues))
+        loss_it.append(loss.item())
+        loss.backward()
+        optimizer.step()
+        # update general lists
+        trues.extend(batch_trues)
+        preds.extend(batch_preds)
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
@@ -141,13 +148,40 @@ if __name__ == "__main__":
 
     wikitalk = load_from_disk("../wikitalk")
     args, train_loader, val_loader, test_loader = get_args_and_dataloaders(wikitalk, WikiTalkDataset)
+    args.update({'vocab_size':308284,
+                'batch_size':16,
+                'block_size':64, 
+                'max_iters':5000,
+                'eval_interval':100,
+                'lr':1e-3,
+                'device':activate_gpu(),
+                'eval_iters':1000,
+                'n_embd':64,
+                'n_heads':8,
+                'n_layers':24,
+                'dropout':0.3,
+                 })
 
     print("Getting stoi and itos dicts...")
-    with open("../objects/vocab_stoi.json", "r") as f:
-        stoi = json.load(f)
-    with open("../objects/vocab_itos.json", "r") as f:
-        itos = json.load(f)
+    itos, stoi = load_vocab_mappings()
 
-    model = BabyLanguageModel(args)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'], foreach=False)
-    train(args, model, train_loader, stoi, optimizer, 0)
+    print("Load the pretrained model weights...")
+    model_path = '../models/babyllm-gptlike_64_22012024110928_nq_params.pt'
+    pretrained_model = BabyLanguageModel(args)
+    pretrained_model.load_state_dict(torch.load(model_path))
+
+    print("Start fine-tuning on one epoch...")
+    optimizer = torch.optim.AdamW(pretrained_model.parameters(), lr=args['lr'], foreach=False)
+    train(args, pretrained_model, train_loader, stoi, itos, optimizer, 0)
+
+
+    # OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
+        # - decodes it
+        # - creates a temp ontology individual from this utterance
+        # - perform inference on it (like it is already done in create_individuals.py)
+        # - uses the mapping class -> class index to finally output the individual class
+    
+    # [x] OPTION 2: change the prompt to finish on last utterance by (ReadabilityLevel= which encourages the model to learn the concept of readability (in a final test step we can use OPTION 1 to check of the model actually learnt something). We need a function that:
+        # - decodes the output
+        # - parses it to deduce the predicted readability level
+        # - maps it to the class index, and that's all :)
