@@ -118,9 +118,6 @@ class BabyLanguageModel(nn.Module):
         tok_emb = self.token_embedding_table(idx) # (B,T,C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=self.device)) # (T,C)
 
-        # if self.quantization:
-        #     tok_emb, pos_emb = tok_emb.half(), pos_emb.half()
-
         x = tok_emb + pos_emb # (B,T,C)
         x = self.blocks(x) # (B,T,C)
         x = self.ln_f(x) # (B,T,C)
