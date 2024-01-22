@@ -285,7 +285,7 @@ def parse_indexes(levels_dict):
     return dict(sorted(levels_indexes_dict.items()))
 
 
-def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
+def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
     '''
         This function outputs a prompt encoded with respect to the right vocab, containing the dialog stored in the .json file dialog_file.
 
@@ -295,10 +295,10 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
         @param onto_path (str):         
     '''
     # get labels mapping for different readability level
-    readability_levels_mapping = {'EasilyReadableText':0, 'StandardReadableText':1, 'HardlyreadableText':2}
+    readability_levels_mapping = {'EasilyReadableText':0, 'StandardReadableText':1, 'HardlyReadableText':2}
 
     # load the encoded dialog file
-    with open(f"../objects/{dialog_file}.json", 'r') as f:
+    with open(dialog_file, 'r') as f:
         dial_descr = json.load(f)
 
     dial_id = dial_descr['dial_id']
@@ -324,7 +324,7 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
     # deduce soft prompt by dropping one dimension
     soft_prompt = custom_flatten(dial_enc)
     # convert prompt to torch tensor
-    soft_prompt = torch.tensor(soft_prompt, dtype=torch.long).unsqueeze(-1)
+    soft_prompt = torch.tensor(soft_prompt, dtype=torch.long).unsqueeze(-1).to(device)
 
     # retrieve label which is the readability level of the last utterance
     last_utterance_index = max(utterance_levels.keys())
@@ -340,7 +340,7 @@ def parse_output_and_deduce_class(output, itos):
     '''
         This function takes as argument the output of a BabyLanguageModel model and parses it to retrieve the predicted value for ReadabilityLevel.
 
-        @param output (list): a list of indexes corresponding to the generated tokens
+        @param output (tensor): a list of indexes corresponding to the generated tokens
         @param itos (list): the mapping from token indexes to their corresponding strings
     '''
     decoded_output = decode(output, itos)
