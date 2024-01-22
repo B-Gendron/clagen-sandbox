@@ -4,6 +4,7 @@ from termcolor import colored
 from pprint import pprint
 from datetime import datetime
 import torch
+import numpy as np
 import logging
 from datasets import Dataset, DatasetDict
 from collections import Counter
@@ -293,6 +294,9 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
         @param stoi (dict):             the string to index mapping from the pretraining vocabulary
         @param onto_path (str):         
     '''
+    # get labels mapping for different readability level
+    readability_levels_mapping = {'EasilyReadableText':0, 'StandardReadableText':1, 'HardlyreadableText':2}
+
     # load the encoded dialog file
     with open(f"../objects/{dialog_file}.json", 'r') as f:
         dial_descr = json.load(f)
@@ -310,22 +314,26 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
         'HardlyReadableText':       [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
-    print(dial_enc)
     idx = 0
     for k in utterance_levels.keys():
-        # add EasilyReadableText and the others to the vocab ??
-        readbility_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})"))
-        dial_enc[idx].extend(readbility_info)
+        # concatenate the readability level information to the prompt
+        readability_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})"))
+        dial_enc[idx].extend(readability_info)
         idx += 1
-    print(dial_enc)
-
-
-    # no header and no footer since the model is not instruction fine-tuned
 
     # remove last utterance
+    del dial_enc[idx-1]
+    # deduce soft prompt by dropping one dimension
+    soft_prompt = custom_flatten(dial_enc)
 
-# _, stoi = load_vocab_mappings()
-# get_prompt_and_label('batch_0', 'train', stoi)
+    # retrieve label which is the readability level of the last utterance
+    last_utterance_index = max(utterance_levels.keys())
+    label = readability_levels_mapping[utterance_levels[last_utterance_index]]
+
+    return soft_prompt, label
+
+_, stoi = load_vocab_mappings()
+get_prompt_and_label('batch_0', 'train', stoi)
 
 # -----------------------------------------------------------------------------------------
 # Display utils
