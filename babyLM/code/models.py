@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+from utils import parse_output_and_deduce_class, load_vocab_mappings
 
 class Head(nn.Module):
     """ one head of self-attention """
@@ -101,7 +101,6 @@ class BabyLanguageModel(nn.Module):
         self.lm_head = nn.Linear(n_embd, vocab_size)
 
         self.device = args['device']
-        self.quantization = args['quantization']
 
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
