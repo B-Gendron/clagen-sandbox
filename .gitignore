@@ -4,5 +4,8 @@ babyLM/openwebtext
 babyLM/objects/
 babyLM/models/
 babyLM/wikitalk/
+<<<<<<< HEAD
 babyLM/bookreviews/
+=======
+>>>>>>> c83711d98e45648eb4cc54224a616a682ffa2e93
 babyLM/wikitalk_sentencebert/
