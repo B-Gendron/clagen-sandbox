@@ -21,7 +21,7 @@ import logging
 from torch.utils.tensorboard import SummaryWriter
 
 # from other scripts
-from utils import activate_gpu
+from utils import activate_gpu, get_prompt_and_label
 from models import BabyLanguageModel
 
 
@@ -72,7 +72,7 @@ def get_args_and_dataloaders(dataset, dataset_class):
     return args, train_loader, val_loader, test_loader
 
 
-def train(args, model, train_loader, optimizer, epoch):
+def train(args, model, train_loader, stoi, optimizer, epoch):
     '''
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
@@ -111,13 +111,16 @@ def train(args, model, train_loader, optimizer, epoch):
             with open(f'../objects/batch_{idx}.json', 'w') as f:
                 json.dump({'dial_id':batch['dial_id'][idx].item(), 'dial_encoding':dialog_without_pad}, f, indent=2)
 
+        # make a list with all the file names
+        files_list = []
+        for f in files_list:
+            prompt, label = get_prompt_and_label(f, 'train', stoi) # define stoi
+
     ### NEXT LINES ARE TO BE ADAPTED
-                
-    # build a prompt around the dialog encoding to give the instruction to the model
+    # create a new model class that encapsulates the GPT-like model and adds some extra layers for classification. Copy and paste class and 
 
     # perform training
     classes_probas = model(batch['embedding'])
-    loss = ce_loss(A, P, N)
     loss.backward()
     optimizer.step()
 
@@ -138,6 +141,13 @@ if __name__ == "__main__":
 
     wikitalk = load_from_disk("../wikitalk")
     args, train_loader, val_loader, test_loader = get_args_and_dataloaders(wikitalk, WikiTalkDataset)
-    # model = BabyLanguageModel(args)
-    # optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'], foreach=False)
-    train(args, train_loader, 0)
+
+    print("Getting stoi and itos dicts...")
+    with open("../objects/vocab_stoi.json", "r") as f:
+        stoi = json.load(f)
+    with open("../objects/vocab_itos.json", "r") as f:
+        itos = json.load(f)
+
+    model = BabyLanguageModel(args)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'], foreach=False)
+    train(args, model, train_loader, stoi, optimizer, 0)
