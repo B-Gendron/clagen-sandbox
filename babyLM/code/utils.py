@@ -317,14 +317,14 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
     idx = 0
     for k in utterance_levels.keys():
         # concatenate the readability level information to the prompt
-        readability_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})"))
+        readability_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})")) if idx < len(utterance_levels)-1 else encode(stoi, tokenizer.tokenize("(ReadabilityLevel: "))
         dial_enc[idx].extend(readability_info)
         idx += 1
 
-    # remove last utterance
-    del dial_enc[idx-1]
     # deduce soft prompt by dropping one dimension
     soft_prompt = custom_flatten(dial_enc)
+    # convert prompt to torch tensor
+    soft_prompt = torch.tensor(soft_prompt, dtype=torch.long).unsqueeze(-1)
 
     # retrieve label which is the readability level of the last utterance
     last_utterance_index = max(utterance_levels.keys())
@@ -335,6 +335,26 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
 # _, stoi = load_vocab_mappings()
 # get_prompt_and_label('batch_0', 'train', stoi)
 
+
+def parse_output_and_deduce_class(output, itos):
+    '''
+        This function takes as argument the output of a BabyLanguageModel model and parses it to retrieve the predicted value for ReadabilityLevel.
+
+        @param output (list): a list of indexes corresponding to the generated tokens
+        @param itos (list): the mapping from token indexes to their corresponding strings
+    '''
+    decoded_output = decode(output, itos)
+    print(decoded_output)
+    predicted_class = 3 # let's say we add a class "unable to classify"
+
+    if 'EasilyReadableText' in decoded_output:
+        predicted_class = 0
+    elif 'StandardReadableText' in decoded_output:
+        predicted_class = 1
+    elif 'HardlyReadableText' in decoded_output:
+        predicted_class = 2
+
+    return predicted_class
 # -----------------------------------------------------------------------------------------
 # Display utils
 # -----------------------------------------------------------------------------------------
