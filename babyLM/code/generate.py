@@ -14,6 +14,7 @@ from torchtext.data import get_tokenizer
 tokenize = get_tokenizer("basic_english")
 
 from train import *
+from utils import encode, decode
 
 class CPU_Unpickler(pickle.Unpickler):
     """
