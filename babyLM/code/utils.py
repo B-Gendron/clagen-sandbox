@@ -324,8 +324,8 @@ def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPr
 
     # remove last utterance
 
-_, stoi = load_vocab_mappings()
-get_prompt_and_label('batch_0', 'train', stoi)
+# _, stoi = load_vocab_mappings()
+# get_prompt_and_label('batch_0', 'train', stoi)
 
 # -----------------------------------------------------------------------------------------
 # Display utils
