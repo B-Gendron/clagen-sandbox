@@ -117,8 +117,8 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
         # make a list with all the file names
         file_list = [os.path.join("../objects/", filename) for filename in [f"batch_{i}.json" for i in range(args['train_bsize'])]]
         for f in file_list:
-            prompt, label = get_prompt_and_label(f, 'train', stoi)
-            output = pretrained_model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])
+            prompt, label = get_prompt_and_label(f, 'train', stoi, args['device'])
+            output = pretrained_model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])[0].tolist()
             predicted_class = parse_output_and_deduce_class(output, itos)
 
             # update batch lists
@@ -160,6 +160,7 @@ if __name__ == "__main__":
                 'n_heads':8,
                 'n_layers':24,
                 'dropout':0.3,
+                'writer':SummaryWriter(f"../logs/{get_datetime()}_{64}")
                  })
 
     print("Getting stoi and itos dicts...")
@@ -169,6 +170,7 @@ if __name__ == "__main__":
     model_path = '../models/babyllm-gptlike_64_22012024110928_nq_params.pt'
     pretrained_model = BabyLanguageModel(args)
     pretrained_model.load_state_dict(torch.load(model_path))
+    pretrained_model.to(args['device'])
 
     print("Start fine-tuning on one epoch...")
     optimizer = torch.optim.AdamW(pretrained_model.parameters(), lr=args['lr'], foreach=False)
