@@ -32,7 +32,7 @@ from transformers import BertTokenizer, BertTokenizerFast
 tokenizer = TweetTokenizer()
 
 # from other scripts
-from utils import activate_gpu, get_datetime, args2filename, vocab_dicts
+from utils import activate_gpu, get_datetime, vocab_dicts, encode, decode
 from models import BabyLanguageModel
     
     
@@ -56,38 +56,6 @@ def token_generator():
     for token in all_tokens:
         yield [token] # put the token inside a list so the vocab is not character-wise
 
-
-def encode(stoi, text):
-    '''
-        From token strings to indexes
-
-        @param stoi (dict):             string to index mapping from the vocab
-        @param text (str):              the text to encode
-
-        @return idxes (list of int):    the list of indexes that correspond to the text encoding according to the underlying vocab
-    '''
-    encoding = []
-    for token in text:
-        if token not in (' ', '\n'):
-            try:
-                stoi[token.lower()]
-            except KeyError:
-                encoding.append(stoi['<unk>']) 
-            else:
-                encoding.append(stoi[token.lower()])
-                
-    return encoding
-
-def decode(idxes, itos):
-    '''
-        From vocab indexes to token strings
-
-        @param idexes (list of int): the list of indexes to be mapped to their associated tokens
-        @param itos (dict): index to string mapping from the vocab
-
-        @return tokens (str): the concatenated tokens that form the encoded sentence
-    '''
-    return ' '.join([itos[i] for i in idxes])
 
 # Train and test splits
 def train_val_split(stoi, data, train_ratio=0.9):

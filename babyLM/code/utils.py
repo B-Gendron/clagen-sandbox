@@ -8,10 +8,13 @@ import logging
 from datasets import Dataset, DatasetDict
 from collections import Counter
 import json
+import re
 import random
 from math import sqrt
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, roc_auc_score, f1_score
+from nltk.tokenize import TweetTokenizer
+tokenizer = TweetTokenizer()
 
 
 # -----------------------------------------------------------------------------------------
@@ -211,6 +214,118 @@ def add_sentencebert_random_vectors(embedding, size, max_length):
     for _ in range(size):
         embedding.append([random.gauss(mu=mean, sigma=sqrt(variance)) for _ in range(max_length)])
     return embedding
+
+def encode(stoi, text):
+    '''
+        From token strings to indexes
+
+        @param stoi (dict):             string to index mapping from the vocab
+        @param text (str):              the text to encode
+
+        @return idxes (list of int):    the list of indexes that correspond to the text encoding according to the underlying vocab
+    '''
+    encoding = []
+    for token in text:
+        if token not in (' ', '\n'):
+            try:
+                stoi[token.lower()]
+            except KeyError:
+                encoding.append(stoi['<unk>']) 
+            else:
+                encoding.append(stoi[token.lower()])
+                
+    return encoding
+
+def decode(idxes, itos):
+    '''
+        From vocab indexes to token strings
+
+        @param idexes (list of int): the list of indexes to be mapped to their associated tokens
+        @param itos (dict): index to string mapping from the vocab
+
+        @return tokens (str): the concatenated tokens that form the encoded sentence
+    '''
+    return ' '.join([itos[i] for i in idxes])
+
+
+def load_vocab_mappings():
+    with open("../objects/vocab_itos.json") as f:
+        itos = f.read()
+
+    with open("../objects/vocab_stoi.json") as f:
+        stoi = f.read()
+    stoi = json.loads(stoi)
+
+    return itos, stoi
+
+# -----------------------------------------------------------------------------------------
+# Prompt utils
+# -----------------------------------------------------------------------------------------
+
+def parse_indexes(levels_dict):
+    '''
+        This auxiliary function parses and retrieves the utterance indexes from the readability level dictionnary when an utterance is reffered to using the ontology identifier. It return a dictionary with the same format than the input, containing only the indexes instead of the complete identifier.
+
+        @param levels_dict (dict):          the dict from the ontology individual search.
+        
+        @return levels_indexes_dict (dict): a dict that maps the readability levels to the associated utterance indexes in the current dialog.
+    '''
+    levels_indexes_dict = {}
+
+    # iterate through the input dict
+    for k in levels_dict.keys():
+        for v in levels_dict[k]:
+            # parse the utterance full name to retrieve its index
+            splitted_v = v.split('_')
+            index = splitted_v[2] # the 3rd element when individual_592.592_598_utt_21271711 is splitted by _ is 598, which is the utterance index
+            # store the readability class for the current index
+            levels_indexes_dict[int(index)] = k
+
+    return dict(sorted(levels_indexes_dict.items()))
+
+
+def get_prompt_and_label(dialog_file, split, stoi, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
+    '''
+        This function outputs a prompt encoded with respect to the right vocab, containing the dialog stored in the .json file dialog_file.
+
+        @param dialog_file (str):       the name of the (temp) json file where the dialog information is stored
+        @param split (str):             the dataset split from which the dialog comes from
+        @param stoi (dict):             the string to index mapping from the pretraining vocabulary
+        @param onto_path (str):         
+    '''
+    # load the encoded dialog file
+    with open(f"../objects/{dialog_file}.json", 'r') as f:
+        dial_descr = json.load(f)
+
+    dial_id = dial_descr['dial_id']
+    dial_enc = dial_descr['dial_encoding']
+
+    # retrieve the corresponding ontology individual
+    indiv_path = os.path.join(onto_path, split, f'individual_{dial_id}.rdf')
+    individual = get_ontology(indiv_path).load()
+    # crop first element as it simply corresponds to the class occurence
+    utterance_levels = {
+        'EasilyReadableText':       [str(i) for i in individual.search(is_a=individual.EasilyReadableText)[1:]],
+        'StandardReadableText':     [str(i) for i in individual.search(is_a=individual.StandardReadableText)[1:]],
+        'HardlyReadableText':       [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
+    }
+    utterance_levels = parse_indexes(utterance_levels)
+    print(dial_enc)
+    idx = 0
+    for k in utterance_levels.keys():
+        # add EasilyReadableText and the others to the vocab ??
+        readbility_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})"))
+        dial_enc[idx].extend(readbility_info)
+        idx += 1
+    print(dial_enc)
+
+
+    # no header and no footer since the model is not instruction fine-tuned
+
+    # remove last utterance
+
+_, stoi = load_vocab_mappings()
+get_prompt_and_label('batch_0', 'train', stoi)
 
 # -----------------------------------------------------------------------------------------
 # Display utils
