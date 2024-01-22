@@ -47,7 +47,7 @@ def get_data(folder_name):
             # apply tokenizer
             # tokens = tokenize(line, padding="max_length", max_length=512, truncation=True)
             # tokens = tokens['input_ids'] # retrieve only input_ids from the pretrained bert tokenizer
-            tokens = tokenizer(line.lower())
+            tokens = tokenizer.tokenize(line.lower())
             if tokens != []:
                 text_data.extend(tokens)
 
@@ -190,7 +190,7 @@ if __name__ == "__main__":
         subprocess.call(['sh', '../download_openwebtext.sh'])
 
     print("Load data and tokenization...")
-    all_tokens = get_data('openwebtext')
+    all_tokens = get_data('bookreviews')
     print(f"Number of tokens: {len(all_tokens)}")
     vocab = build_vocab_from_iterator(token_generator(), specials=["<unk>"], special_first=True)
     vocab_size = len(vocab)
