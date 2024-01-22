@@ -227,7 +227,6 @@ def encode(stoi, text):
     '''
     encoding = []
     for token in text:
-        print(token)
         if token not in (' ', '\n'):
             try:
                 stoi[token.lower()]
