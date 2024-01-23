@@ -251,7 +251,7 @@ def decode(idxes, itos):
 
 def load_vocab_mappings():
     with open("../objects/vocab_itos.json") as f:
-        itos = f.read()
+        itos = json.load(f)
 
     with open("../objects/vocab_stoi.json") as f:
         stoi = f.read()
@@ -315,7 +315,6 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
     }
     utterance_levels = parse_indexes(utterance_levels)
     idx = 0
-    # TODO corriger l'aspect cumulatif sur les dico des utterances
     print(utterance_levels)
     for k in utterance_levels.keys():
         # concatenate the readability level information to the prompt
@@ -331,6 +330,9 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
     # retrieve label which is the readability level of the last utterance
     last_utterance_index = max(utterance_levels.keys())
     label = readability_levels_mapping[utterance_levels[last_utterance_index]]
+
+    # empty the ontology and destroy all tracks in memory to avoid to stack the individuals
+    individual.destroy(update_relation = True, update_is_a = True)
 
     return soft_prompt, label
 

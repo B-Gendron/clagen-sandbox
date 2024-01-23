@@ -65,7 +65,7 @@ def get_args_and_dataloaders(dataset, dataset_class):
         @return val_loader (dataloader):    the dataloader that contains the validation samples
         @return test_loader (dataloader):   the dataloader that contains the test samples
     '''
-    args = {'train_bsize': 32, 'eval_bsize': 1, 'lr': 0.00001, 'spreading':False}
+    args = {'train_bsize': 1, 'eval_bsize': 1, 'lr': 0.00001}
     train_loader = DataLoader(dataset=dataset_class(dataset["train"], args=args), pin_memory=True, batch_size=args['train_bsize'], shuffle=True, drop_last=True)
     val_loader   = DataLoader(dataset=dataset_class(dataset["validation"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
     test_loader  = DataLoader(dataset=dataset_class(dataset["test"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
@@ -89,13 +89,12 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
     writer = args['writer']
     loss_it = []
     mse_loss = nn.MSELoss()
+    ce_loss = nn.CrossEntropyLoss()
     # la MSE c'est n'importe quoi dans ce cas !! On peut toujours faire une CE ! c.f. doc PyTorch :
-        # >>> # Example of target with class indices
-        # >>> loss = nn.CrossEntropyLoss()
         # >>> input = torch.randn(3, 5, requires_grad=True)
         # >>> target = torch.empty(3, dtype=torch.long).random_(5)
-        # >>> output = loss(input, target)
-        # >>> output.backward()
+        # >>> loss = ce_loss(input, target)
+        # >>> loss.backward()
     trues, preds = [], []
 
     for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (epoch+1), total=train_loader.__len__()):
@@ -155,8 +154,8 @@ if __name__ == "__main__":
 
     wikitalk = load_from_disk("../wikitalk")
     args, train_loader, val_loader, test_loader = get_args_and_dataloaders(wikitalk, WikiTalkDataset)
-    args.update({'vocab_size':308284,
-                'batch_size':16,
+    args.update({'vocab_size':239267, # new vocab size corresponding to the new dataset
+                'batch_size':8,
                 'block_size':64, 
                 'max_iters':5000,
                 'eval_interval':100,
@@ -174,7 +173,8 @@ if __name__ == "__main__":
     itos, stoi = load_vocab_mappings()
 
     print("Load the pretrained model weights...")
-    model_path = '../models/babyllm-gptlike_64_22012024110928_nq_params.pt'
+    # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
+    model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     pretrained_model = BabyLanguageModel(args)
     pretrained_model.load_state_dict(torch.load(model_path))
     pretrained_model.to(args['device'])

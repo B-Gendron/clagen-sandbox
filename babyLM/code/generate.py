@@ -38,7 +38,7 @@ def generate_from_prompt(prompt_text, tokenizer, model, stoi, itos, args):
     prompt.to(device)
     print(f'Prompt: {prompt_text}')
     print(f'Encoded prompt: {prompt}')
-    output = model.generate(prompt, max_new_tokens=200, block_size=block_size)[0].tolist()
+    output = model.generate(prompt, max_new_tokens=20, block_size=block_size)[0].tolist()
     print(f'Encoded output: {output}')
     output_text = decode(output, itos)
     print(f'Output text: {output_text}')
@@ -66,4 +66,4 @@ if __name__ == '__main__':
     model = torch.load(f'../models/{model_name}.pt')
 
     print("Start generation")
-    generate_from_prompt("hey!", TweetTokenizer(), model, stoi, itos, args)
+    generate_from_prompt("ReadabilityLevel=EasyReadableText, ReadabilityLevel=EasyReadableText, ReadabilityLevel=", TweetTokenizer(), model, stoi, itos, args)
