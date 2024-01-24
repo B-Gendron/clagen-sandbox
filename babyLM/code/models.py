@@ -152,13 +152,17 @@ class BabyLanguageModel(nn.Module):
 
     def predict_readability_levels(self, idx, block_size):
         idx_cond = idx[:, -block_size:]
+        # handle out-of-range indices
+        idx_cond = torch.clamp(idx_cond, max=self.token_embedding_table.num_embeddings - 1)
+
         logits, _ = self(idx_cond)
         logits = logits[:, -1, :] # becomes (B, C)
         probas = F.softmax(logits, dim=-1)
-        print(probas, probas.size(), block_size)
 
-        # TEST: return token index with maximum probability
-        # idx_next = torch.multinomial(probas, num_samples=1)[0] # (B, 1)
-        # print(idx_next.item())
+        # return token index with max proba among the 3 readability levels
+        last_token_probas = probas[0]
+        v_size = probas[0].size()[0]
 
-        # OBJECTIVE: return token index with max proba among the 3 readability levels
+        rl_probas = [last_token_probas[k] for k in [v_size - i for i in range(3, 0, -1)]]
+
+        return torch.stack(rl_probas)
