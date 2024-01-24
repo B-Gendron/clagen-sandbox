@@ -34,7 +34,7 @@ from transformers import BertTokenizer, BertTokenizerFast
 tokenizer = TweetTokenizer()
 
 # from other scripts
-from utils import activate_gpu, get_datetime, vocab_dicts, encode, decode
+from utils import activate_gpu, get_datetime, vocab_dicts, encode, decode, extend_vocab_with_readability_levels
 from models import BabyLanguageModel
     
     
@@ -201,10 +201,11 @@ if __name__ == "__main__":
 
     # save stoi and itos dicts
     stoi, itos = vocab_dicts(vocab)
+    itos, stoi = extend_vocab_with_readability_levels(itos, stoi)
 
     # hyperparameters default config
     args = {
-        'vocab_size':vocab_size,
+        'vocab_size':vocab_size+3, # +3 readability levels
         'batch_size':16, # should be bigger that 16 to accelerate training (but avoid memory errors)
         'block_size':64, 
         'max_iters':5000,
