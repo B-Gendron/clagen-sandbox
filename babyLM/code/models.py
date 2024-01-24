@@ -148,3 +148,17 @@ class BabyLanguageModel(nn.Module):
             # append sampled index to the running sequence
             idx = torch.cat((idx, idx_next), dim=1) # (B, T+1)
         return idx
+
+
+    def predict_readability_levels(self, idx, block_size):
+        idx_cond = idx[:, -block_size:]
+        logits, _ = self(idx_cond)
+        logits = logits[:, -1, :] # becomes (B, C)
+        probas = F.softmax(logits, dim=-1)
+        print(probas, probas.size(), block_size)
+
+        # TEST: return token index with maximum probability
+        # idx_next = torch.multinomial(probas, num_samples=1)[0] # (B, 1)
+        # print(idx_next.item())
+
+        # OBJECTIVE: return token index with max proba among the 3 readability levels
