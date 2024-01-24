@@ -282,7 +282,13 @@ def parse_indexes(levels_dict):
             # store the readability class for the current index
             levels_indexes_dict[int(index)] = k
 
-    return dict(sorted(levels_indexes_dict.items()))
+    result_dict = dict(sorted(levels_indexes_dict.items()))
+
+    # remove the keys after the 10 first utterances to be consistent with padding strategy
+    if len(result_dict) > 10:
+        result_dict = {k:result_dict[k] for k in list(result_dict.keys())[:10]}
+
+    return result_dict
 
 
 def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
@@ -302,7 +308,9 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
         dial_descr = json.load(f)
 
     dial_id = dial_descr['dial_id']
+    print(f"Dialog id: {dial_id}")
     dial_enc = dial_descr['dial_encoding']
+    print(dial_enc)
 
     # retrieve the corresponding ontology individual
     indiv_path = os.path.join(onto_path, split, f'individual_{dial_id}.rdf')
@@ -314,8 +322,8 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
         'HardlyReadableText':       [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
+    print(f"utterance levels: {utterance_levels}")
     idx = 0
-    print(utterance_levels)
     for k in utterance_levels.keys():
         # concatenate the readability level information to the prompt
         readability_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})")) if idx < len(utterance_levels)-1 else encode(stoi, tokenizer.tokenize("(ReadabilityLevel: "))
@@ -325,7 +333,7 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
     # deduce soft prompt by dropping one dimension
     soft_prompt = custom_flatten(dial_enc)
     # convert prompt to torch tensor
-    soft_prompt = torch.tensor(soft_prompt, dtype=torch.long).unsqueeze(-1).to(device)
+    soft_prompt = torch.tensor(soft_prompt, dtype=torch.long).unsqueeze(0).to(device)
 
     # retrieve label which is the readability level of the last utterance
     last_utterance_index = max(utterance_levels.keys())
