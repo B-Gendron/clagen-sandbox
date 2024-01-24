@@ -85,7 +85,7 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
         @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
     '''
     model.train()
-    device = 'cpu'
+    device = args['device']
     writer = args['writer']
     loss_it = []
     ce_loss = nn.CrossEntropyLoss()
@@ -95,7 +95,7 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
         batch = {'dial_id': batch['dial_id'].to(device), 'utt_id': batch['utt_id'].to(device), 'embedding' : batch['embedding'].to(device)}
         optimizer.zero_grad()
 
-        batch_trues, batch_preds = [], []
+        batch_trues, batch_preds = [], [] 
 
         # remove padded part
         for idx in range(args['train_bsize']):
@@ -110,32 +110,33 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
                 if utterance_without_pad != []:
                     dialog_without_pad.append(utterance_without_pad)
 
-            # dump dialog encoding without padding in a json file
-            with open(f'../objects/batch_{idx}.json', 'w') as f:
-                json.dump({'dial_id':batch['dial_id'][idx].item(), 'dial_encoding':dialog_without_pad}, f, indent=2)
+            if dialog_without_pad != []:
+                # dump dialog encoding without padding in a json file
+                with open(f'../objects/batch_{idx}.json', 'w') as f:
+                    json.dump({'dial_id':batch['dial_id'][idx].item(), 'dial_encoding':dialog_without_pad}, f, indent=2)
 
         # make a list with all the file names
         file_list = [os.path.join("../objects/", filename) for filename in [f"batch_{i}.json" for i in range(args['train_bsize'])]]
         for f in file_list:
             prompt, label = get_prompt_and_label(f, 'train', stoi, args['device'])
-            print(len(prompt))
-            output = pretrained_model.predict_readability_levels(prompt, args['block_size'])
-            exit()
-            output = pretrained_model.generate(prompt, max_new_tokens=1, block_size=args['block_size'])[0].tolist()
-            predicted_class = parse_output_and_deduce_class(output, itos)
-
-            # update batch lists
+            read_level_probas = model.predict_readability_levels(prompt, block_size=args['block_size'])
+            # print(read_level_probas)
+            batch_preds.append(read_level_probas)
+            # output = pretrained_model.generate(prompt, max_new_tokens=1, block_size=args['block_size'])[0].tolist()
+            # predicted_class = parse_output_and_deduce_class(output, itos)
+            # update trues/preds lists
             batch_trues.append(label)
-            batch_preds.append(predicted_class)
+            preds.append(torch.argmax(read_level_probas).item())
+            # print(f'Batch trues: {batch_trues}, Trues: {trues}, Preds: {preds}')
 
         # compute and backpropagate MSE loss on batch predictions
-        loss = ce_loss(torch.tensor(batch_preds, dtype=torch.long, requires_grad=True), torch.tensor(batch_trues))
+        loss = ce_loss(torch.stack(batch_preds), torch.tensor(batch_trues))
         loss_it.append(loss.item())
         loss.backward()
         optimizer.step()
+
         # update general lists
         trues.extend(batch_trues)
-        preds.extend(batch_preds)
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
@@ -146,6 +147,7 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
     writer.add_scalar("Loss/train", loss_it_avg, epoch)
 
     return loss_it_avg
+
 
 if __name__ == "__main__":
 
@@ -168,7 +170,6 @@ if __name__ == "__main__":
 
     print("Getting stoi and itos dicts...")
     itos, stoi = load_vocab_mappings()
-    itos, stoi = extend_vocab_with_readability_levels(itos, stoi)
 
     print("Load the pretrained model weights...")
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
