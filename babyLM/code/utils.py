@@ -359,6 +359,42 @@ def parse_output_and_deduce_class(output, itos):
         predicted_class = 2
 
     return predicted_class
+
+# -----------------------------------------------------------------------------------------
+# Ontology concept learning utils
+# -----------------------------------------------------------------------------------------
+
+def extend_vocab_with_readability_levels(itos, stoi):
+    '''
+        This function adds the useful ontology concepts in the vocabulary used for generation. 
+        /!\ This function overwrites the json files contraining itos and stoi mappings 
+
+        @param itos
+        @param stoi
+
+        @return itos
+        @return stoi
+    '''
+    readability_levels = ['EasilyReadableText', 'StandardReadableText', 'HardlyReadableText']
+
+    # update itos
+    itos.extend(readability_levels)
+
+    # update stoi
+    l, rl = len(itos), len(readability_levels)
+    for r in range(rl):
+        stoi[readability_levels[r]] = l - rl + r + 1
+    
+    # dump new stoi dict
+    with open("../objects/vocab_stoi.json", "w") as f:
+        json.dump(stoi, f)
+
+    # dump new itos dict
+    with open("../objects/vocab_itos.json", "w") as f:
+        json.dump(itos, f)
+
+    return itos, stoi
+
 # -----------------------------------------------------------------------------------------
 # Display utils
 # -----------------------------------------------------------------------------------------

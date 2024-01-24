@@ -88,13 +88,7 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
     device = 'cpu'
     writer = args['writer']
     loss_it = []
-    mse_loss = nn.MSELoss()
     ce_loss = nn.CrossEntropyLoss()
-    # la MSE c'est n'importe quoi dans ce cas !! On peut toujours faire une CE ! c.f. doc PyTorch :
-        # >>> input = torch.randn(3, 5, requires_grad=True)
-        # >>> target = torch.empty(3, dtype=torch.long).random_(5)
-        # >>> loss = ce_loss(input, target)
-        # >>> loss.backward()
     trues, preds = [], []
 
     for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (epoch+1), total=train_loader.__len__()):
@@ -124,7 +118,10 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
         file_list = [os.path.join("../objects/", filename) for filename in [f"batch_{i}.json" for i in range(args['train_bsize'])]]
         for f in file_list:
             prompt, label = get_prompt_and_label(f, 'train', stoi, args['device'])
-            output = pretrained_model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])[0].tolist()
+            print(len(prompt))
+            output = pretrained_model.predict_readability_levels(prompt, args['block_size'])
+            exit()
+            output = pretrained_model.generate(prompt, max_new_tokens=1, block_size=args['block_size'])[0].tolist()
             predicted_class = parse_output_and_deduce_class(output, itos)
 
             # update batch lists
@@ -132,7 +129,7 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
             batch_preds.append(predicted_class)
 
         # compute and backpropagate MSE loss on batch predictions
-        loss = mse_loss(torch.tensor(batch_preds, requires_grad=True), torch.tensor(batch_trues))
+        loss = ce_loss(torch.tensor(batch_preds, dtype=torch.long, requires_grad=True), torch.tensor(batch_trues))
         loss_it.append(loss.item())
         loss.backward()
         optimizer.step()
@@ -160,7 +157,7 @@ if __name__ == "__main__":
                 'max_iters':5000,
                 'eval_interval':100,
                 'lr':1e-3,
-                'device':activate_gpu(),
+                'device':activate_gpu(force_cpu=True),
                 'eval_iters':1000,
                 'n_embd':64,
                 'n_heads':8,
@@ -171,12 +168,13 @@ if __name__ == "__main__":
 
     print("Getting stoi and itos dicts...")
     itos, stoi = load_vocab_mappings()
+    itos, stoi = extend_vocab_with_readability_levels(itos, stoi)
 
     print("Load the pretrained model weights...")
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     pretrained_model = BabyLanguageModel(args)
-    pretrained_model.load_state_dict(torch.load(model_path))
+    pretrained_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     pretrained_model.to(args['device'])
 
     print("Start fine-tuning on one epoch...")
