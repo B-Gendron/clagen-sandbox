@@ -156,7 +156,7 @@ def train_and_infer(model, args):
 def parse_and_update_args(args):
     # instantiate parser and retrieve model hyperparameters
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-v", "--vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size)
+    parser.add_argument("-v", "--vocab_size", help="The size of the vocabulary. Default is the number of unique characters in the training corpus.", type=int, default=vocab_size+3)
     parser.add_argument("-e", "--embedding_size", help=f"The embedding size. Default is {args['n_embd']}.", type=int, default=args['n_embd'])
     parser.add_argument("-s", "--batch_size", help=f"The batch size for the model training. Default is {args['batch_size']}.", type=int, default=args['batch_size'])
     parser.add_argument("-b", "--block_size", help=f"The size of the Transformer decoder block, i.e. the maximum context length for predictions. Default is {args['block_size']}.", type=int, default=args['block_size'])
