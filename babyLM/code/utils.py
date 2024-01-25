@@ -10,6 +10,7 @@ from datasets import Dataset, DatasetDict
 from collections import Counter
 import json
 import re
+import csv
 import random
 from math import sqrt
 import matplotlib.pyplot as plt
@@ -308,9 +309,7 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
         dial_descr = json.load(f)
 
     dial_id = dial_descr['dial_id']
-    print(f"Dialog id: {dial_id}")
     dial_enc = dial_descr['dial_encoding']
-    print(dial_enc)
 
     # retrieve the corresponding ontology individual
     indiv_path = os.path.join(onto_path, split, f'individual_{dial_id}.rdf')
@@ -322,7 +321,7 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
         'HardlyReadableText':       [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
-    print(f"utterance levels: {utterance_levels}")
+    if dial_id == 4099: del utterance_levels[min(utterance_levels.keys())] # cas patho unique, la première utterance est vide
     idx = 0
     for k in utterance_levels.keys():
         # concatenate the readability level information to the prompt
@@ -402,6 +401,25 @@ def extend_vocab_with_readability_levels(itos, stoi):
         json.dump(itos, f)
 
     return itos, stoi
+
+# -----------------------------------------------------------------------------------------
+# Training results utils
+# -----------------------------------------------------------------------------------------
+
+def save_batch_info(dial_ids, trues, preds, probas, output_file):
+    # convert all tensors to lists
+    trues, preds, probas = trues.tolist(), preds.tolist(), probas.tolist()
+
+    # create results dir if it doesn't exist
+    if not os.path.exists('../results/'):
+        os.makedirs('../results/')  
+
+    with open(f'../results/{output_file}.csv', 'a', newline='') as f:
+        write = csv.writer(f)
+
+        # Write data in columns
+        for i in range(len(dial_ids)):
+            write.writerow([dial_ids[i], trues[i], preds[i], probas[i][0], probas[i][1], probas[i][2]])
 
 # -----------------------------------------------------------------------------------------
 # Display utils
