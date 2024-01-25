@@ -164,5 +164,5 @@ class BabyLanguageModel(nn.Module):
         v_size = probas[0].size()[0]
 
         rl_probas = [last_token_probas[k] for k in [v_size - i for i in range(3, 0, -1)]]
-
+        
         return torch.stack(rl_probas)
