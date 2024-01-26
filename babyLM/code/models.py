@@ -157,6 +157,7 @@ class BabyLanguageModel(nn.Module):
 
         logits, _ = self(idx_cond)
         logits = logits[:, -1, :] # becomes (B, C)
+        # TODO select logits for readability levels
         probas = F.softmax(logits, dim=-1)
 
         # return token index with max proba among the 3 readability levels
