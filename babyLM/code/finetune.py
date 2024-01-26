@@ -198,7 +198,7 @@ def test(args, model, loader, target):
                 batch_trues.append(label)
                 preds.extend(torch.argmax(read_level_probas, dim=-1).tolist())
 
-            # compute and backpropagate MSE loss on batch predictions
+            # compute and backpropagate CE loss on batch predictions
             loss = ce_loss(torch.stack(batch_preds).to(device), torch.tensor(batch_trues).to(device))
             loss_it.append(loss.item())
 
