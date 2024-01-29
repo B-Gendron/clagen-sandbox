@@ -25,7 +25,7 @@ from utils import *
 from models import BabyLanguageModel
 
 
-def train(args, model, train_loader, stoi, itos, optimizer, epoch):
+def train(args, model, optimizer, itos, epoch):
     '''
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
@@ -44,56 +44,18 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
     ce_loss = nn.CrossEntropyLoss()
     trues, preds = [], []
 
-    for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (epoch+1), total=train_loader.__len__()):
-        batch = {'dial_id': batch['dial_id'].to(device), 'utt_id': batch['utt_id'].to(device), 'embedding' : batch['embedding'].to(device)}
+    for _ in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
+        # construire un batch de prompt
+        batch_prompts, batch_generations = generate_from_random_prompts(args, model, itos)
+        print(batch_prompts[0], batch_generations[0])
+        
 
-        batch_trues, batch_preds = [], [] 
-        batch_ids = []
-
-        # remove padded part
-        for idx in range(args['train_bsize']):
-            # get the dialog data 
-            encoded_dialog = batch['embedding'][idx]
-            dialog_without_pad = []
-            for utterance in encoded_dialog:
-                # select token indexes only
-                utt = utterance.tolist()
-                utterance_without_pad = utt[:utt.index(-1) if -1 in utt else len(utt)]
-                # naturally remove the utterances full of pad
-                if utterance_without_pad != []:
-                    dialog_without_pad.append(utterance_without_pad)
-
-            if dialog_without_pad != []:
-                dial_id = batch['dial_id'][idx].item()
-                batch_ids.append(dial_id)
-                # dump dialog encoding without padding in a json file
-                with open(f'../objects/batch_{idx}.json', 'w') as f:
-                    json.dump({'dial_id':dial_id, 'dial_encoding':dialog_without_pad}, f, indent=2)
-
-        # make a list with all the file names
-        file_list = [os.path.join("../objects/", filename) for filename in [f"batch_{i}.json" for i in range(args['train_bsize'])]]
-        for f in file_list:
-            prompt, label = get_prompt_and_label(f, 'train', stoi, args['device'])
-            read_level_probas = model.predict_readability_levels(prompt, block_size=args['block_size'])
-            batch_preds.append(read_level_probas)
-            # update trues/preds lists
-            batch_trues.append(label)
-        # convert to tensors
-        batch_preds, batch_trues = torch.stack(batch_preds), torch.tensor(batch_trues)
-
-        # these 3 elements should be saved in a file during training
-        save_batch_info(batch_ids, batch_trues, torch.argmax(batch_preds, dim=-1), batch_preds, output_file='first_test')
-        preds.extend(torch.argmax(batch_preds, dim=-1).tolist()) # this should not work.
-
-        # compute and backpropagate MSE loss on batch predictions
-        loss = ce_loss(batch_preds.to(device), batch_trues.to(device))
-        loss_it.append(loss.item())
-        loss.backward()
+        ce_loss.backward()
         optimizer.step()
 
         # update general lists
-        trues.extend(batch_trues)
+        # trues.extend(batch_trues)
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
@@ -105,9 +67,16 @@ def train(args, model, train_loader, stoi, itos, optimizer, epoch):
 
     return loss_it_avg, trues, preds
 
+def test(args, model, loader):
+    pass
 
 
-def run_epochs(args, model, train_loader, val_loader, test_loader, optimizer):
+def run_epochs(args, model, optimizer):
+    pass
+
+def run_exp(args, model):
+    # include the layers to freeze and not to freeze
+
     pass
 
 if __name__ == "__main__":
@@ -140,7 +109,7 @@ if __name__ == "__main__":
 
     print("Start fine-tuning on one epoch...")
     optimizer = torch.optim.AdamW(pretrained_model.parameters(), lr=args['lr'], foreach=False)
-    train(args, pretrained_model, train_loader, stoi, itos, optimizer, 0)
+    train(args, pretrained_model, optimizer, 0)
 
 
     # OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
