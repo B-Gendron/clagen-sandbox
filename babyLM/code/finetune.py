@@ -25,7 +25,7 @@ from utils import *
 from models import BabyLanguageModel
 
 
-def train(args, model, optimizer, itos, epoch):
+def train(args, model, optimizer, stoi, itos, epoch):
     '''
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
@@ -47,9 +47,9 @@ def train(args, model, optimizer, itos, epoch):
     for _ in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
         # construire un batch de prompt
-        batch_prompts, batch_generations = generate_from_random_prompts(args, model, itos)
-        print(batch_prompts[0], batch_generations[0])
-        
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos)
+        print(batch_labels, batch_generations)
+        exit()
 
         ce_loss.backward()
         optimizer.step()
@@ -81,19 +81,20 @@ def run_exp(args, model):
 
 if __name__ == "__main__":
 
-    args = {'vocab_size':239270, # new vocab size corresponding to the new dataset + add 3 onto concepts
+    args = {'vocab_size':239267, # new vocab size corresponding to the new dataset + add 3 onto concepts
             'batch_size':8,
             'block_size':64, 
             'max_iters':5000,
             'eval_interval':100,
             'lr':1e-3,
-            'device':activate_gpu(),
+            'device':activate_gpu(force_cpu=True),
             'max_eps':10,
             'eval_iters':1000,
             'n_embd':64,
             'n_heads':8,
             'n_layers':24,
             'dropout':0.3,
+            'train_bsize':8,
             'writer':SummaryWriter(f"../logs/{get_datetime()}_{64}")
         }
 
@@ -102,14 +103,14 @@ if __name__ == "__main__":
     print(len(itos))
 
     print("Load the pretrained model weights...")
-    model_path = '../models/babyllm-gptlike_64_25012024110257_nq_params.pt'
+    model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     pretrained_model = BabyLanguageModel(args)
-    pretrained_model.load_state_dict(torch.load(model_path))
+    pretrained_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     pretrained_model.to(args['device'])
 
     print("Start fine-tuning on one epoch...")
     optimizer = torch.optim.AdamW(pretrained_model.parameters(), lr=args['lr'], foreach=False)
-    train(args, pretrained_model, optimizer, 0)
+    train(args, pretrained_model, optimizer, stoi, itos, 0)
 
 
     # OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
