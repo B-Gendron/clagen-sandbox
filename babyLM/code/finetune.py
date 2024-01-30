@@ -46,10 +46,13 @@ def train(args, model, optimizer, stoi, itos, epoch):
 
     for _ in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
-        # construire un batch de prompt
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos)
-        print(batch_labels, batch_generations)
-        exit()
+
+        # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
+        trues.extend(batch_labels)
+
+        generations_rls = call_ontology_on_batch(batch_generations) # fct to be implemented
+
 
         ce_loss.backward()
         optimizer.step()
