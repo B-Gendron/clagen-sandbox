@@ -11,6 +11,7 @@ from collections import Counter
 import json
 import re
 import csv
+from numpy import random as rd
 import random
 from math import sqrt
 import matplotlib.pyplot as plt
@@ -346,24 +347,27 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
 # _, stoi = load_vocab_mappings()
 # get_prompt_and_label('batch_0', 'train', stoi)
 
-def generate_from_random_prompts(args, model, itos):
-    batch_prompts, batch_generations = [], []
+def generate_from_random_prompts(args, model, stoi, itos):
+    batch_labels, batch_generations = [], []
     for _ in range(args['train_bsize']):
-        p = random.random()
+        p = rd.uniform()
+        print(p)
         if p < 1/3:
-            prompt = f"Here is a EasilyReadableText sentence: "
+            prompt = f"A EasilyReadableText sentence: "
+            batch_labels.append(0)
         elif p > 1/3 and p < 2/3:
-            prompt = f"Here is a StandardReadableText sentence: "
+            prompt = f"A StandardReadableText sentence: "
+            batch_labels.append(1)
         else:
-            prompt = f"Here is a HardlyReadableText sentence: "
-        prompt = tokenizer.tokenize(prompt)
-        prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(0).to(args['device'])
-        batch_prompts.append(prompt)
-
-        generation = model.generate(prompt, max_new_tokens=20, block_size=args['block_size'])
-        batch_generations.append(decode(generation, itos))
+            prompt = f"A HardlyReadableText sentence: "
+            batch_labels.append(2)
+        prompt = encode(stoi, tokenizer.tokenize(prompt))
+        prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
+        generation = model.generate(prompt, max_new_tokens=20, block_size=args['block_size'])[0].tolist()
+        generation = decode(generation, itos)
+        batch_generations.append(generation)
         
-    return batch_prompts, batch_generations
+    return batch_labels, batch_generations
 
 def parse_output_and_deduce_class(output, itos):
     '''
