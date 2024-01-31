@@ -154,12 +154,15 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
     else:
         print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json")
 
-def save_batch_generations(batch_generations):
-    with open('../objects/batch_generations.tsv', 'w', newline='') as f:
+def save_batch_generations(batch_generations, batch_index):
+    file_path = f'../objects/batch_generations_{batch_index}.tsv'
+    with open(file_path, 'w', newline='') as f:
         tsv_writer = csv.writer(f, delimiter='\t')
 
         for row in batch_generations:
             tsv_writer.writerow([row])
+
+    return file_path[3:] # remove ../ to make it relative
 
 # -----------------------------------------------------------------------------------------
 # Training precedure utils
@@ -428,6 +431,16 @@ def extend_vocab_with_readability_levels(itos, stoi):
         json.dump(itos, f)
 
     return itos, stoi
+
+
+def create_batch_individual(batch_index, file_path):
+    command = ["../call_ontology.sh", str(batch_index), file_path]
+
+    # Run the command using subprocess
+    try:
+        subprocess.run(command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error: {e}")
 
 # -----------------------------------------------------------------------------------------
 # Training results utils
