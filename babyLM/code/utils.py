@@ -154,6 +154,7 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
     else:
         print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json")
 
+
 def save_batch_generations(batch_generations, batch_index):
     file_path = f'../objects/batch_generations_{batch_index}.tsv'
     with open(file_path, 'w', newline='') as f:
@@ -289,7 +290,7 @@ def parse_indexes(levels_dict):
         for v in levels_dict[k]:
             # parse the utterance full name to retrieve its index
             splitted_v = v.split('_')
-            index = splitted_v[2] # the 3rd element when individual_592.592_598_utt_21271711 is splitted by _ is 598, which is the utterance index
+            index = splitted_v[3] # the 3rd element when individual_592.592_598_utt_21271711 is splitted by _ is 598, which is the utterance index
             # store the readability class for the current index
             levels_indexes_dict[int(index)] = k
 
@@ -302,27 +303,15 @@ def parse_indexes(levels_dict):
     return result_dict
 
 
-def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../OntoUttPreprocessing/rdf/wikitalk"):
+def get_readability_levels(indiv_path):
     '''
-        This function outputs a prompt encoded with respect to the right vocab, containing the dialog stored in the .json file dialog_file.
+        TODO update doc
 
-        @param dialog_file (str):       the name of the (temp) json file where the dialog information is stored
-        @param split (str):             the dataset split from which the dialog comes from
-        @param stoi (dict):             the string to index mapping from the pretraining vocabulary
-        @param onto_path (str):         
+        @param indiv_path (str):    the path to the batch ontology individual.     
     '''
     # get labels mapping for different readability level
     readability_levels_mapping = {'EasilyReadableText':0, 'StandardReadableText':1, 'HardlyReadableText':2}
-
-    # load the encoded dialog file
-    with open(dialog_file, 'r') as f:
-        dial_descr = json.load(f)
-
-    dial_id = dial_descr['dial_id']
-    dial_enc = dial_descr['dial_encoding']
-
-    # retrieve the corresponding ontology individual
-    indiv_path = os.path.join(onto_path, split, f'individual_{dial_id}.rdf')
+    # retrieve the ontology individual
     individual = get_ontology(indiv_path).load()
     # crop first element as it simply corresponds to the class occurence
     utterance_levels = {
@@ -331,30 +320,10 @@ def get_prompt_and_label(dialog_file, split, stoi, device, onto_path="../../../O
         'HardlyReadableText':       [str(i) for i in individual.search(is_a=individual.HardlyReadableText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
-    if dial_id == 4099: del utterance_levels[min(utterance_levels.keys())] # cas patho unique, la première utterance est vide
-    idx = 0
-    for k in utterance_levels.keys():
-        # concatenate the readability level information to the prompt
-        readability_info = encode(stoi, tokenizer.tokenize(f"(ReadabilityLevel: {utterance_levels[k]})")) if idx < len(utterance_levels)-1 else encode(stoi, tokenizer.tokenize("(ReadabilityLevel: "))
-        dial_enc[idx].extend(readability_info)
-        idx += 1
+    labels = [readability_levels_mapping[v] for v in utterance_levels.values()]
 
-    # deduce soft prompt by dropping one dimension
-    soft_prompt = custom_flatten(dial_enc)
-    # convert prompt to torch tensor
-    soft_prompt = torch.tensor(soft_prompt, dtype=torch.long).unsqueeze(0).to(device)
+    return labels
 
-    # retrieve label which is the readability level of the last utterance
-    last_utterance_index = max(utterance_levels.keys())
-    label = readability_levels_mapping[utterance_levels[last_utterance_index]]
-
-    # empty the ontology and destroy all tracks in memory to avoid to stack the individuals
-    individual.destroy(update_relation = True, update_is_a = True)
-
-    return soft_prompt, label
-
-# _, stoi = load_vocab_mappings()
-# get_prompt_and_label('batch_0', 'train', stoi)
 
 def generate_from_random_prompts(args, model, stoi, itos):
     batch_labels, batch_generations = [], []

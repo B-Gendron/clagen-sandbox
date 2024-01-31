@@ -56,8 +56,10 @@ def train(args, model, optimizer, stoi, itos, epoch):
         trues.extend(batch_labels)
 
         create_batch_individual(batch_index, file_path)
-        exit()
+        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
+        preds.extend(generations_rl)
 
+        # appliquer un bruit à generations_rl puis appliquer ce loss
 
         ce_loss.backward()
         optimizer.step()
