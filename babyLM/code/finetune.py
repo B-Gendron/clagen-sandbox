@@ -11,6 +11,7 @@ import subprocess
 import csv
 import json
 import numpy as np
+from numpy import random as rd
 from datasets import load_dataset, load_from_disk
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
@@ -59,15 +60,14 @@ def train(args, model, optimizer, stoi, itos, epoch):
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
 
-        # appliquer un bruit à generations_rl puis appliquer ce loss
-        print(batch_labels, generations_rl)
-        exit()
+        # deduce predictions probabilities from predictions
+        generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
+        # add gaussian white noise to predictions probabilities
+        generations_probas = [[p+rd.normal()*1e-5 for p in generations_probas[i]] for i in range(len(generations_probas))]
 
-        ce_loss.backward()
+        loss = ce_loss(torch.tensor(generations_probas, requires_grad=True), torch.tensor(batch_labels))
+        loss.backward()
         optimizer.step()
-
-        # update general lists
-        # trues.extend(batch_trues)
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
