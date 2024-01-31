@@ -45,17 +45,18 @@ def train(args, model, optimizer, stoi, itos, epoch):
     ce_loss = nn.CrossEntropyLoss()
     trues, preds = [], []
 
-    for _ in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
+    for batch_index in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
 
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos)
-        # save the generated sentences in a temp dataset to perform inference on it
-        save_batch_generations(batch_generations)
+        # save the generated sentences to further look at it
+        file_path = save_batch_generations(batch_generations, batch_index)
 
         # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
         trues.extend(batch_labels)
 
-        generations_rls = call_ontology_on_batch(batch_generations) # fct to be implemented
+        create_batch_individual(batch_index, file_path)
+        exit()
 
 
         ce_loss.backward()
