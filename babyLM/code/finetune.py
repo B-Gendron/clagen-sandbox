@@ -60,6 +60,8 @@ def train(args, model, optimizer, stoi, itos, epoch):
         preds.extend(generations_rl)
 
         # appliquer un bruit à generations_rl puis appliquer ce loss
+        print(batch_labels, generations_rl)
+        exit()
 
         ce_loss.backward()
         optimizer.step()
