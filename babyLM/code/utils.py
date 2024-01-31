@@ -154,6 +154,12 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
     else:
         print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json")
 
+def save_batch_generations(batch_generations):
+    with open('../objects/batch_generations.tsv', 'w', newline='') as f:
+        tsv_writer = csv.writer(f, delimiter='\t')
+
+        for row in batch_generations:
+            tsv_writer.writerow([row])
 
 # -----------------------------------------------------------------------------------------
 # Training precedure utils
@@ -351,7 +357,6 @@ def generate_from_random_prompts(args, model, stoi, itos):
     batch_labels, batch_generations = [], []
     for _ in range(args['train_bsize']):
         p = rd.uniform()
-        print(p)
         if p < 1/3:
             prompt = f"A EasilyReadableText sentence: "
             batch_labels.append(0)

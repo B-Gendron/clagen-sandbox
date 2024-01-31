@@ -8,6 +8,7 @@ from torch.utils.data import Dataset
 from glob import glob
 import os
 import subprocess
+import csv
 import json
 import numpy as np
 from datasets import load_dataset, load_from_disk
@@ -46,7 +47,10 @@ def train(args, model, optimizer, stoi, itos, epoch):
 
     for _ in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
+
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos)
+        # save the generated sentences in a temp dataset to perform inference on it
+        save_batch_generations(batch_generations)
 
         # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
         trues.extend(batch_labels)
