@@ -93,13 +93,13 @@ def run_exp(args, model):
 
 if __name__ == "__main__":
 
-    args = {'vocab_size':239267, # new vocab size corresponding to the new dataset + add 3 onto concepts
-            'batch_size':8,
+    args = {'vocab_size':239267, # new vocab size corresponding to the new dataset
+            'batch_size':32,
             'block_size':64, 
             'max_iters':5000,
             'eval_interval':100,
             'lr':1e-3,
-            'device':activate_gpu(force_cpu=True),
+            'device':activate_gpu(),
             'max_eps':10,
             'eval_iters':1000,
             'n_embd':64,
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     print("Load the pretrained model weights...")
     model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     pretrained_model = BabyLanguageModel(args)
-    pretrained_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    pretrained_model.load_state_dict(torch.load(model_path))
     pretrained_model.to(args['device'])
 
     print("Start fine-tuning on one epoch...")
