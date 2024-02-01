@@ -8,7 +8,8 @@ import numpy as np
 import logging
 from datasets import Dataset, DatasetDict
 from collections import Counter
-import multiprocess
+import multiprocess as mp
+import threading
 import json
 import re
 import csv
@@ -331,9 +332,7 @@ def generate_from_random_prompts(args, model, stoi, itos, batch_size, n_threads=
         TODO parallelize this step using as much threads as the batch size
     '''
     batch_labels, batch_generations = [], []
-    n_threads = batch_size if n_threads is None else n_threads
-
-    for _ in range(batch_size):
+    def process_set(args, model, stoi, itos):
         p = rd.uniform()
         if p < 1/3:
             prompt = f"A EasilyReadableText sentence: "
@@ -349,8 +348,13 @@ def generate_from_random_prompts(args, model, stoi, itos, batch_size, n_threads=
         generation = model.generate(prompt, max_new_tokens=20, block_size=args['block_size'])[0].tolist()
         generation = decode(generation, itos)
         batch_generations.append(generation)
-        
-    return batch_labels, batch_generations
+
+    # paralellize model calls
+    processes = [mp.Process(target=process_set, args=(args, model, stoi, itos)) for _ in range(batch_size)]
+    for process in processes:
+        process.start()
+    for process in processes:
+        process.join()
 
 def parse_output_and_deduce_class(output, itos):
     '''

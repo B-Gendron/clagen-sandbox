@@ -48,7 +48,7 @@ def train(args, model, optimizer, stoi, itos, epoch):
 
     for batch_index in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) # this is the longest step (2s per generated sentence)
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, batch_size=args['train_bsize']) # this is the longest step (2s per generated sentence) --> multiprocess
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index) # instantaneous
 
@@ -93,7 +93,7 @@ def run_exp(args, model):
 if __name__ == "__main__":
 
     args = {'vocab_size':239267, # new vocab size corresponding to the new dataset
-            'batch_size':32,
+            'batch_size':8,
             'block_size':64, 
             'max_iters':5000,
             'eval_interval':100,
