@@ -48,15 +48,14 @@ def train(args, model, optimizer, stoi, itos, epoch):
 
     for batch_index in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
-
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos)
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) # this is the longest step (2s per generated sentence)
         # save the generated sentences to further look at it
-        file_path = save_batch_generations(batch_generations, batch_index)
+        file_path = save_batch_generations(batch_generations, batch_index) # instantaneous
 
         # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
         trues.extend(batch_labels)
 
-        create_batch_individual(batch_index, file_path)
+        create_batch_individual(batch_index, file_path) # reasonable amount of time regarding the need (less than 1s per sample)
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
 
@@ -112,7 +111,6 @@ if __name__ == "__main__":
 
     print("Getting stoi and itos dicts...")
     itos, stoi = load_vocab_mappings()
-    print(len(itos))
 
     print("Load the pretrained model weights...")
     model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
@@ -125,7 +123,7 @@ if __name__ == "__main__":
     train(args, pretrained_model, optimizer, stoi, itos, 0)
 
 
-    # OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
+    # [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
         # - generates a sentence with a readability level instruction given in prompt
         # - add this infividual to a temp rdf file for the batch
         # - perform inference on this file (like it is done in create_individuals.py)

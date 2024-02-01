@@ -8,6 +8,7 @@ import numpy as np
 import logging
 from datasets import Dataset, DatasetDict
 from collections import Counter
+import multiprocess
 import json
 import re
 import csv
@@ -325,9 +326,14 @@ def get_readability_levels(indiv_path):
     return labels
 
 
-def generate_from_random_prompts(args, model, stoi, itos):
+def generate_from_random_prompts(args, model, stoi, itos, batch_size, n_threads=None):
+    '''
+        TODO parallelize this step using as much threads as the batch size
+    '''
     batch_labels, batch_generations = [], []
-    for _ in range(args['train_bsize']):
+    n_threads = batch_size if n_threads is None else n_threads
+
+    for _ in range(batch_size):
         p = rd.uniform()
         if p < 1/3:
             prompt = f"A EasilyReadableText sentence: "
