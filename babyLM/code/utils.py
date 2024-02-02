@@ -421,7 +421,7 @@ def create_batch_individual(batch_index, file_path):
 # Training results utils
 # -----------------------------------------------------------------------------------------
 
-def save_epoch_data(target, trues, preds, epoch_or_iter):
+def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
     '''
         This function saves the trues and preds at each epoch for train and validation and for each run on test set (several runs are performed to ensure stability)
 
@@ -433,7 +433,7 @@ def save_epoch_data(target, trues, preds, epoch_or_iter):
     # convert all tensors to lists
     trues, preds = trues.tolist(), preds.tolist()  
 
-    with open(f'../results/predictions_{target}.csv', 'a', newline='') as f:
+    with open(f'../results/{experiment}/predictions_{target}.csv', 'a', newline='') as f:
         write = csv.writer(f)
 
         # Write data in columns

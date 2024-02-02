@@ -134,7 +134,7 @@ def test(args, model, optimizer, stoi, itos, target):
     return loss_it_avg, trues, preds
 
 
-def run_epochs(args, model, optimizer, stoi, itos):
+def run_epochs(args, model, optimizer, stoi, itos, experiment):
     val_losses = []
 
     for ep in range(args['max_eps']):
@@ -143,22 +143,46 @@ def run_epochs(args, model, optimizer, stoi, itos):
         val_loss, val_trues, val_preds = test(args, model, optimizer, stoi, itos, 'validation')
  
         # save epoch trues and preds for train and validation
-        save_epoch_data('train', train_trues, train_preds, ep)
-        save_epoch_data('validation', val_trues, val_preds, ep)
+        save_epoch_data('train', train_trues, train_preds, ep, experiment)
+        save_epoch_data('validation', val_trues, val_preds, ep, experiment)
 
         # save val loss for this epoch
         val_losses.append(val_loss)
 
     return val_losses
 
-def run_exp(args, model):
-    # include the layers to freeze and not to freeze
-    
+def run_exp(args, model_path, experiment):
+    print(colored(f'Start of the experiment {experiment}', 'green'))
+
     # create results dir if it doesn't exist
     if not os.path.exists('../results/'):
         os.makedirs('../results/')
 
-    pass
+    # Getting stoi and itos dicts
+    itos, stoi = load_vocab_mappings()
+
+    # Load the pretrained model weights
+    model = BabyLanguageModel(args)
+    if args['device'] == 'cpu':
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    else:
+        model.load_state_dict(torch.load(model_path))
+    model.to(args['device'])
+
+    # freeze all layers except model.lm_head
+    for p in model.token_embedding_table.parameters(): p.requires_grad = False
+    for p in model.position_embedding_table.parameters(): p.requires_grad = False
+    for p in model.blocks.parameters(): p.requires_grad = False
+    for p in model.ln_f.parameters(): p.requires_grad = False
+
+    # set optimizer
+    optimizer = torch.optim.AdamW(model.parameters(), lr=args['lr'])
+
+    # run training and validation
+    val_losses = run_epochs(args, model, optimizer, stoi, itos, experiment)
+
+    # run test 
+    
 
 if __name__ == "__main__":
 
@@ -178,18 +202,9 @@ if __name__ == "__main__":
             'writer':SummaryWriter(f"../logs/{get_datetime()}_{64}")
         }
 
-    print("Getting stoi and itos dicts...")
-    itos, stoi = load_vocab_mappings()
-
-    print("Load the pretrained model weights...")
     model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
-    pretrained_model = BabyLanguageModel(args)
-    pretrained_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    pretrained_model.to(args['device'])
 
-    print("Start fine-tuning on one epoch...")
-    optimizer = torch.optim.AdamW(pretrained_model.parameters(), lr=args['lr'], foreach=False)
-    train(args, pretrained_model, optimizer, stoi, itos, 0)
+    run_exp(args, model_path, 'firstTest')
 
 
     # [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
