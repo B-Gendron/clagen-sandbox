@@ -421,20 +421,24 @@ def create_batch_individual(batch_index, file_path):
 # Training results utils
 # -----------------------------------------------------------------------------------------
 
-def save_batch_info(dial_ids, trues, preds, probas, output_file):
+def save_epoch_data(target, trues, preds, epoch_or_iter):
+    '''
+        This function saves the trues and preds at each epoch for train and validation and for each run on test set (several runs are performed to ensure stability)
+
+        @target (str):              either 'train', 'validation' or 'test'
+        @trues (tensor):            the gold labels for sentence readability levels
+        @preds (tensor):            the readability levels of the generated sentences
+        @epoch_or_iter (int):       the # of the epoch (train and val sets) or the iter (test set)
+    '''
     # convert all tensors to lists
-    trues, preds, probas = trues.tolist(), preds.tolist(), probas.tolist()
+    trues, preds = trues.tolist(), preds.tolist()  
 
-    # create results dir if it doesn't exist
-    if not os.path.exists('../results/'):
-        os.makedirs('../results/')  
-
-    with open(f'../results/{output_file}.csv', 'a', newline='') as f:
+    with open(f'../results/predictions_{target}.csv', 'a', newline='') as f:
         write = csv.writer(f)
 
         # Write data in columns
-        for i in range(len(dial_ids)):
-            write.writerow([dial_ids[i], trues[i], preds[i], probas[i][0], probas[i][1], probas[i][2]])
+        for i in range(len(trues)):
+            write.writerow([ trues[i], preds[i], epoch_or_iter ])
 
 # -----------------------------------------------------------------------------------------
 # Display utils

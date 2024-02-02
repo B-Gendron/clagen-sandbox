@@ -129,16 +129,34 @@ def test(args, model, optimizer, stoi, itos, target):
     print("%s : (%s %s)" % (colored(f'{target}', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg))
 
 	# 🛑 add some metrics to keep with a label and the epoch index
-    writer.add_scalar("Loss/train", loss_it_avg, )
+    writer.add_scalar(f"Loss/{target}", loss_it_avg)
 
     return loss_it_avg, trues, preds
 
 
-def run_epochs(args, model, optimizer):
-    pass
+def run_epochs(args, model, optimizer, stoi, itos):
+    val_losses = []
+
+    for ep in range(args['max_eps']):
+        # perform training and validation runs
+        _, train_trues, train_preds = train(args, model, optimizer, stoi, itos, ep)
+        val_loss, val_trues, val_preds = test(args, model, optimizer, stoi, itos, 'validation')
+ 
+        # save epoch trues and preds for train and validation
+        save_epoch_data('train', train_trues, train_preds, ep)
+        save_epoch_data('validation', val_trues, val_preds, ep)
+
+        # save val loss for this epoch
+        val_losses.append(val_loss)
+
+    return val_losses
 
 def run_exp(args, model):
     # include the layers to freeze and not to freeze
+    
+    # create results dir if it doesn't exist
+    if not os.path.exists('../results/'):
+        os.makedirs('../results/')
 
     pass
 
