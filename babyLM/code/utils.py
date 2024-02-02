@@ -328,12 +328,12 @@ def get_readability_levels(indiv_path):
     return labels
 
 
-def generate_from_random_prompts(args, model, stoi, itos, batch_size):
+def generate_from_random_prompts(args, model, stoi, itos):
     '''
         Version parallélisée (non fonctionnelle)
     '''
     batch_labels, batch_generations = [], []
-    for _ in range(batch_size):
+    for _ in range(args['batch_size']):
         p = rd.uniform()
         if p < 1/3:
             prompt = f"A EasilyReadableText sentence: "
