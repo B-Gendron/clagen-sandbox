@@ -48,14 +48,14 @@ def train(args, model, optimizer, stoi, itos, epoch):
 
     for batch_index in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
         optimizer.zero_grad()
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, batch_size=args['train_bsize']) # this is the longest step (2s per generated sentence) --> multiprocess
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, args['train_bsize']) 
         # save the generated sentences to further look at it
-        file_path = save_batch_generations(batch_generations, batch_index) # instantaneous
+        file_path = save_batch_generations(batch_generations, batch_index)
 
         # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
         trues.extend(batch_labels)
 
-        create_batch_individual(batch_index, file_path) # reasonable amount of time regarding the need (less than 1s per sample)
+        create_batch_individual(batch_index, file_path)
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
 
@@ -63,6 +63,7 @@ def train(args, model, optimizer, stoi, itos, epoch):
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         # add gaussian white noise to predictions probabilities
         generations_probas = [[p+rd.normal()*1e-5 for p in generations_probas[i]] for i in range(len(generations_probas))]
+        # essayer aussi avec 0.6 / 0.2 / 0.2
 
         loss = ce_loss(torch.tensor(generations_probas, requires_grad=True), torch.tensor(batch_labels))
         loss.backward()
@@ -78,7 +79,7 @@ def train(args, model, optimizer, stoi, itos, epoch):
 
     return loss_it_avg, trues, preds
 
-def test(args, model, loader):
+def test(args, model, target, loader):
     pass
 
 
@@ -98,7 +99,7 @@ if __name__ == "__main__":
             'max_iters':5000,
             'eval_interval':100,
             'lr':1e-3,
-            'device':activate_gpu(),
+            'device':activate_gpu(force_cpu=True),
             'max_eps':10,
             'eval_iters':1000,
             'n_embd':64,
@@ -115,7 +116,7 @@ if __name__ == "__main__":
     print("Load the pretrained model weights...")
     model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     pretrained_model = BabyLanguageModel(args)
-    pretrained_model.load_state_dict(torch.load(model_path))
+    pretrained_model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
     pretrained_model.to(args['device'])
 
     print("Start fine-tuning on one epoch...")

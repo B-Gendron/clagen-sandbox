@@ -308,6 +308,7 @@ def parse_indexes(levels_dict):
 def get_readability_levels(indiv_path):
     '''
         TODO update doc
+        A généraliser ! Pareil pour la fonction suivante
 
         @param indiv_path (str):    the path to the batch ontology individual.     
     '''
@@ -327,12 +328,12 @@ def get_readability_levels(indiv_path):
     return labels
 
 
-def generate_from_random_prompts(args, model, stoi, itos, batch_size, n_threads=None):
+def generate_from_random_prompts(args, model, stoi, itos, batch_size):
     '''
-        TODO parallelize this step using as much threads as the batch size
+        Version parallélisée (non fonctionnelle)
     '''
     batch_labels, batch_generations = [], []
-    def process_set(args, model, stoi, itos):
+    for _ in range(batch_size):
         p = rd.uniform()
         if p < 1/3:
             prompt = f"A EasilyReadableText sentence: "
@@ -345,16 +346,11 @@ def generate_from_random_prompts(args, model, stoi, itos, batch_size, n_threads=
             batch_labels.append(2)
         prompt = encode(stoi, tokenizer.tokenize(prompt))
         prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
-        generation = model.generate(prompt, max_new_tokens=20, block_size=args['block_size'])[0].tolist()
+        generation = model.generate(prompt, max_new_tokens=15, block_size=args['block_size'])[0].tolist() # reduce max_new_tokens value to accelerate fine-tuning
         generation = decode(generation, itos)
         batch_generations.append(generation)
 
-    # paralellize model calls
-    processes = [mp.Process(target=process_set, args=(args, model, stoi, itos)) for _ in range(batch_size)]
-    for process in processes:
-        process.start()
-    for process in processes:
-        process.join()
+    return batch_labels, batch_generations
 
 def parse_output_and_deduce_class(output, itos):
     '''

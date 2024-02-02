@@ -132,3 +132,35 @@
     
 #     resulting_dataset = DatasetDict(processed_dataset)
 #     return resulting_dataset
+
+
+# generate from randomly selected prompts using multiprocessing
+
+# def generate_from_random_prompts(args, model, stoi, itos, batch_size, n_threads=None):
+#     '''
+#         Version parallélisée (non fonctionnelle)
+#     '''
+#     batch_labels, batch_generations = [], []
+#     def process_set(args, model, stoi, itos):
+#         p = rd.uniform()
+#         if p < 1/3:
+#             prompt = f"A EasilyReadableText sentence: "
+#             batch_labels.append(0)
+#         elif p > 1/3 and p < 2/3:
+#             prompt = f"A StandardReadableText sentence: "
+#             batch_labels.append(1)
+#         else:
+#             prompt = f"A HardlyReadableText sentence: "
+#             batch_labels.append(2)
+#         prompt = encode(stoi, tokenizer.tokenize(prompt))
+#         prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
+#         generation = model.generate(prompt, max_new_tokens=20, block_size=args['block_size'])[0].tolist()
+#         generation = decode(generation, itos)
+#         batch_generations.append(generation)
+
+#     # paralellize model calls
+#     processes = [mp.Process(target=process_set, args=(args, model, stoi, itos)) for _ in range(batch_size)]
+#     for process in processes:
+#         process.start()
+#     for process in processes:
+#         process.join() 
