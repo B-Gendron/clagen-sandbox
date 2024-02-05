@@ -46,7 +46,7 @@ def train(args, model, optimizer, stoi, itos, epoch):
     ce_loss = nn.CrossEntropyLoss()
     trues, preds = [], []
 
-    for batch_index in tqdm(range(args['max_iters']), desc="Epoch %s: " % (epoch+1), total=args['max_iters']):
+    for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
         optimizer.zero_grad()
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) 
         # save the generated sentences to further look at it
@@ -81,13 +81,12 @@ def train(args, model, optimizer, stoi, itos, epoch):
     return loss_it_avg, trues, preds
 
 
-def test(args, model, optimizer, stoi, itos, target):
+def test(args, model, stoi, itos, target):
     '''
         Perfom one epoch of model evaluation, either as validation or test.
 
         @param args (str):                 the hyperparameters for the training
         @param model:                      the model to train
-        @param optimizer:                  the optimizer to use for training
         @param stoi (dict):                the string-to-index dict from the pretraining vocab
         @param itos (list):                the index-to-string list from the pretraining vocab
         @param epoch (int):                the index of the current epoch
@@ -101,8 +100,7 @@ def test(args, model, optimizer, stoi, itos, target):
     ce_loss = nn.CrossEntropyLoss()
     trues, preds = [], []
 
-    for batch_index in tqdm(range(args['max_iters']), total=args['max_iters']):
-        optimizer.zero_grad()
+    for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) 
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
@@ -140,7 +138,7 @@ def run_epochs(args, model, optimizer, stoi, itos, experiment):
     for ep in range(args['max_eps']):
         # perform training and validation runs
         _, train_trues, train_preds = train(args, model, optimizer, stoi, itos, ep)
-        val_loss, val_trues, val_preds = test(args, model, optimizer, stoi, itos, 'validation')
+        val_loss, val_trues, val_preds = test(args, model, stoi, itos, 'validation')
  
         # save epoch trues and preds for train and validation
         save_epoch_data('train', train_trues, train_preds, ep, experiment)
@@ -151,7 +149,32 @@ def run_epochs(args, model, optimizer, stoi, itos, experiment):
 
     return val_losses
 
-def run_exp(args, model_path, experiment):
+
+def run_on_several_test_sets(args, model, stoi, itos, experiment, episodes=10):
+    '''
+        This function accounts for model stability by testing the model on different test sets depending on the number of episodes. Predictions are stored for each episode so all the classification metrics can be computed as well as their mean and standard deviation.
+
+        @param args (dict):                 the hyperparameters for the training
+        @param model:                       the pretrained model to use for inference
+        @param stoi (dict):                 the string-to-index dict from the pretraining vocab
+        @param itos (list):                 the index-to-string list from the pretraining vocab
+        @param experiment (str):            the name of the experiment
+        @param episoddes (int):             the number of test sets to infer on (default=10)
+
+        @return test_losses (list):         the losses on test sets (length = number of episodes)
+    '''
+    test_losses = []
+
+    for i in range(episodes):
+        test_loss, test_trues, test_preds = test(args, model, stoi, itos, 'test')
+        save_epoch_data('test', test_trues, test_preds, i, experiment)
+
+        test_losses.append(test_loss)
+
+    return test_losses
+
+
+def run_exp(args, model_path, experiment, episodes=10):
     print(colored(f'Start of the experiment {experiment}', 'green'))
 
     # create results dir if it doesn't exist
@@ -182,19 +205,23 @@ def run_exp(args, model_path, experiment):
     val_losses = run_epochs(args, model, optimizer, stoi, itos, experiment)
 
     # run test 
-    
+    test_losses = run_on_several_test_sets(args, model, stoi, itos, experiment, episodes)
+
+    # log all classification metrics from saved trues/preds
+    ## TBC
+
+    return val_losses, test_losses
 
 if __name__ == "__main__":
 
     args = {'vocab_size':239267, # new vocab size corresponding to the new dataset
             'batch_size':8,
             'block_size':64, 
-            'max_iters':5000,
-            'eval_interval':100,
+            'train_iters':5000,
+            'eval_iters':1000,
             'lr':1e-3,
             'device':activate_gpu(force_cpu=True),
             'max_eps':10,
-            'eval_iters':1000,
             'n_embd':64,
             'n_heads':8,
             'n_layers':24,
@@ -204,7 +231,7 @@ if __name__ == "__main__":
 
     model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
 
-    run_exp(args, model_path, 'firstTest')
+    run_exp(args, model_path, 'firstTestOnGPU')
 
 
     # [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:

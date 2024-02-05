@@ -418,7 +418,7 @@ def create_batch_individual(batch_index, file_path):
         print(f"Error: {e}")
 
 # -----------------------------------------------------------------------------------------
-# Training results utils
+# Results logging utils
 # -----------------------------------------------------------------------------------------
 
 def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
@@ -439,6 +439,25 @@ def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
         # Write data in columns
         for i in range(len(trues)):
             write.writerow([ trues[i], preds[i], epoch_or_iter ])
+
+
+def log_all_metrics(experiment):
+    '''
+        This function browses the files containing trues and preds for each set (train, val, test) and computes standard classification metrics + MCC on it
+
+        @param experiment (str):        name of the experiment
+
+        @return metrics (dict)
+    '''
+    # train set
+    for target in ['train', 'validation', 'test']:
+
+        with open(f'../results/{experiment}/predictions_{target}.csv', 'rb', newline='') as f:
+            
+            pass
+    # val set
+
+    # test set
 
 # -----------------------------------------------------------------------------------------
 # Display utils
