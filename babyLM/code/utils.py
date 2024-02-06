@@ -329,9 +329,6 @@ def get_readability_levels(indiv_path):
 
 
 def generate_from_random_prompts(args, model, stoi, itos):
-    '''
-        Version parallélisée (non fonctionnelle)
-    '''
     batch_labels, batch_generations = [], []
     for _ in range(args['batch_size']):
         p = rd.uniform()
@@ -346,8 +343,8 @@ def generate_from_random_prompts(args, model, stoi, itos):
             batch_labels.append(2)
         prompt = encode(stoi, tokenizer.tokenize(prompt))
         prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
-        generation = model.generate(prompt, max_new_tokens=15, block_size=args['block_size'])[0].tolist() # reduce max_new_tokens value to accelerate fine-tuning
-        generation = decode(generation, itos)
+        generation = model.generate(prompt, max_new_tokens=15, block_size=args['block_size'])[0] # reduce max_new_tokens value to accelerate fine-tuning
+        generation = decode(generation.tolist(), itos)
         batch_generations.append(generation)
 
     return batch_labels, batch_generations
@@ -430,10 +427,7 @@ def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
         @preds (tensor):            the readability levels of the generated sentences
         @epoch_or_iter (int):       the # of the epoch (train and val sets) or the iter (test set)
     '''
-    # convert all tensors to lists
-    trues, preds = trues.tolist(), preds.tolist()  
-
-    with open(f'../results/{experiment}/predictions_{target}.csv', 'a', newline='') as f:
+    with open(f'../results/{experiment}/predictions_{target}.csv', 'a+', newline='') as f:
         write = csv.writer(f)
 
         # Write data in columns
