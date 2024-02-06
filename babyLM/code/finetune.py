@@ -50,6 +50,10 @@ def train(args, model, finetuning_model, stoi, itos, epoch):
     trues, preds = [], []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
+
+        # this changes nothing for first batch, but then it update the weights of the main model
+        model.lm_head.weight = finetuning_model.lm_head.weight 
+
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) 
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
@@ -76,6 +80,8 @@ def train(args, model, finetuning_model, stoi, itos, epoch):
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
+    # perform last model update that corresponds to last batch
+    model.lm_head.weight = finetuning_model.lm_head.weight
 
     # print useful information about the training progress and scores on this training set's full pass
     print("Epoch %s/%s - %s : (%s %s)" % (colored(str(epoch+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg))
