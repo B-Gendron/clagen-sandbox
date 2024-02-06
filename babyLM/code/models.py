@@ -167,3 +167,26 @@ class BabyLanguageModel(nn.Module):
         rl_probas = [last_token_probas[k] for k in [v_size - i for i in range(3, 0, -1)]]
         
         return torch.stack(rl_probas)
+    
+
+class TrainableHead(nn.Module):
+    '''
+        An auxiliary model to update the babylm model lm_head layer using generation redability levels predictions.
+    '''
+    def __init__(self, args, n_rl=3):
+        super(TrainableHead, self).__init__()
+        n_embd = args['n_embd']
+        vocab_size = args['vocab_size']
+        self.lm_head = nn.Linear(n_embd, vocab_size)
+        self.pool = nn.Linear(vocab_size, n_rl)
+        self.anti_pool = nn.Linear(n_rl, n_embd)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x_input):
+        x = self.softmax(x_input)
+        x = self.anti_pool(x)
+        x = self.lm_head(x)
+        x = self.pool(x)
+        x = 1e-4*self.softmax(x) + x_input
+
+        return x
