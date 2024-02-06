@@ -201,11 +201,11 @@ if __name__ == "__main__":
 
     # save stoi and itos dicts
     stoi, itos = vocab_dicts(vocab)
-    itos, stoi = extend_vocab_with_readability_levels(itos, stoi)
+    # itos, stoi = extend_vocab_with_readability_levels(itos, stoi)
 
     # hyperparameters default config
     args = {
-        'vocab_size':vocab_size+3, # +3 readability levels
+        'vocab_size':vocab_size, # +3 readability levels
         'batch_size':16, # should be bigger that 16 to accelerate training (but avoid memory errors)
         'block_size':64, 
         'max_iters':5000,
@@ -217,7 +217,6 @@ if __name__ == "__main__":
         'n_heads':8,
         'n_layers':24,
         'dropout':0.3,
-        'quantization':True,
     }
 
     # update params depending of the arguments

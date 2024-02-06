@@ -242,7 +242,7 @@ if __name__ == "__main__":
             'block_size':64, 
             'train_iters':10,
             'eval_iters':1,
-            'lr':1e-1,
+            'lr':1e-3,
             'device':activate_gpu(force_cpu=True),
             'max_eps':10,
             'n_embd':64,
