@@ -167,6 +167,29 @@ def save_batch_generations(batch_generations, batch_index):
 
     return file_path[3:] # remove ../ to make it relative
 
+def store_split_generations(split, file_paths, trues, experiment):
+    '''
+        This function concatenate generated sentences from all batches of the split 'split' into one tsv file. 
+
+        @param split (str):             the name of the split, either 'train', 'validation' or 'test'. Note that these are not proper splits as there is no dataset in this fine-tuning procedure
+        @param file_paths (list):       the list of paths to the generated sentences in each batch
+        @param trues (list):            all the gold readability level labels
+        @param experiment (str):        the name of the experiment (=folder where all logs are saved)
+    '''
+    readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
+    with open(f'../results/{experiment}/generations_{split}.tsv', 'w') as all_gens:
+        tsv_writer = csv.writer(all_gens, delimiter='\t')
+        # iterate through batch files
+        for i, path in enumerate(file_paths):
+            # store gold labels and generations for this batch
+            abs_path = f'../{path}'
+            with open(abs_path, 'r') as batch_gens:
+                for j, row in enumerate(batch_gens):
+                    tsv_writer.writerow([readability_levels_mapping[trues[i+j]], row])
+
+            # remove batch-wise generations file path
+            os.remove(abs_path)
+
 # -----------------------------------------------------------------------------------------
 # Training precedure utils
 # -----------------------------------------------------------------------------------------
