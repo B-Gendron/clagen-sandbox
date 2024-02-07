@@ -4,6 +4,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
+from transformers import ( AutoModelForCausalLM, AutoTokenizer,
+pipeline,
+)
+
 # general purpose modules
 from glob import glob
 import os
@@ -202,7 +206,19 @@ def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experime
     return test_losses
 
 
-def run_exp(args, model_path, experiment, episodes=10):
+def run_exp(args, model_path, experiment, episodes=10, hf=False):
+    '''
+        Run an end-to-end finetuning.
+
+        @param args (dict):           the dict containing all the hyperparameters
+        @param model_path (str):      either from a local storage (hf=False), or from huggingface hub (hf=True)
+        @param experiment (str):      name of the experiment 
+        @param episodes (int):        number of times the test step should be performed (to compute descriptive stats on metrics)
+        @param hf (bool):             a flag that indicates is the model should be loaded from huggingface hub
+
+        @return val_losses (list):    all val losses for all the 'epochs'
+        @return test_losses (list):   all test losses from all the episodes
+    '''
     print(colored(f'Start of the experiment {experiment}', 'green'))
 
     # create results dir if it doesn't exist
@@ -212,20 +228,34 @@ def run_exp(args, model_path, experiment, episodes=10):
     # Getting stoi and itos dicts
     itos, stoi = load_vocab_mappings()
 
-    # Load the pretrained model weights
-    model = BabyLanguageModel(args)
-    if args['device'] == 'cpu':
-        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    else:
-        model.load_state_dict(torch.load(model_path))
-    model.to(args['device'])
+    if hf:
+        model = AutoModelForCausalLM.from_pretrained(  
+            model_name,
+            low_cpu_mem_usage=True,
+            return_dict=True,       # this returns a load_state_dict compatible object ?
+            torch_dtype=torch.float16,
+            device_map=args['device'],
+        )
 
-    # freeze all layers except model.lm_head
-    for p in model.token_embedding_table.parameters(): p.requires_grad = False
-    for p in model.position_embedding_table.parameters(): p.requires_grad = False
-    for p in model.blocks.parameters(): p.requires_grad = False
-    for p in model.ln_f.parameters(): p.requires_grad = False
-    for p in model.lm_head.parameters(): p.requires_grad = True
+        # freeze all layers except lm_head
+        for p in model.parameters(): p.requires_grad = False
+        for p in model.lm_head.parameters(): p.requires_grad = True
+
+    else:
+        # Load the pretrained model weights
+        model = BabyLanguageModel(args)
+        if args['device'] == 'cpu':
+            model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        else:
+            model.load_state_dict(torch.load(model_path))
+        model.to(args['device'])
+
+        # freeze all layers except model.lm_head
+        for p in model.token_embedding_table.parameters(): p.requires_grad = False
+        for p in model.position_embedding_table.parameters(): p.requires_grad = False
+        for p in model.blocks.parameters(): p.requires_grad = False
+        for p in model.ln_f.parameters(): p.requires_grad = False
+        for p in model.lm_head.parameters(): p.requires_grad = True
 
     # Setup finetuning model
     finetuning_model = TrainableHead(args)
@@ -263,9 +293,11 @@ if __name__ == "__main__":
             'writer':SummaryWriter(f"../logs/{get_datetime()}_{64}")
         }
 
-    model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
+    # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
 
-    run_exp(args, model_path, 'firstTestOnGPU')
+    model_name = "meta-llama/Llama-2-7b-chat-hf"
+
+    run_exp(args, model_name, 'firstTestOnGPU', hf=True)
 
 
     # [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
