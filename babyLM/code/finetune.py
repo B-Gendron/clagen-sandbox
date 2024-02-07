@@ -52,6 +52,7 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
+        tic = time.time()
         batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) 
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
@@ -59,7 +60,6 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
 
         # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
         trues.extend(batch_labels)
-
         create_batch_individual(batch_index, file_path)
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
@@ -67,9 +67,9 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
         # deduce predictions "probabilities" from predictions
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         # pass the "probas" through the finetuning model to compute loss and update main model head
-        generations_probas = torch.tensor(generations_probas, dtype=torch.float32, requires_grad=True)
+        generations_probas = torch.tensor(generations_probas, dtype=torch.float32, requires_grad=True).to(args['device'])
         output_probas = finetuning_model(generations_probas)
-        loss = ce_loss(output_probas, torch.tensor(batch_labels))
+        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device']))
 
         loss.backward()
         optimizer.step()
@@ -79,6 +79,9 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
 
         # update the weights of the main model
         model.lm_head.weight = finetuning_model.lm_head.weight 
+
+        toc = time.time()
+        print("Elapsed time: ", toc-tic)
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
@@ -132,9 +135,9 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment):
         # deduce predictions probabilities from predictions
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         # pass the "probas" through the finetuning model to compute loss and update main model head
-        generations_probas = torch.tensor(generations_probas, dtype=torch.float32, requires_grad=True)
+        generations_probas = torch.tensor(generations_probas, dtype=torch.float32, requires_grad=True).to(args['device'])
         output_probas = finetuning_model(generations_probas)
-        loss = ce_loss(output_probas, torch.tensor(batch_labels))
+        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device']))
 
         loss_it.append(loss.item())
 
@@ -229,6 +232,7 @@ def run_exp(args, model_path, experiment, episodes=10):
     finetuning_model.lm_head.weight = model.lm_head.weight
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     for p in finetuning_model.anti_pool.parameters(): p.requires_grad = False
+    finetuning_model.to(args['device'])
 
     # run training and validation
     val_losses = run_epochs(args, model, finetuning_model, stoi, itos, experiment)
@@ -245,12 +249,12 @@ def run_exp(args, model_path, experiment, episodes=10):
 if __name__ == "__main__":
 
     args = {'vocab_size':239267, # new vocab size corresponding to the new dataset
-            'batch_size':8,
+            'batch_size':32,
             'block_size':64, 
-            'train_iters':10,
-            'eval_iters':1,
+            'train_iters':100,
+            'eval_iters':10,
             'lr':1e-3,
-            'device':activate_gpu(force_cpu=True),
+            'device':activate_gpu(),
             'max_eps':10,
             'n_embd':64,
             'n_heads':8,

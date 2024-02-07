@@ -4,5 +4,6 @@ babyLM/openwebtext
 babyLM/objects/
 babyLM/models/
 babyLM/wikitalk/
+babyLM/logs/
 babyLM/bookreviews/
 babyLM/wikitalk_sentencebert/

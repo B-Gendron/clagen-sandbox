@@ -321,9 +321,9 @@ def parse_indexes(levels_dict):
 
     result_dict = dict(sorted(levels_indexes_dict.items()))
 
-    # remove the keys after the 10 first utterances to be consistent with padding strategy
-    if len(result_dict) > 10:
-        result_dict = {k:result_dict[k] for k in list(result_dict.keys())[:10]}
+    # DEPRECATED CAUSE NO LONGER WORKING WITH DIALOGUES HERE remove the keys after the 10 first utterances to be consistent with padding strategy
+    # if len(result_dict) > 10:
+    #     result_dict = {k:result_dict[k] for k in list(result_dict.keys())[:10]}
 
     return result_dict
 
@@ -366,7 +366,7 @@ def generate_from_random_prompts(args, model, stoi, itos):
             batch_labels.append(2)
         prompt = encode(stoi, tokenizer.tokenize(prompt))
         prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
-        generation = model.generate(prompt, max_new_tokens=15, block_size=args['block_size'])[0] # reduce max_new_tokens value to accelerate fine-tuning
+        generation = model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])[0] # reduce max_new_tokens value to accelerate fine-tuning
         generation = decode(generation.tolist(), itos)
         batch_generations.append(generation)
 
