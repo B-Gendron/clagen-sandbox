@@ -1,9 +1,9 @@
-babyLM/code/__pycache__
-babyLM/openwebtext
+code/__pycache__
+openwebtext
 /plots
-babyLM/objects/
-babyLM/models/
-babyLM/wikitalk/
-babyLM/logs/
-babyLM/bookreviews/
-babyLM/wikitalk_sentencebert/
+objects/
+models/
+wikitalk/
+logs/
+bookreviews/
+wikitalk_sentencebert/
