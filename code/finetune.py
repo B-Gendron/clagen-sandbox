@@ -75,7 +75,6 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
         optimizer.zero_grad()
 
         loss_it.append(loss.item())
-        print(loss_it)
 
         # update the weights of the main model
         model.lm_head.weight = finetuning_model.lm_head.weight 

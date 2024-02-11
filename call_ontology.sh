@@ -12,7 +12,7 @@ file_path="$2"
 
 # Move to the other GitHub repo
 initial_path="../OntoGPT/code"
-new_path="../../../OntoUttPreprocessing/"
+new_path="../../OntoUttPreprocessing/"
 cd $new_path
 # echo Change location to $new_path
 script_path="code/finetuning_batch_individuals.py"
