@@ -205,18 +205,19 @@ if __name__ == "__main__":
 
     # hyperparameters default config
     args = {
-        'vocab_size':vocab_size, # +3 readability levels
-        'batch_size':16, # should be bigger that 16 to accelerate training (but avoid memory errors)
-        'block_size':64, 
-        'max_iters':5000,
+        'vocab_size':vocab_size,    # new vocab size corresponding to the new dataset
+        'batch_size':16,            # size of the batch, the greater bsize the greater number of data samples
+        'block_size':64,            # Transformer block size in the language model
+        'max_iters':5000,           # number of iterations in one training epoch
         'eval_interval':100,
-        'lr':1e-3,
-        'device':activate_gpu(),
-        'eval_iters':1000,
-        'n_embd':64,
-        'n_heads':8,
-        'n_layers':24,
-        'dropout':0.3,
+        'lr':1e-3,                  # learning rate
+        'device':activate_gpu(),    # set device for training. Disable force_cpu to run on gpu if available
+        'eval_iters':1000,          # number of iterations in one validation/test epoch
+        'n_embd':64,                # embedding size
+        'n_heads':8,                # number of attention heads for one transformer block
+        'n_layers':24,              # number of Transformer layers in the language model
+        'dropout':0.3,              # dropout rate
+        'writer':SummaryWriter(f"../logs/{get_datetime()}") # Tensorboard util
     }
 
     # update params depending of the arguments

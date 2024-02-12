@@ -150,25 +150,6 @@ class BabyLanguageModel(nn.Module):
         return idx
 
 
-    def predict_readability_levels(self, idx, block_size):
-        idx_cond = idx[:, -block_size:]
-        # handle out-of-range indices
-        idx_cond = torch.clamp(idx_cond, max=self.token_embedding_table.num_embeddings - 1)
-
-        logits, _ = self(idx_cond)
-        logits = logits[:, -1, :] # becomes (B, C)
-        # TODO select logits for readability levels
-        probas = F.softmax(logits, dim=-1)
-
-        # return token index with max proba among the 3 readability levels
-        last_token_probas = probas[0]
-        v_size = probas[0].size()[0]
-
-        rl_probas = [last_token_probas[k] for k in [v_size - i for i in range(3, 0, -1)]]
-        
-        return torch.stack(rl_probas)
-    
-
 class TrainableHead(nn.Module):
     '''
         An auxiliary model to update the babylm model lm_head layer using generation redability levels predictions.

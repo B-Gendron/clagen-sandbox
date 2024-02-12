@@ -37,14 +37,16 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
         @param args (str):                 the hyperparameters for the training
-        @param model:                      the model to train
-        @param optimizer:                  the optimizer to use for training
+        @param model:                      the pretrained model to use for inference
+        @param finetuning_model:           the model used for weight updates in fine-tuning
         @param stoi (dict):                the string-to-index dict from the pretraining vocab
         @param itos (list):                the index-to-string list from the pretraining vocab
         @param epoch (int):                the index of the current epoch
         @param experiment (str):           the experiment name
 
         @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
+        @return trues (list):              list of gold labels to be stored later
+        @return preds (list):              list of the associated predictions to be stored later
     '''
     finetuning_model.train()
     optimizer = torch.optim.Adam(finetuning_model.parameters(), lr=args['lr'])
@@ -102,14 +104,16 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment):
         Perfom one epoch of model evaluation, either as validation or test.
 
         @param args (str):                 the hyperparameters for the training
-        @param model:                      the model to train
+        @param model:                      the pretrained model to use for inference
+        @param finetuning_model:           the model used for weight updates in fine-tuning
         @param stoi (dict):                the string-to-index dict from the pretraining vocab
         @param itos (list):                the index-to-string list from the pretraining vocab
-        @param epoch (int):                the index of the current epoch
         @param target (str):               either 'validation' or 'test', for a better display
         @param experiment (str):           the experiment name
 
         @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
+        @return trues (list):              list of gold labels to be stored later
+        @return preds (list):              list of the associated predictions to be stored later
     '''
     finetuning_model.eval()
     writer = args['writer']
@@ -160,7 +164,19 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment):
     return loss_it_avg, trues, preds
 
 
-def run_epochs(args, model, finetuning_model, stoi, itos, experiment):
+def run_episodes(args, model, finetuning_model, stoi, itos, experiment):
+    '''
+        Run all episodes of the fine-tuning (train + validation).
+
+        @param args (dict):                 the hyperparameters for the training
+        @param model:                       the pretrained model to use for inference
+        @param finetuning_model:            the model used for weight updates in fine-tuning
+        @param stoi (dict):                 the string-to-index dict from the pretraining vocab
+        @param itos (list):                 the index-to-string list from the pretraining vocab
+        @param experiment (str):            the name of the experiment
+
+        @return val_losses (list):          the losses on validation sets (length = number of val_iters)
+    '''
     val_losses = []
 
     for ep in range(args['max_eps']):
@@ -184,10 +200,11 @@ def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experime
 
         @param args (dict):                 the hyperparameters for the training
         @param model:                       the pretrained model to use for inference
+        @param finetuning_model:            the model used for weight updates in fine-tuning
         @param stoi (dict):                 the string-to-index dict from the pretraining vocab
         @param itos (list):                 the index-to-string list from the pretraining vocab
         @param experiment (str):            the name of the experiment
-        @param episoddes (int):             the number of test sets to infer on (default=10)
+        @param episodes (int):              the number of test sets to infer on (default=10)
 
         @return test_losses (list):         the losses on test sets (length = number of episodes)
     '''
@@ -210,7 +227,7 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
         @param model_path (str):      either from a local storage (hf=False), or from huggingface hub (hf=True)
         @param experiment (str):      name of the experiment 
         @param episodes (int):        number of times the test step should be performed (to compute descriptive stats on metrics)
-        @param hf (bool):             a flag that indicates is the model should be loaded from huggingface hub
+        @param hf:                    False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
 
         @return val_losses (list):    all val losses for all the 'epochs'
         @return test_losses (list):   all test losses from all the episodes
@@ -261,7 +278,7 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
     finetuning_model.to(args['device'])
 
     # run training and validation
-    val_losses = run_epochs(args, model, finetuning_model, stoi, itos, experiment)
+    val_losses = run_episodes(args, model, finetuning_model, stoi, itos, experiment)
 
     # run test 
     test_losses = run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes)
@@ -274,24 +291,20 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
 
 if __name__ == "__main__":
 
-    args = {'vocab_size':239267, # new vocab size corresponding to the new dataset
-            'batch_size':32,
-            'block_size':64, 
-            'train_iters':100,
-            'eval_iters':10,
-            'lr':1e-1,
-            'device':activate_gpu(force_cpu=True),
-            'max_eps':10,
-            'n_embd':64,
-            'n_heads':8,
-            'n_layers':24,
-            'dropout':0.3,
-            'writer':SummaryWriter(f"../logs/{get_datetime()}_{64}")
+    args = {'vocab_size':239267,                    # new vocab size corresponding to the new dataset
+            'batch_size':32,                        # size of the batch, the greater bsize the greater number of data samples
+            'train_iters':100,                      # number of train batches to consider in one episode
+            'eval_iters':10,                        # number of validation/test batches to consider in one episode
+            'lr':1e-3,                              # learning rate
+            'device':activate_gpu(force_cpu=True),  # set device for training. Desable force_cpu to run on gpu if available
+            'max_eps':10,                           # number of episodes (max of episodes in case of early stopping)
+            'hf':False,                             # False if BabyLM, otherwise llama, falcon, mistral,... 
         }
 
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
 
     model_name = "meta-llama/Llama-2-7b-chat-hf"
+    args.update({'hf':'llama'})
 
     run_exp(args, model_name, 'firstTestOnGPU', hf=True)
 
