@@ -39,14 +39,19 @@ from models import BabyLanguageModel
     
     
 def get_data(folder_name):
+    '''
+        Fetch data in a .txt file named 'data.txt' inside folder_name folder located at the same level than the code folder containing this script.
+
+        @param folder_name (str):           the name of the folder (browsed as ../folder_name)
+
+        @return text_data (list):           an array containing all the tokenized text data
+    '''
     file_path = os.path.join(f'../{folder_name}', "data.txt")
     text_data = []
     with open(file_path, 'r', encoding='latin-1') as f:
         # yield tokens from each line
         for line in tqdm(f):
-            # apply tokenizer
-            # tokens = tokenize(line, padding="max_length", max_length=512, truncation=True)
-            # tokens = tokens['input_ids'] # retrieve only input_ids from the pretrained bert tokenizer
+            # apply tweet tokenizer
             tokens = tokenizer.tokenize(line.lower())
             if tokens != []:
                 text_data.extend(tokens)
@@ -55,6 +60,9 @@ def get_data(folder_name):
 
 
 def token_generator():
+    '''
+        A basic generator for to use torch.Vocab function `build_vocab_from_iterator()`
+    '''
     for token in all_tokens:
         yield [token] # put the token inside a list so the vocab is not character-wise
 
@@ -62,7 +70,13 @@ def token_generator():
 # Train and test splits
 def train_val_split(stoi, data, train_ratio=0.9):
     '''
-        Processes train/val split according to the given train_ratio (default = 90% of the dataset is used for training)
+        Processes train/val split according to the given train_ratio (default = 90% of the dataset is used for training). Data in 
+
+        @param stoi (dict):             the string-to-index dict from the pretraining vocab
+        @param data (list):             the full text_data array from `get_data()`
+        @param train_ratio (float):     the train/val ratio, default=0.9
+
+        @return train_data (tensor)
     '''
     tensor_data = torch.tensor(encode(stoi, data), dtype=torch.long)
     n = int(train_ratio*len(tensor_data))
