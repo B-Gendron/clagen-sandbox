@@ -32,7 +32,7 @@ from utils import *
 from models import BabyLanguageModel, TrainableHead
 
 
-def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
+def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False):
     '''
         Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
 
@@ -43,6 +43,7 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
         @param itos (list):                the index-to-string list from the pretraining vocab
         @param epoch (int):                the index of the current epoch
         @param experiment (str):           the experiment name
+        @param hf:                         False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
 
         @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
         @return trues (list):              list of gold labels to be stored later
@@ -58,7 +59,7 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) 
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf) 
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
@@ -99,7 +100,7 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment):
     return loss_it_avg, trues, preds
 
 
-def test(args, model, finetuning_model, stoi, itos, target, experiment):
+def test(args, model, finetuning_model, stoi, itos, target, experiment, hf=False):
     '''
         Perfom one epoch of model evaluation, either as validation or test.
 
@@ -110,6 +111,7 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment):
         @param itos (list):                the index-to-string list from the pretraining vocab
         @param target (str):               either 'validation' or 'test', for a better display
         @param experiment (str):           the experiment name
+        @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
 
         @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
         @return trues (list):              list of gold labels to be stored later
@@ -124,7 +126,7 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment):
 
     for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
 
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos) 
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf) 
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
@@ -164,7 +166,7 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment):
     return loss_it_avg, trues, preds
 
 
-def run_episodes(args, model, finetuning_model, stoi, itos, experiment):
+def run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=False):
     '''
         Run all episodes of the fine-tuning (train + validation).
 
@@ -174,6 +176,7 @@ def run_episodes(args, model, finetuning_model, stoi, itos, experiment):
         @param stoi (dict):                 the string-to-index dict from the pretraining vocab
         @param itos (list):                 the index-to-string list from the pretraining vocab
         @param experiment (str):            the name of the experiment
+        @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
 
         @return val_losses (list):          the losses on validation sets (length = number of val_iters)
     '''
@@ -181,8 +184,8 @@ def run_episodes(args, model, finetuning_model, stoi, itos, experiment):
 
     for ep in range(args['max_eps']):
         # perform training and validation runs
-        _, train_trues, train_preds = train(args, model, finetuning_model, stoi, itos, ep, experiment)
-        val_loss, val_trues, val_preds = test(args, model, finetuning_model, stoi, itos, 'validation', experiment)
+        _, train_trues, train_preds = train(args, model, finetuning_model, stoi, itos, ep, experiment, hf=hf)
+        val_loss, val_trues, val_preds = test(args, model, finetuning_model, stoi, itos, 'validation', experiment, hf=hf)
  
         # save epoch trues and preds for train and validation
         save_epoch_data('train', train_trues, train_preds, ep, experiment)
@@ -194,7 +197,7 @@ def run_episodes(args, model, finetuning_model, stoi, itos, experiment):
     return val_losses
 
 
-def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes=10):
+def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes=10, hf=False):
     '''
         This function accounts for model stability by testing the model on different test sets depending on the number of episodes. Predictions are stored for each episode so all the classification metrics can be computed as well as their mean and standard deviation.
 
@@ -205,13 +208,14 @@ def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experime
         @param itos (list):                 the index-to-string list from the pretraining vocab
         @param experiment (str):            the name of the experiment
         @param episodes (int):              the number of test sets to infer on (default=10)
+        @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
 
         @return test_losses (list):         the losses on test sets (length = number of episodes)
     '''
     test_losses = []
 
     for i in range(episodes):
-        test_loss, test_trues, test_preds = test(args, model, finetuning_model, stoi, itos, 'test')
+        test_loss, test_trues, test_preds = test(args, model, finetuning_model, stoi, itos, 'test', hf=hf)
         save_epoch_data('test', test_trues, test_preds, i, experiment)
 
         test_losses.append(test_loss)
@@ -241,7 +245,7 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
     # Getting stoi and itos dicts
     itos, stoi = load_vocab_mappings()
 
-    if hf:
+    if hf == 'llama':
         model = AutoModelForCausalLM.from_pretrained(  
             model_name,
             low_cpu_mem_usage=True,
@@ -250,7 +254,7 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
             device_map=args['device'],
         )
 
-        # freeze all layers except lm_head
+        # freeze all layers except lm_head (not the better option but just to test)
         for p in model.parameters(): p.requires_grad = False
         for p in model.lm_head.parameters(): p.requires_grad = True
 
@@ -278,10 +282,10 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
     finetuning_model.to(args['device'])
 
     # run training and validation
-    val_losses = run_episodes(args, model, finetuning_model, stoi, itos, experiment)
+    val_losses = run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=hf)
 
     # run test 
-    test_losses = run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes)
+    test_losses = run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes, hf=hf)
 
     # log all classification metrics from saved trues/preds
     ## TBC
@@ -293,11 +297,17 @@ if __name__ == "__main__":
 
     args = {'vocab_size':239267,                    # new vocab size corresponding to the new dataset
             'batch_size':32,                        # size of the batch, the greater bsize the greater number of data samples
+            'block_size':64,            # Transformer block size in the language model
             'train_iters':100,                      # number of train batches to consider in one episode
             'eval_iters':10,                        # number of validation/test batches to consider in one episode
             'lr':1e-3,                              # learning rate
             'device':activate_gpu(force_cpu=True),  # set device for training. Desable force_cpu to run on gpu if available
             'max_eps':10,                           # number of episodes (max of episodes in case of early stopping)
+            'n_embd':64,                # embedding size
+            'n_heads':8,                # number of attention heads for one transformer block
+            'n_layers':24,              # number of Transformer layers in the language model
+            'dropout':0.3,              # dropout rate
+            'writer':SummaryWriter(f"../logs/{get_datetime()}"), # Tensorboard util
             'hf':False,                             # False if BabyLM, otherwise llama, falcon, mistral,... 
         }
 
@@ -306,7 +316,7 @@ if __name__ == "__main__":
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     args.update({'hf':'llama'})
 
-    run_exp(args, model_name, 'firstTestOnGPU', hf=True)
+    run_exp(args, model_name, 'firstTestOnGPU', hf='llama')
 
 
     # [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:

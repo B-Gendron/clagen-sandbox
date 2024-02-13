@@ -350,25 +350,50 @@ def get_readability_levels(indiv_path):
 
     return labels
 
+def random_prompt(classes):
+    '''
+        This auxiliary function allows to get a prompt that ask for a sentence belonging to a certain class among given classes. It is for now used for readability levels but is meant for a more general purpose.
 
-def generate_from_random_prompts(args, model, stoi, itos):
+        @param classes (list):      a list or strings giving the names of all the classes 
+
+        @return prompt (str):       the randomly selected prompt to use for generation
+        @return class_index (int):  the index of the corresponding class that is asked in the prompt 
+    '''
+    p = rd.uniform()
+    n = len(classes)
+    for k in range(1, n+1):
+        if (k-1)/n < p < k/n:
+            prompt = f"A {classes[k-1]} sentence: "
+            return prompt, k-1
+
+
+def generate_from_random_prompts(args, model, stoi, itos, hf=False):
+    classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
     batch_labels, batch_generations = [], []
-    for _ in range(args['batch_size']):
-        p = rd.uniform()
-        if p < 1/3:
-            prompt = f"A EasilyReadableText sentence: "
-            batch_labels.append(0)
-        elif p > 1/3 and p < 2/3:
-            prompt = f"A StandardReadableText sentence: "
-            batch_labels.append(1)
-        else:
-            prompt = f"A HardlyReadableText sentence: "
-            batch_labels.append(2)
-        prompt = encode(stoi, tokenizer.tokenize(prompt))
-        prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
-        generation = model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])[0] # reduce max_new_tokens value to accelerate fine-tuning
-        generation = decode(generation.tolist(), itos)
-        batch_generations.append(generation)
+
+    if hf == 'llama':
+        for _ in range(args['batch_size']):
+            # get a randomly selected prompt (uniform law)
+            prompt, label = random_prompt(classes)
+            batch_labels.append(label)
+            # perform generation (to be adapted to llama)
+            generation = ...
+            # store result
+            batch_generations.append(generation)
+
+    else:
+        for _ in range(args['batch_size']):
+            # get a randomly selected prompt (uniform law)
+            prompt, label = random_prompt(classes)
+            batch_labels.append(label)
+            # encode the prompt
+            prompt = encode(stoi, tokenizer.tokenize(prompt))
+            prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
+            # perform generation
+            generation = model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])[0] # reduce max_new_tokens value to accelerate fine-tuning
+            generation = decode(generation.tolist(), itos)
+            # store result
+            batch_generations.append(generation)
 
     return batch_labels, batch_generations
 
