@@ -223,12 +223,12 @@ def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experime
     return test_losses
 
 
-def run_exp(args, model_path, experiment, episodes=10, hf=False):
+def run_exp(args, model_name, experiment, episodes=10, hf=False):
     '''
         Run an end-to-end finetuning.
 
         @param args (dict):           the dict containing all the hyperparameters
-        @param model_path (str):      either from a local storage (hf=False), or from huggingface hub (hf=True)
+        @param model_name (str):      either from a local storage (hf=False), or from huggingface hub (hf=True)
         @param experiment (str):      name of the experiment 
         @param episodes (int):        number of times the test step should be performed (to compute descriptive stats on metrics)
         @param hf:                    False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
@@ -246,6 +246,7 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
     itos, stoi = load_vocab_mappings()
 
     if hf == 'llama':
+        # setup model
         model = AutoModelForCausalLM.from_pretrained(  
             model_name,
             low_cpu_mem_usage=True,
@@ -253,7 +254,14 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
             torch_dtype=torch.float16,
             device_map=args['device'],
         )
+        # setup tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "right"
 
+        # store the pipe to use it in generation
+        pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_length=10)
+        args.update({'pipe':pipe})
         # freeze all layers except lm_head (not the better option but just to test)
         for p in model.parameters(): p.requires_grad = False
         for p in model.lm_head.parameters(): p.requires_grad = True
@@ -262,9 +270,9 @@ def run_exp(args, model_path, experiment, episodes=10, hf=False):
         # Load the pretrained model weights
         model = BabyLanguageModel(args)
         if args['device'] == 'cpu':
-            model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+            model.load_state_dict(torch.load(model_name, map_location=torch.device('cpu')))
         else:
-            model.load_state_dict(torch.load(model_path))
+            model.load_state_dict(torch.load(model_name))
         model.to(args['device'])
 
         # freeze all layers except model.lm_head
@@ -312,7 +320,6 @@ if __name__ == "__main__":
         }
 
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
-
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     args.update({'hf':'llama'})
 

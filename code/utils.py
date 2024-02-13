@@ -372,12 +372,15 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
     batch_labels, batch_generations = [], []
 
     if hf == 'llama':
+        # retrieve pipe
+        pipe = args['pipe']
         for _ in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(classes)
             batch_labels.append(label)
             # perform generation (to be adapted to llama)
-            generation = ...
+            generation = pipe(f"<s>[INST] {prompt} [/INST]")
+            print(generation)
             # store result
             batch_generations.append(generation)
 
