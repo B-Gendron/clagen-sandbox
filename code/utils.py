@@ -393,7 +393,7 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
             prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
             # perform generation (to be adapted to llama)
-            result = pipe(prompt)
+            result = pipe(prompt, repetition_penalty=1.1, do_sample=True, temperature=1.5, top_k=50, top_p=0.99)
             gen = result[0]['generated_text']
             generation = gen[gen.find(')')+1:]
             # store result

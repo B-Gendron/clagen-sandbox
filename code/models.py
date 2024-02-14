@@ -160,17 +160,19 @@ class TrainableHead(nn.Module):
         n_embd = args['n_embd']
         vocab_size = args['vocab_size']
         self.lm_head = nn.Linear(n_embd, vocab_size, bias=False) # bias=False to be consistent with llama
-        self.pool = nn.Linear(vocab_size, n_rl)
         self.anti_pool = nn.Linear(n_rl, n_embd)
+        self.pool = nn.Linear(vocab_size, n_rl)
         self.softmax = nn.Softmax(dim=1)
+        self.batch_norm = nn.BatchNorm1d(n_rl)
 
         self.penalty = 1e-4
 
     def forward(self, x_input):
-        x = self.softmax(x_input)
-        x = self.anti_pool(x)
+        # x = self.softmax(x_input)
+        x = self.anti_pool(x_input)
         x = self.lm_head(x)
         x = self.pool(x)
-        x = self.penalty*self.softmax(x) + x_input # 
+        x = 1e-2*self.softmax(x) + x_input
+        # x = self.batch_norm(x) + x_input
 
         return x

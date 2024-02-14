@@ -36,6 +36,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # set default tensor type
 torch.set_default_dtype(torch.float16)
+torch.set_printoptions(precision=10)
 
 
 def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False):
@@ -56,7 +57,7 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         @return preds (list):              list of the associated predictions to be stored later
     '''
     finetuning_model.train()
-    optimizer = torch.optim.Adam(finetuning_model.parameters(), lr=args['lr'])
+    optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'], fused=torch.float16)
 
     writer = args['writer']
     loss_it = []
@@ -81,12 +82,11 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         # pass the "probas" through the finetuning model to compute loss and update main model head
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
         output_probas = finetuning_model(generations_probas)
-        loss = ce_loss(torch.tensor(output_probas, dtype=torch.float32, requires_grad=True), torch.tensor(batch_labels).to(args['device'])) # convert to float32 so optimizer.step() can be performed
 
+        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
-
         loss_it.append(loss.item())
         print(loss_it)
 
@@ -262,15 +262,22 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         )
         # setup tokenizer
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+        # tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = "right"
 
         # store the pipe to use it in generation
-        pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_new_tokens=20) # increase max_new_tokens to generate HardlyReadableText
+        pipe = pipeline(task="text-generation", 
+                        model=model, 
+                        tokenizer=tokenizer, 
+                        max_new_tokens=20) # increase max_new_tokens to generate HardlyReadableText
         args.update({'pipe':pipe})
         # freeze all layers except lm_head (not the better option but just to test)
         for p in model.parameters(): p.requires_grad = False
         for p in model.lm_head.parameters(): p.requires_grad = True
+
+        for n, p in model.named_parameters(): print(n, p.size())
+        exit()
 
     else:
         # Load the pretrained model weights
@@ -290,11 +297,15 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
 
     # Setup finetuning model
     finetuning_model = TrainableHead(args)
-    finetuning_model.lm_head.weight = model.lm_head.weight
-
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     for p in finetuning_model.anti_pool.parameters(): p.requires_grad = False
+    for p in finetuning_model.lm_head.parameters(): p.requires_grad = True
+    finetuning_model.lm_head.weight = model.lm_head.weight
     finetuning_model.to(args['device'])
+
+    # Check for requires_grad at right places
+    # for n, p in model.named_parameters(): print(n, p.requires_grad)
+    # for n, p in finetuning_model.named_parameters(): print(n, p.requires_grad)
 
     # run training and validation
     val_losses = run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=hf)
@@ -315,7 +326,7 @@ if __name__ == "__main__":
             'block_size':64,            # Transformer block size in the language model
             'train_iters':100,          # number of train batches to consider in one episode
             'eval_iters':10,            # number of validation/test batches to consider in one episode
-            'lr':1e-3,                  # learning rate
+            'lr':0.001,                 # learning rate
             'device':activate_gpu(),    # set device for training. Desable force_cpu to run on gpu if available
             'max_eps':10,               # number of episodes (max of episodes in case of early stopping)
             'n_embd':64,                # embedding size
