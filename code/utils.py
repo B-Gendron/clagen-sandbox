@@ -21,6 +21,11 @@ from sklearn.metrics import classification_report, roc_auc_score, f1_score
 from nltk.tokenize import TweetTokenizer
 tokenizer = TweetTokenizer()
 
+import warnings
+warnings.filterwarnings('ignore')
+
+# set default tensor type
+torch.set_default_dtype(torch.float16)
 
 # -----------------------------------------------------------------------------------------
 # General purpose auxiliary functions
@@ -163,6 +168,7 @@ def save_batch_generations(batch_generations, batch_index):
         tsv_writer = csv.writer(f, delimiter='\t')
 
         for row in batch_generations:
+            row = row.replace('\n', '\\n')
             tsv_writer.writerow([row])
 
     return file_path[3:] # remove ../ to make it relative
@@ -177,7 +183,7 @@ def store_split_generations(split, file_paths, trues, experiment):
         @param experiment (str):        the name of the experiment (=folder where all logs are saved)
     '''
     readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
-    with open(f'../results/{experiment}/generations_{split}.tsv', 'w') as all_gens:
+    with open(f'../results/{experiment}/generations_{split}.tsv', 'a') as all_gens:
         tsv_writer = csv.writer(all_gens, delimiter='\t')
         # iterate through batch files
         for i, path in enumerate(file_paths):
@@ -350,24 +356,32 @@ def get_readability_levels(indiv_path):
 
     return labels
 
-def random_prompt(classes):
+def random_prompt(concept, classes, hf=False):
     '''
         This auxiliary function allows to get a prompt that ask for a sentence belonging to a certain class among given classes. It is for now used for readability levels but is meant for a more general purpose.
 
-        @param classes (list):      a list or strings giving the names of all the classes 
+        @param concept (str):               the name of the ontology concept we want to learn, that is divided into the following classes
+        @param classes (list):              a list or strings giving the names of all the classes 
 
-        @return prompt (str):       the randomly selected prompt to use for generation
-        @return class_index (int):  the index of the corresponding class that is asked in the prompt 
+        @return prompt (str):               the randomly selected prompt to use for generation
+        @return class_index (int):          the index of the corresponding class that is asked in the prompt 
+        @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
     '''
+    start_of_sentence = ['A', 'The', 'Yesterday', 'Hello', 'Here', 'In', 'For', 'Yes', 'Tomorrow', 'Today']
     p = rd.uniform()
     n = len(classes)
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
-            prompt = f"A {classes[k-1]} sentence: "
-            return prompt, k-1
+            if hf == 'llama':
+                prompt = f"({concept}: {classes[k-1]}) {rd.choice(np.array(start_of_sentence))}"
+                return prompt, k-1
+            else: 
+                prompt = f"A sentence whose {concept} is {classes[k-1]}: The"
+                return prompt, k-1
 
 
 def generate_from_random_prompts(args, model, stoi, itos, hf=False):
+    concept = 'ReadabilityLevel'
     classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
     batch_labels, batch_generations = [], []
 
@@ -376,24 +390,25 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
         pipe = args['pipe']
         for _ in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
-            prompt, label = random_prompt(classes)
+            prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
             # perform generation (to be adapted to llama)
-            generation = pipe(f"<s>[INST] {prompt} [/INST]")
-            print(generation)
+            result = pipe(prompt)
+            gen = result[0]['generated_text']
+            generation = gen[gen.find(')')+1:]
             # store result
             batch_generations.append(generation)
 
     else:
         for _ in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
-            prompt, label = random_prompt(classes)
+            prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
             # encode the prompt
             prompt = encode(stoi, tokenizer.tokenize(prompt))
-            prompt = torch.tensor(prompt, dtype=torch.long).unsqueeze(-1).to(args['device'])
+            prompt = torch.tensor(prompt, dtype=torch.float16).unsqueeze(-1).to(args['device'])
             # perform generation
-            generation = model.generate(prompt, max_new_tokens=10, block_size=args['block_size'])[0] # reduce max_new_tokens value to accelerate fine-tuning
+            generation = model.generate(prompt, max_new_tokens=20, block_size=args['block_size'])[0] # increase max_new_tokens to generate HardlyReadableText
             generation = decode(generation.tolist(), itos)
             # store result
             batch_generations.append(generation)
@@ -408,7 +423,6 @@ def parse_output_and_deduce_class(output, itos):
         @param itos (list): the mapping from token indexes to their corresponding strings
     '''
     decoded_output = decode(output, itos)
-    print(decoded_output)
     predicted_class = 3 # let's say we add a class "unable to classify"
 
     if 'EasilyReadableText' in decoded_output:

@@ -31,6 +31,12 @@ from torch.utils.tensorboard import SummaryWriter
 from utils import *
 from models import BabyLanguageModel, TrainableHead
 
+# disable hf tokenizer parallelism warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# set default tensor type
+torch.set_default_dtype(torch.float16)
+
 
 def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False):
     '''
@@ -59,7 +65,7 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf) 
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf)
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
@@ -73,22 +79,22 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         # deduce predictions "probabilities" from predictions
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         # pass the "probas" through the finetuning model to compute loss and update main model head
-        generations_probas = torch.tensor(generations_probas, dtype=torch.float32, requires_grad=True).to(args['device'])
+        generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
         output_probas = finetuning_model(generations_probas)
-        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device']))
+        loss = ce_loss(torch.tensor(output_probas, dtype=torch.float32, requires_grad=True), torch.tensor(batch_labels).to(args['device'])) # convert to float32 so optimizer.step() can be performed
 
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
 
         loss_it.append(loss.item())
+        print(loss_it)
 
         # update the weights of the main model
         model.lm_head.weight = finetuning_model.lm_head.weight 
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
-
     loss_it_avg = sum(loss_it)/len(loss_it)
 
     # print useful information about the training progress and scores on this training set's full pass
@@ -260,7 +266,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         tokenizer.padding_side = "right"
 
         # store the pipe to use it in generation
-        pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_length=10)
+        pipe = pipeline(task="text-generation", model=model, tokenizer=tokenizer, max_new_tokens=20) # increase max_new_tokens to generate HardlyReadableText
         args.update({'pipe':pipe})
         # freeze all layers except lm_head (not the better option but just to test)
         for p in model.parameters(): p.requires_grad = False
@@ -285,6 +291,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
     # Setup finetuning model
     finetuning_model = TrainableHead(args)
     finetuning_model.lm_head.weight = model.lm_head.weight
+
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     for p in finetuning_model.anti_pool.parameters(): p.requires_grad = False
     finetuning_model.to(args['device'])
@@ -303,36 +310,42 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
 
 if __name__ == "__main__":
 
-    args = {'vocab_size':239267,                    # new vocab size corresponding to the new dataset
-            'batch_size':32,                        # size of the batch, the greater bsize the greater number of data samples
+    args = {'vocab_size':239267,        # new vocab size corresponding to the new dataset
+            'batch_size':32,            # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,            # Transformer block size in the language model
-            'train_iters':100,                      # number of train batches to consider in one episode
-            'eval_iters':10,                        # number of validation/test batches to consider in one episode
-            'lr':1e-3,                              # learning rate
-            'device':activate_gpu(force_cpu=True),  # set device for training. Desable force_cpu to run on gpu if available
-            'max_eps':10,                           # number of episodes (max of episodes in case of early stopping)
+            'train_iters':100,          # number of train batches to consider in one episode
+            'eval_iters':10,            # number of validation/test batches to consider in one episode
+            'lr':1e-3,                  # learning rate
+            'device':activate_gpu(),    # set device for training. Desable force_cpu to run on gpu if available
+            'max_eps':10,               # number of episodes (max of episodes in case of early stopping)
             'n_embd':64,                # embedding size
             'n_heads':8,                # number of attention heads for one transformer block
             'n_layers':24,              # number of Transformer layers in the language model
             'dropout':0.3,              # dropout rate
             'writer':SummaryWriter(f"../logs/{get_datetime()}"), # Tensorboard util
-            'hf':False,                             # False if BabyLM, otherwise llama, falcon, mistral,... 
+            'hf':False,                 # False if BabyLM, otherwise llama, falcon, mistral,... 
         }
 
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     model_name = "meta-llama/Llama-2-7b-chat-hf"
-    args.update({'hf':'llama'})
+    # update args to run finetuning trainable head with appropriate dimensions
+    args.update({'hf':'llama', 'vocab_size':32000, 'n_embd':4096})
 
-    run_exp(args, model_name, 'firstTestOnGPU', hf='llama')
+    run_exp(args, model_name, '1402_llama2_finetuning', hf='llama')
 
 
-    # [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
-        # - generates a sentence with a readability level instruction given in prompt
-        # - add this infividual to a temp rdf file for the batch
-        # - perform inference on this file (like it is done in create_individuals.py)
-        # - uses the mapping class -> class index to finally output the individual class
-    
-    # [x] OPTION 2: change the prompt to finish on last utterance by (ReadabilityLevel= which encourages the model to learn the concept of readability (in a final test step we can use OPTION 1 to check of the model actually learnt something). We need a function that:
-        # - decodes the output
-        # - parses it to deduce the predicted readability level
-        # - maps it to the class index, and that's all :)
+
+
+
+# ---
+
+# [x] OPTION 1: check the readability class of the output. To do so, write an auxiliary function that:
+    # - generates a sentence with a readability level instruction given in prompt
+    # - add this infividual to a temp rdf file for the batch
+    # - perform inference on this file (like it is done in create_individuals.py)
+    # - uses the mapping class -> class index to finally output the individual class
+
+# [x] OPTION 2: change the prompt to finish on last utterance by (ReadabilityLevel= which encourages the model to learn the concept of readability (in a final test step we can use OPTION 1 to check of the model actually learnt something). We need a function that:
+    # - decodes the output
+    # - parses it to deduce the predicted readability level
+    # - maps it to the class index, and that's all :)

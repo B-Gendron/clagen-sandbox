@@ -4,7 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils import parse_output_and_deduce_class, load_vocab_mappings
+# set default tensor type
+torch.set_default_dtype(torch.float16)
 
 class Head(nn.Module):
     """ one head of self-attention """
@@ -158,16 +159,18 @@ class TrainableHead(nn.Module):
         super(TrainableHead, self).__init__()
         n_embd = args['n_embd']
         vocab_size = args['vocab_size']
-        self.lm_head = nn.Linear(n_embd, vocab_size)
+        self.lm_head = nn.Linear(n_embd, vocab_size, bias=False) # bias=False to be consistent with llama
         self.pool = nn.Linear(vocab_size, n_rl)
         self.anti_pool = nn.Linear(n_rl, n_embd)
         self.softmax = nn.Softmax(dim=1)
+
+        self.penalty = 1e-4
 
     def forward(self, x_input):
         x = self.softmax(x_input)
         x = self.anti_pool(x)
         x = self.lm_head(x)
         x = self.pool(x)
-        x = 1e-4*self.softmax(x) + x_input
+        x = self.penalty*self.softmax(x) + x_input # 
 
         return x
