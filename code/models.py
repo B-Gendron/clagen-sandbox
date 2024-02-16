@@ -3,6 +3,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaModel
+from transformers.models.llama.configuration_llama import LlamaConfig
 
 # set default tensor type
 torch.set_default_dtype(torch.float16)
@@ -150,6 +152,38 @@ class BabyLanguageModel(nn.Module):
             idx = torch.cat((idx, idx_next), dim=1) # (B, T+1)
         return idx
 
+# class LlamaTrainableDecoderBlock(nn.Module):
+#     def __init__(self, args, n_rl=3):
+#         super(LlamaTrainableDecoderBlock, self).__init__()
+
+#         # layers for updating one of llama decoders
+#         self.anti_pool_llama = nn.Linear(n_rl, 4096)
+#         self.pool_llama = nn.Linear(4096, n_rl)
+#         self.attn_q_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.attn_k_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.attn_v_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.attn_o_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.gate_proj = nn.Linear(in_features=4096, out_features=11008)
+#         self.up_proj = nn.Linear(in_features=4096, out_features=11008)
+#         self.down_proj = nn.Linear(in_features=11008, out_features=4096)
+#         self.input_layernorm = LlamaRMSNorm(hidden_size=4096)
+#         self.post_attn_layernorm = LlamaRMSNorm(hidden_size=4096)
+
+#         self.args = args
+
+#     def forward(self, x):
+#         x = self.anti_pool_llama(x)
+#         x = self.attn_q_proj(x)
+#         x = self.attn_k_proj(x)
+#         x = self.attn_v_proj(x)
+#         x = self.attn_o_proj(x)
+#         x = self.gate_proj(x)
+#         x = self.up_proj(x)
+#         x = self.down_proj(x)
+#         x = self.input_layernorm(x)
+#         x = self.post_attn_layernorm(x)
+
+#         return x
 
 class TrainableHead(nn.Module):
     '''
@@ -162,17 +196,51 @@ class TrainableHead(nn.Module):
         self.lm_head = nn.Linear(n_embd, vocab_size, bias=False) # bias=False to be consistent with llama
         self.anti_pool = nn.Linear(n_rl, n_embd)
         self.pool = nn.Linear(vocab_size, n_rl)
+        self.anti_pool_llama = nn.Linear(n_rl, 4096)
+        self.pool_llama = nn.Linear(4096, n_rl)
         self.softmax = nn.Softmax(dim=1)
         self.batch_norm = nn.BatchNorm1d(n_rl)
 
-        self.penalty = 1e-4
+        self.decoder = LlamaDecoderLayer(config=args['config'])
+
+        self.args = args
+        self.penalty = 1e-2
 
     def forward(self, x_input):
-        # x = self.softmax(x_input)
-        x = self.anti_pool(x_input)
-        x = self.lm_head(x)
-        x = self.pool(x)
-        x = 1e-2*self.softmax(x) + x_input
-        # x = self.batch_norm(x) + x_input
+        if self.args['hf'] == 'llama':
+            x = self.anti_pool_llama(x_input)
+            x = self.decoder(x)
+            x = self.pool_llama(x[0].squeeze())
+            x = self.penalty*self.softmax(x) + x_input
+        else:
+            # x = self.softmax(x_input)
+            x = self.anti_pool(x_input)
+            x = self.lm_head(x)
+            x = self.pool(x)
+            x = self.penalty*self.softmax(x) + x_input
+            # x = self.batch_norm(x) + x_input
 
+        return x
+    
+class TrainableHeadAdapters(nn.Module):
+    '''
+        An auxiliary model to update the babylm model lm_head layer using generation redability levels predictions.
+    '''
+    def __init__(self, args, vocab_size=32000, n_rl=3):
+        super(TrainableHeadAdapters, self).__init__()
+        self.pool = nn.Linear(vocab_size, n_rl)
+        self.softmax = nn.Softmax(dim=1)
+
+        self.model = args['model']
+
+        self.args = args
+        self.penalty = 1e-2
+
+    def forward(self, input_ids, x_input):
+        '''
+            Fake a forward path through the model using a compliant input (a tensor of completely random input_ids)
+        '''
+        x = self.model(input_ids)
+        x = self.pool(x[0].half())
+        x = 1e-2*self.softmax(x[0]) + x_input
         return x

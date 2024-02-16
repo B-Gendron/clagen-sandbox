@@ -385,7 +385,7 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
     classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
     batch_labels, batch_generations = [], []
 
-    if hf == 'llama':
+    if hf == 'llama' or hf == 'adapters':
         # retrieve pipe
         pipe = args['pipe']
         for _ in range(args['batch_size']):
@@ -478,6 +478,21 @@ def create_batch_individual(batch_index, file_path):
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
+
+# -----------------------------------------------------------------------------------------
+# Fine-tuning utils
+# -----------------------------------------------------------------------------------------
+
+def transfer_weights(source, target):
+    target.self_attn.q_proj.weight = source.self_attn.q_proj.weight
+    target.self_attn.k_proj.weight = source.self_attn.k_proj.weight
+    target.self_attn.v_proj.weight = source.self_attn.v_proj.weight
+    target.self_attn.o_proj.weight = source.self_attn.o_proj.weight
+    target.mlp.gate_proj.weight = source.mlp.gate_proj.weight
+    target.mlp.up_proj.weight = source.mlp.up_proj.weight
+    target.mlp.down_proj.weight = source.mlp.down_proj.weight
+    target.input_layernorm.weight = source.input_layernorm.weight
+    target.post_attention_layernorm.weight = source.post_attention_layernorm.weight 
 
 # -----------------------------------------------------------------------------------------
 # Results logging utils
