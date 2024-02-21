@@ -72,17 +72,11 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         input_ids = torch.randint(0, 32000, (32,)).unsqueeze(-1).to(args['device'])
         output_probas = finetuning_model(input_ids=input_ids, x_input=generations_probas)
         loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
-        # for p in finetuning_model.model.lm_head.lora_B.default.parameters(): print(p.grad)
         loss.backward()
         optimizer.step()
-        # for p in finetuning_model.model.lm_head.lora_B.default.parameters(): print(p.grad)
         optimizer.zero_grad()
         loss_it.append(loss.item())
         print(loss_it)
-
-        # update the weights of the main model
-        # TODO adapt this function to a scenario with adapters
-        transfer_weights(finetuning_model.decoder, model.model.layers[args['d_block']])
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
@@ -122,26 +116,24 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment, hf=False
     file_paths = []
 
     for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
-
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf) 
+        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf)
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
 
         # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
         trues.extend(batch_labels)
-
         create_batch_individual(batch_index, file_path)
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
 
-        # deduce predictions probabilities from predictions
+        # deduce predictions "probabilities" from predictions
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         # pass the "probas" through the finetuning model to compute loss and update main model head
-        generations_probas = torch.tensor(generations_probas, dtype=torch.float32, requires_grad=True).to(args['device'])
-        output_probas = finetuning_model(generations_probas)
+        generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
+        input_ids = torch.randint(0, 32000, (32,)).unsqueeze(-1).to(args['device'])
+        output_probas = finetuning_model(input_ids=input_ids, x_input=generations_probas)
         loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device']))
-
         loss_it.append(loss.item())
 
     loss_it_avg = sum(loss_it)/len(loss_it)
@@ -194,7 +186,7 @@ def run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=False
     return val_losses
 
 
-def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes=10, hf=False):
+def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes=5, hf=False):
     '''
         This function accounts for model stability by testing the model on different test sets depending on the number of episodes. Predictions are stored for each episode so all the classification metrics can be computed as well as their mean and standard deviation.
 
@@ -367,7 +359,7 @@ if __name__ == "__main__":
     parser.add_argument("-d", "--dblock", help="The index of the Transfomer docoder block to update.", type=int, default=0)
     arg = parser.parse_args()
     d_block = arg.dblock
-    print(f"Decoder block #{d_block} will be updated")
+    # print(f"Decoder block #{d_block} will be updated")
 
     args = {'vocab_size':239267,        # new vocab size corresponding to the new dataset
             'batch_size':32,            # size of the batch, the greater bsize the greater number of data samples
@@ -389,9 +381,9 @@ if __name__ == "__main__":
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     # update args to run finetuning trainable head with appropriate dimensions
-    args.update({'hf':'llama', 'vocab_size':32000, 'n_embd':4096})
+    args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096})
 
-    run_exp(args, model_name, '1602_llama2_finetuning', hf='adapters')
+    run_exp(args, model_name, '2102_llama2_finetuning', hf='adapters')
 
 
 
