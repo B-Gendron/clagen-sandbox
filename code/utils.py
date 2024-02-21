@@ -372,7 +372,7 @@ def random_prompt(concept, classes, hf=False):
     n = len(classes)
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
-            if hf == 'llama':
+            if hf == 'llama' or hf == 'adapters':
                 prompt = f"({concept}: {classes[k-1]}) {rd.choice(np.array(start_of_sentence))}"
                 return prompt, k-1
             else: 
@@ -393,7 +393,7 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
             prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
             # perform generation (to be adapted to llama)
-            result = pipe(prompt, repetition_penalty=1.1, do_sample=True, temperature=1.5, top_k=50, top_p=0.99)
+            result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=1.5, top_k=50, top_p=0.99999)
             gen = result[0]['generated_text']
             generation = gen[gen.find(')')+1:]
             # store result
