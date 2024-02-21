@@ -5,7 +5,7 @@ import torch.nn as nn
 from transformers import ( AutoModelForCausalLM, AutoTokenizer,
 pipeline,
 )
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, TaskType
 # general purpose modules
 import os
 from tqdm import tqdm
@@ -277,14 +277,13 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         model = AutoModelForCausalLM.from_pretrained(  
             model_name,
             low_cpu_mem_usage=True,
-            return_dict=True,       # this returns a load_state_dict compatible object ?
+            return_dict=True,
             torch_dtype=torch.float16,
             device_map=args['device'],
         )
         for p in model.parameters(): p.requires_grad = False
 
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        # tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = "right"
 
@@ -292,7 +291,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         pipe = pipeline(task="text-generation", 
                         model=model, 
                         tokenizer=tokenizer, 
-                        max_new_tokens=20) # increase max_new_tokens to generate HardlyReadableText
+                        max_new_tokens=20)
         args.update({'pipe':pipe})
         
         config = LoraConfig(
@@ -300,17 +299,17 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                 lora_alpha=64,
                 target_modules=[
                     "q_proj",
-                    "k_proj",
-                    "v_proj",
-                    "o_proj",
-                    "gate_proj",
-                    "up_proj",
-                    "down_proj",
-                    "lm_head",
+                    # "k_proj",
+                    # "v_proj",
+                    # "o_proj",
+                    # "gate_proj",
+                    # "up_proj",
+                    # "down_proj",
+                    # "lm_head",
                 ],
                 bias="none",
-                lora_dropout=0.05,  # Conventional
-                task_type="CAUSAL_LM",
+                lora_dropout=0.05,  # conventional setting
+                # task_type=TaskType.SEQ_CLS,
             )
 
         model = get_peft_model(model, config)
@@ -366,7 +365,7 @@ if __name__ == "__main__":
             'block_size':64,            # Transformer block size in the language model
             'train_iters':100,          # number of train batches to consider in one episode
             'eval_iters':10,            # number of validation/test batches to consider in one episode
-            'lr':0.001,                 # learning rate
+            'lr':1e-4,                 # learning rate
             'device':activate_gpu(),    # set device for training. Desable force_cpu to run on gpu if available
             'max_eps':10,               # number of episodes (max of episodes in case of early stopping)
             'n_embd':64,                # embedding size

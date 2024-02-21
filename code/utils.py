@@ -373,7 +373,7 @@ def random_prompt(concept, classes, hf=False):
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
             if hf == 'llama' or hf == 'adapters':
-                prompt = f"({concept}: {classes[k-1]}) {rd.choice(np.array(start_of_sentence))}"
+                prompt = f"Generate a sentence that has a {concept} of {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
                 return prompt, k-1
             else: 
                 prompt = f"A sentence whose {concept} is {classes[k-1]}: The"
@@ -386,16 +386,15 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
     batch_labels, batch_generations = [], []
 
     if hf == 'llama' or hf == 'adapters':
-        # retrieve pipe
-        pipe = args['pipe']
+        pipe = args['pipe'] # retrieve pipe
         for _ in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
             # perform generation (to be adapted to llama)
-            result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=1.5, top_k=50, top_p=0.99999)
+            result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=0.1)
             gen = result[0]['generated_text']
-            generation = gen[gen.find(')')+1:]
+            generation = gen[gen.find(':')+1:gen.find('\n')]
             # store result
             batch_generations.append(generation)
 
