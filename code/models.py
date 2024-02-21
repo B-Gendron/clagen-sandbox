@@ -234,7 +234,7 @@ class TrainableHeadAdapters(nn.Module):
         self.model = args['model']
 
         self.args = args
-        self.penalty = 1e-2
+        self.penalty = 1e-3
 
     def forward(self, input_ids, x_input):
         '''
@@ -242,5 +242,5 @@ class TrainableHeadAdapters(nn.Module):
         '''
         x = self.model(input_ids)
         x = self.pool(x[0].half())
-        x = 1e-2*self.softmax(x[0]) + x_input
+        x = self.penalty*self.softmax(x[0]) + x_input
         return x
