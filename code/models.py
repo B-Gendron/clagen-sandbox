@@ -231,10 +231,19 @@ class TrainableHeadAdapters(nn.Module):
         self.pool = nn.Linear(vocab_size, n_rl)
         self.softmax = nn.Softmax(dim=1)
 
-        # TODO freeze all layers here except the adapters, otherwise the whole model will be updated!
         self.model = args['model']
-        for p in self.model.parameters(): p.requires_grad = False
-        # for p in lora layers requires grad should be true
+
+        # freeze all layers here except the adapters, otherwise the whole model will be updated!
+        # for p in self.model.parameters(): p.requires_grad = False
+        # for i in range(0, 32):
+        #     prefix_layers = self.model.base_model.model.model.layers[i].self_attn
+        #     attention_layers = [prefix_layers.q_proj, prefix_layers.k_proj, prefix_layers.v_proj, prefix_layers.o_proj]
+        #     for attn in attention_layers:
+        #         for p in attn.lora_dropout.parameters(): p.requires_grad = True
+        #         for p in attn.lora_A.parameters(): p.requires_grad = True
+        #         for p in attn.lora_B.parameters(): p.requires_grad = True
+        #         for p in attn.lora_embedding_A.parameters(): p.requires_grad = True
+        #         for p in attn.lora_embedding_B.parameters(): p.requires_grad = True
 
         self.args = args
         self.penalty = 1e-1

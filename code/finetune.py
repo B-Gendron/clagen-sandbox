@@ -313,10 +313,10 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
             )
 
         model = get_peft_model(model, config)
-        print(model)
         args.update({'model':model})
         finetuning_model = TrainableHeadAdapters(args)
         finetuning_model.to(args['device'])
+        for n, p in finetuning_model.named_parameters(): print(n, p.grad)
 
     else:
         # Load the pretrained model weights
