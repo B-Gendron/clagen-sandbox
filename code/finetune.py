@@ -76,7 +76,6 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         optimizer.step()
         optimizer.zero_grad()
         loss_it.append(loss.item())
-        for n, p in model.named_parameters(): print(n, p.requires_grad)
         for n, p in finetuning_model.model.named_parameters(): print(n, p.requires_grad)
         print(loss_it)
 
@@ -300,15 +299,16 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                 r=32,
                 lora_alpha=64,
                 target_modules=[
-                    "q_proj",
-                    "k_proj",
+                    # "q_proj",
+                    # "k_proj",
                     "v_proj",
-                    "o_proj",
+                    # "o_proj",
                     # "gate_proj",
                     # "up_proj",
                     # "down_proj",
                     # "lm_head",
                 ],
+                layers_to_transform=[29, 30, 31],
                 bias="none",
                 lora_dropout=0.05,  # conventional setting
                 # task_type=TaskType.SEQ_CLS,
