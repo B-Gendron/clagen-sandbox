@@ -76,8 +76,8 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         optimizer.step()
         optimizer.zero_grad()
         loss_it.append(loss.item())
-        for n, p in model.named_parameters(): print(n, p.grad)
-        for n, p in finetuning_model.model.named_parameters(): print(n, p.grad)
+        for n, p in model.named_parameters(): print(n, p.requires_grad)
+        for n, p in finetuning_model.model.named_parameters(): print(n, p.requires_grad)
         print(loss_it)
 
     # append batch generations to split generations
