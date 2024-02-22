@@ -76,6 +76,8 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         optimizer.step()
         optimizer.zero_grad()
         loss_it.append(loss.item())
+        for n, p in model.named_parameters(): print(n, p.grad)
+        for n, p in finetuning_model.model.named_parameters(): print(n, p.grad)
         print(loss_it)
 
     # append batch generations to split generations
@@ -316,7 +318,6 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         args.update({'model':model})
         finetuning_model = TrainableHeadAdapters(args)
         finetuning_model.to(args['device'])
-        for n, p in finetuning_model.named_parameters(): print(n, p.grad)
 
     else:
         # Load the pretrained model weights
