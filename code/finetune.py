@@ -299,9 +299,9 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                 lora_alpha=64,
                 target_modules=[
                     "q_proj",
-                    # "k_proj",
-                    # "v_proj",
-                    # "o_proj",
+                    "k_proj",
+                    "v_proj",
+                    "o_proj",
                     # "gate_proj",
                     # "up_proj",
                     # "down_proj",
@@ -313,6 +313,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
             )
 
         model = get_peft_model(model, config)
+        print(model)
         args.update({'model':model})
         finetuning_model = TrainableHeadAdapters(args)
         finetuning_model.to(args['device'])
