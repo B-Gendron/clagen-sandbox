@@ -383,6 +383,9 @@ def random_prompt(concept, classes, hf=False):
 def generate_from_random_prompts(args, model, stoi, itos, hf=False):
     concept = 'ReadabilityLevel'
     classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
+    # try with random IDs instead of concept names
+    concept = 'C6468168'
+    classes = [f'{concept}_{i}' for i in range(3)]
     batch_labels, batch_generations = [], []
 
     if hf == 'llama' or hf == 'adapters':
@@ -390,6 +393,7 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
         for _ in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
+            print(prompt)
             batch_labels.append(label)
             # perform generation (to be adapted to llama)
             result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=0.1)
