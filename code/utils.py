@@ -395,20 +395,15 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
-            # perform generation
-            # result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=0.1)
-            # gen = result[0]['generated_text']
-            # generation = gen[len(prompt[prompt.find(':')])+1:gen.find('\n')+1]
 
-            # perform generation (gemma)
+            # perform generation
             prompt = tokenizer(prompt, return_tensors="pt").to(args['device'])
             output = model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part
-            output_ids = get_and_pad_ids(prompt, output, padding_length=20)
             result = tokenizer.decode(output)
+            generation = result[result.find(':')+1:result.find('\n')+1]
+            output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], tokenizer, args, padding_length=20)
             batch_ids.append(output_ids)
-            generation = result[result.find(':')+1:result.find('\n')]
             print(f'Sample {i}: \t {generation}')
-            # print(output_ids)
             # store result
             batch_generations.append(generation)
 
@@ -428,13 +423,25 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
 
     return batch_labels, batch_generations, batch_ids
 
-def get_and_pad_ids(prompt, output, padding_length=20):
+def get_and_pad_ids(output, tokenizer, args, padding_length=20):
     '''
         To be documented.
     '''
-    output = output[len(prompt[0]):]
-    pad_length = max(padding_length - len(output), 0)
-    padded_output = torch.nn.functional.pad(output, (0, pad_length), value=0)
+    # pad_length = max(padding_length - len(output), 0)
+    # pad_index = tokenizer.convert_tokens_to_ids('<pad>')
+    # padded_output = torch.cat([output, torch.tensor([pad_index] * pad_length).to(args['device'])])
+
+    current_length = output.shape[1]
+    
+    if current_length >= padding_length:
+        return output[:, :padding_length]
+    
+    padding_size = padding_length - current_length
+    padding = torch.zeros((1, padding_size), dtype=output.dtype, device=args['device'])
+    
+    padded_output = torch.cat((output, padding), dim=1)
+    return padded_output
+
     
     return padded_output
 
