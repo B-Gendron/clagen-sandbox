@@ -373,7 +373,7 @@ def random_prompt(concept, classes, hf=False):
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
             if hf == 'llama' or hf == 'adapters':
-                prompt = f"Generate a sentence that has a {concept} of {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
+                prompt = f"Generate a sentence for which {concept} is {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
                 return prompt, k-1
             else: 
                 prompt = f"A sentence whose {concept} is {classes[k-1]}: The"
@@ -385,20 +385,30 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
     classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
     # try with random IDs instead of concept names
     concept = 'C6468168'
-    classes = [f'{concept}_{i}' for i in range(3)]
-    batch_labels, batch_generations = [], []
+    classes = [f'{concept}{i}' for i in range(3)]
+    batch_labels, batch_generations, batch_ids = [], [], []
 
     if hf == 'llama' or hf == 'adapters':
-        pipe = args['pipe'] # retrieve pipe
-        for _ in range(args['batch_size']):
+        # pipe = args['pipe'] # retrieve pipe (if necessary)
+        tokenizer = args['tokenizer'] # retrieve tokenizer (if necessary)
+        for i in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
-            print(prompt)
             batch_labels.append(label)
-            # perform generation (to be adapted to llama)
-            result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=0.1)
-            gen = result[0]['generated_text']
-            generation = gen[gen.find(':')+1:gen.find('\n')]
+            # perform generation
+            # result = pipe(prompt, repetition_penalty=1.5, do_sample=False, temperature=0.1)
+            # gen = result[0]['generated_text']
+            # generation = gen[len(prompt[prompt.find(':')])+1:gen.find('\n')+1]
+
+            # perform generation (gemma)
+            prompt = tokenizer(prompt, return_tensors="pt").to(args['device'])
+            output = model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part
+            output_ids = get_and_pad_ids(prompt, output, padding_length=20)
+            result = tokenizer.decode(output)
+            batch_ids.append(output_ids)
+            generation = result[result.find(':')+1:result.find('\n')]
+            print(f'Sample {i}: \t {generation}')
+            # print(output_ids)
             # store result
             batch_generations.append(generation)
 
@@ -416,7 +426,17 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
             # store result
             batch_generations.append(generation)
 
-    return batch_labels, batch_generations
+    return batch_labels, batch_generations, batch_ids
+
+def get_and_pad_ids(prompt, output, padding_length=20):
+    '''
+        To be documented.
+    '''
+    output = output[len(prompt[0]):]
+    pad_length = max(padding_length - len(output), 0)
+    padded_output = torch.nn.functional.pad(output, (0, pad_length), value=0)
+    
+    return padded_output
 
 def parse_output_and_deduce_class(output, itos):
     '''
@@ -436,6 +456,27 @@ def parse_output_and_deduce_class(output, itos):
         predicted_class = 2
 
     return predicted_class
+
+def smooth_input(x_input, max_prop=0.6):
+    '''
+        This function is used in TrainableHeadAdapters model forward to smooth the one-hot encoding of the input to a 60/20/20 like vector (in its default config). It is meant to be used with n_rl classes and a max_prop which allows an equal repartition of other proportion over other labels.
+ 
+        @param x_input (torch.Tensor):
+        @param max_prop (float):
+    '''
+    n_rl = x_input.size()[1]
+    # check if it is possible to use this max-prop and compute the other proportions out of it
+    assert int((1-max_prop)*100 % (n_rl-1)) == 0 
+    # compute the minimal proportion since it can be computed
+    min_prop = (1-max_prop)/(n_rl-1) 
+    new_classes_vectors = []
+    for classes_one_hot in x_input:
+        i = torch.argmax(classes_one_hot)
+        x = torch.full((n_rl,), min_prop)
+        x[i] = max_prop
+        new_classes_vectors.append(x)
+
+    return torch.stack(new_classes_vectors)
 
 # -----------------------------------------------------------------------------------------
 # Ontology concept learning utils

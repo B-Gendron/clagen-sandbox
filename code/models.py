@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaModel
 from transformers.models.llama.configuration_llama import LlamaConfig
 
+from utils import smooth_input
+
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 
@@ -226,10 +228,11 @@ class TrainableHeadAdapters(nn.Module):
     '''
         An auxiliary model to update the babylm model lm_head layer using generation redability levels predictions.
     '''
-    def __init__(self, args, vocab_size=32000, n_rl=3):
+    def __init__(self, args, n_rl=3):
         super(TrainableHeadAdapters, self).__init__()
-        self.pool = nn.Linear(vocab_size, n_rl)
-        self.softmax = nn.Softmax(dim=1)
+        vocab_size = args['vocab_size']
+        self.pool = nn.Linear(20*vocab_size, n_rl) # torch.Size([32, 20, vocab_size]) --> torch.Size([32, 3])
+        self.softmax = nn.Softmax(dim=-1)
 
         self.model = args['model']
 
@@ -253,6 +256,9 @@ class TrainableHeadAdapters(nn.Module):
             Fake a forward path through the model using a compliant input (a tensor of completely random input_ids)
         '''
         x = self.model(input_ids)
-        x = self.pool(x[0].half())
-        x = self.penalty*self.softmax(x[0]) + x_input
+        # print("after applying model:", x)
+        x = self.pool(x[0].view(x[0].size(0), -1).half())
+        # print("after pooling:", x)
+        x = self.penalty*self.softmax(x[0]) + smooth_input(x_input).to(self.args['device'])
+
         return x
