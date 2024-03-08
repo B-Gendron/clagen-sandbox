@@ -1,12 +1,8 @@
-# torch utils
 import torch
 import torch.nn as nn
 
-from transformers import ( AutoModelForCausalLM, AutoTokenizer,
-pipeline,
-)
-from peft import LoraConfig, get_peft_model, TaskType, LoraModel
-# general purpose modules
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, get_peft_model
 import os
 from tqdm import tqdm
 import argparse
@@ -16,6 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 # from other scripts
 from utils import *
+from logging_utils import *
 from models import BabyLanguageModel, TrainableHead, TrainableHeadAdapters
 
 # disable hf tokenizer parallelism warning
@@ -26,15 +23,12 @@ torch.set_default_dtype(torch.float16)
 torch.set_printoptions(precision=10)
 
 
-def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False):
+def train(args, finetuning_model, epoch, experiment, hf=False):
     '''
-        Perfom one epoch of model training in the case of the isolated utterance model trained directly on the triplet loss.
+        A sequence of fine-tuning iterations for ontology-validation based fine-tuning. The aim is to understand and accurately generate different readability levels (RL) 
 
         @param args (str):                 the hyperparameters for the training
-        @param model:                      the pretrained model to use for inference
         @param finetuning_model:           the model used for weight updates in fine-tuning
-        @param stoi (dict):                the string-to-index dict from the pretraining vocab
-        @param itos (list):                the index-to-string list from the pretraining vocab
         @param epoch (int):                the index of the current epoch
         @param experiment (str):           the experiment name
         @param hf:                         False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
@@ -43,38 +37,34 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
         @return trues (list):              list of gold labels to be stored later
         @return preds (list):              list of the associated predictions to be stored later
     '''
+    # setup training config + outputs storage
     finetuning_model.train()
-    # freeze the auxiliary model pooling layer
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'], fused=torch.float16)
-    # optimizer = torch.optim.RMSprop(finetuning_model.parameters(), lr=args['lr'])
+    ce_loss = nn.CrossEntropyLoss()
     writer = args['writer']
     loss_it = []
-    ce_loss = nn.CrossEntropyLoss()
     trues, preds = [], []
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
-        batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, model, stoi, itos, hf=hf)
-        # save the generated sentences to further look at it
+        # generate sentences with a specific RL
+        batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=hf)
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
 
-        # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
+        # trues are the RL that the generated sentence should have
         trues.extend(batch_labels)
         create_batch_individual(batch_index, file_path)
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
 
-        # deduce predictions "probabilities" from predictions
+        # prediction probabilities go through finetuning model
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
-        # pass the "probas" through the finetuning model to compute loss and update main model head
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
-        # input_ids0 = torch.randint(0, 32000, (32,20)).to(args['device'])
-        input_ids = torch.stack(batch_ids)
-        # for sentence in input_ids:
-        #     print(args['tokenizer'].decode(sentence))
-        output_probas = finetuning_model(input_ids=input_ids.squeeze(), x_input=generations_probas)
+        output_probas = finetuning_model(input_ids=torch.stack(batch_ids).squeeze(), x_input=generations_probas)
+
+        # training step
         loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
         loss.backward()
         optimizer.step()
@@ -95,15 +85,12 @@ def train(args, model, finetuning_model, stoi, itos, epoch, experiment, hf=False
     return loss_it_avg, trues, preds
 
 
-def test(args, model, finetuning_model, stoi, itos, target, experiment, hf=False):
+def test(args, finetuning_model, target, experiment, hf=False):
     '''
         Perfom one epoch of model evaluation, either as validation or test.
 
         @param args (str):                 the hyperparameters for the training
-        @param model:                      the pretrained model to use for inference
         @param finetuning_model:           the model used for weight updates in fine-tuning
-        @param stoi (dict):                the string-to-index dict from the pretraining vocab
-        @param itos (list):                the index-to-string list from the pretraining vocab
         @param target (str):               either 'validation' or 'test', for a better display
         @param experiment (str):           the experiment name
         @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
@@ -120,7 +107,7 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment, hf=False
     file_paths = []
 
     for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
-        batch_labels, batch_generations = generate_from_random_prompts(args, model, stoi, itos, hf=hf)
+        batch_labels, batch_generations = generate_from_random_prompts(args, hf=hf)
         # save the generated sentences to further look at it
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
@@ -159,7 +146,7 @@ def test(args, model, finetuning_model, stoi, itos, target, experiment, hf=False
     return loss_it_avg, trues, preds
 
 
-def run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=False):
+def run_episodes(args, finetuning_model, experiment, hf=False):
     '''
         Run all episodes of the fine-tuning (train + validation).
 
@@ -177,8 +164,8 @@ def run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=False
 
     for ep in range(args['max_eps']):
         # perform training and validation runs
-        _, train_trues, train_preds = train(args, model, finetuning_model, stoi, itos, ep, experiment, hf=hf)
-        val_loss, val_trues, val_preds = test(args, model, finetuning_model, stoi, itos, 'validation', experiment, hf=hf)
+        _, train_trues, train_preds = train(args, finetuning_model, ep, experiment, hf=hf)
+        val_loss, val_trues, val_preds = test(args, finetuning_model, 'validation', experiment, hf=hf)
  
         # save epoch trues and preds for train and validation
         save_epoch_data('train', train_trues, train_preds, ep, experiment)
@@ -190,7 +177,7 @@ def run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=False
     return val_losses
 
 
-def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes=5, hf=False):
+def run_on_several_test_sets(args, finetuning_model, experiment, episodes=5, hf=False):
     '''
         This function accounts for model stability by testing the model on different test sets depending on the number of episodes. Predictions are stored for each episode so all the classification metrics can be computed as well as their mean and standard deviation.
 
@@ -208,7 +195,7 @@ def run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experime
     test_losses = []
 
     for i in range(episodes):
-        test_loss, test_trues, test_preds = test(args, model, finetuning_model, stoi, itos, 'test', hf=hf)
+        test_loss, test_trues, test_preds = test(args, finetuning_model, 'test', hf=hf)
         save_epoch_data('test', test_trues, test_preds, i, experiment)
 
         test_losses.append(test_loss)
@@ -235,54 +222,13 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
     if not os.path.exists(f'../results/{experiment}/'):
         os.makedirs(f'../results/{experiment}/')
 
-    # Getting stoi and itos dicts
-    itos, stoi = load_vocab_mappings()
-
-    if hf == 'llama':
-        # setup model
-        model = AutoModelForCausalLM.from_pretrained(  
-            model_name,
-            low_cpu_mem_usage=True,
-            return_dict=True,       # this returns a load_state_dict compatible object ?
-            torch_dtype=torch.float16,
-            device_map=args['device'],
-        )
-        args.update({'config':model.config})
-        # setup tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        # tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.padding_side = "right"
-
-        # store the pipe to use it in generation
-        pipe = pipeline(task="text-generation", 
-                        model=model, 
-                        tokenizer=tokenizer, 
-                        max_new_tokens=20) # increase max_new_tokens to generate HardlyReadableText
-        args.update({'pipe':pipe})
-
-        # freeze all model layers 
-        for p in model.parameters(): p.requires_grad = False
-
-        # Setup finetuning model
-        finetuning_model = TrainableHead(args)
-        # initiate TrainableHead weights with the correct decoder layer weights
-        transfer_weights(model.model.layers[args['d_block']], finetuning_model.decoder)
-
-        # require grad at right positions
-        for p in finetuning_model.parameters(): p.requires_grad = False
-        for p in finetuning_model.decoder.parameters(): p.requires_grad = True
-
-        for n, p in finetuning_model.named_parameters(): print(n, p.requires_grad)
-
-        finetuning_model.to(args['device'])
-
-    elif hf == 'adapters':
+    if hf:
+        # TODO encapsuler tout ça dans des fonctions pour plus de clarté et pour pouvoir paramétrer tout ça !
         model = AutoModelForCausalLM.from_pretrained(  
             model_name,
             low_cpu_mem_usage=True,
             return_dict=True,
-            torch_dtype=torch.float16, # try fp32 to see if it solve NaN loss issues
+            torch_dtype=torch.float16,
             device_map=args['device'],
         )
         for p in model.parameters(): p.requires_grad = False
@@ -292,13 +238,6 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         tokenizer.pad_token = tokenizer.eos_token
         model.config.pad_token_id = model.config.eos_token_id
         tokenizer.padding_side = "right"
-
-        # store the pipe to use it in generation
-        # pipe = pipeline(task="text-generation", 
-        #                 model=model, 
-        #                 tokenizer=tokenizer, 
-        #                 max_new_tokens=20)
-        # args.update({'pipe':pipe})
 
         config = LoraConfig(
                 r=32,
@@ -313,44 +252,26 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                     # "down_proj",
                     # "lm_head",
                 ],
-                layers_to_transform=[3, 4, 5],
-                bias="lora_only",
-                lora_dropout=0.05,  # conventional setting
+                layers_to_transform=[3, 4, 5],  # avoid top layers, this modifies the representation too much
+                bias="lora_only",               # should be better than default setting in our case
+                lora_dropout=0.05,              # conventional setting
                 # task_type=TaskType.SEQ_CLS,
             )
-
+        args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
         model = get_peft_model(model, config)
-        args.update({'model':model})
+        args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
         finetuning_model = TrainableHeadAdapters(args)
         finetuning_model.to(args['device'])
 
     else:
-        # Load the pretrained model weights
-        model = BabyLanguageModel(args)
-        if args['device'] == 'cpu':
-            model.load_state_dict(torch.load(model_name, map_location=torch.device('cpu')))
-        else:
-            model.load_state_dict(torch.load(model_name))
-        model.to(args['device'])
-
-        # freeze all layers except model.lm_head
-        for p in model.token_embedding_table.parameters(): p.requires_grad = False
-        for p in model.position_embedding_table.parameters(): p.requires_grad = False
-        for p in model.blocks.parameters(): p.requires_grad = False
-        for p in model.ln_f.parameters(): p.requires_grad = False
-        for p in model.lm_head.parameters(): p.requires_grad = True
-
-        finetuning_model = TrainableHead(args)
-        for p in finetuning_model.pool.parameters(): p.requires_grad = False
-        for p in finetuning_model.anti_pool.parameters(): p.requires_grad = False
-        for p in finetuning_model.lm_head.parameters(): p.requires_grad = True
-        finetuning_model.lm_head.weight = model.lm_head.weight
+        
+        finetuning_model = setup_model_babylm(args, model_name)
 
     # run training and validation
-    val_losses = run_episodes(args, model, finetuning_model, stoi, itos, experiment, hf=hf)
+    val_losses = run_episodes(args, finetuning_model, experiment, hf=hf)
 
     # run test 
-    test_losses = run_on_several_test_sets(args, model, finetuning_model, stoi, itos, experiment, episodes, hf=hf)
+    test_losses = run_on_several_test_sets(args, finetuning_model, experiment, episodes, hf=hf)
 
     # log all classification metrics from saved trues/preds
     ## TBC
@@ -368,7 +289,7 @@ if __name__ == "__main__":
     # print(f"Decoder block #{d_block} will be updated")
 
     args = {'vocab_size':239267,        # new vocab size corresponding to the new dataset
-            'batch_size':32,            # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':5,            # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,            # Transformer block size in the language model
             'train_iters':100,          # number of train batches to consider in one episode
             'eval_iters':10,            # number of validation/test batches to consider in one episode
@@ -391,7 +312,7 @@ if __name__ == "__main__":
     # args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096}) # for llama
     args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
-    run_exp(args, model_name, '0503_gemma_finetuning', hf='adapters')
+    run_exp(args, model_name, '0503_gemma_finetuning', hf=True)
 
 
 

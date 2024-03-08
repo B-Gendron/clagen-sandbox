@@ -1,3 +1,127 @@
+# IN FINETUNING 
+# This setting is now useless because we finetune llama only with adapters
+
+    # if hf == 'llama':
+    #     # setup model
+    #     model = AutoModelForCausalLM.from_pretrained(  
+    #         model_name,
+    #         low_cpu_mem_usage=True,
+    #         return_dict=True,       # this returns a load_state_dict compatible object ?
+    #         torch_dtype=torch.float16,
+    #         device_map=args['device'],
+    #     )
+    #     args.update({'config':model.config})
+    #     # setup tokenizer
+    #     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    #     # tokenizer.pad_token = tokenizer.eos_token
+    #     tokenizer.pad_token = tokenizer.eos_token
+    #     tokenizer.padding_side = "right"
+
+    #     # store the pipe to use it in generation
+    #     pipe = pipeline(task="text-generation", 
+    #                     model=model, 
+    #                     tokenizer=tokenizer, 
+    #                     max_new_tokens=20) # increase max_new_tokens to generate HardlyReadableText
+    #     args.update({'pipe':pipe})
+
+    #     # freeze all model layers 
+    #     for p in model.parameters(): p.requires_grad = False
+
+    #     # Setup finetuning model
+    #     finetuning_model = TrainableHead(args)
+    #     # initiate TrainableHead weights with the correct decoder layer weights
+    #     transfer_weights(model.model.layers[args['d_block']], finetuning_model.decoder)
+
+    #     # require grad at right positions
+    #     for p in finetuning_model.parameters(): p.requires_grad = False
+    #     for p in finetuning_model.decoder.parameters(): p.requires_grad = True
+
+    #     for n, p in finetuning_model.named_parameters(): print(n, p.requires_grad)
+
+    #     finetuning_model.to(args['device'])
+
+
+# When the input ids were random
+# input_ids0 = torch.randint(0, 32000, (32,20)).to(args['device'])
+
+# We are no longer using a pipe for generation
+
+        # store the pipe to use it in generation
+        # pipe = pipeline(task="text-generation", 
+        #                 model=model, 
+        #                 tokenizer=tokenizer, 
+        #                 max_new_tokens=20)
+        # args.update({'pipe':pipe})
+
+
+# This utils function is for tuning pre-trained decoders directly (without adapters, and only for llama models)
+# def transfer_weights(source, target):
+#     target.self_attn.q_proj.weight = source.self_attn.q_proj.weight
+#     target.self_attn.k_proj.weight = source.self_attn.k_proj.weight
+#     target.self_attn.v_proj.weight = source.self_attn.v_proj.weight
+#     target.self_attn.o_proj.weight = source.self_attn.o_proj.weight
+#     target.mlp.gate_proj.weight = source.mlp.gate_proj.weight
+#     target.mlp.up_proj.weight = source.mlp.up_proj.weight
+#     target.mlp.down_proj.weight = source.mlp.down_proj.weight
+#     target.input_layernorm.weight = source.input_layernorm.weight
+#     target.post_attention_layernorm.weight = source.post_attention_layernorm.weight 
+
+
+# Old function from utils. This is not usefull as it doesn't proves that the model learns the concepts. It actually demonstrates that vocab extension works...
+
+# def extend_vocab_with_readability_levels(itos, stoi):
+#     '''
+#         This function adds the useful ontology concepts in the vocabulary used for generation. 
+#         /!\ This function overwrites the json files contraining itos and stoi mappings 
+
+#         @param itos
+#         @param stoi
+
+#         @return itos
+#         @return stoi
+#     '''
+#     readability_levels = ['EasilyReadableText', 'StandardReadableText', 'HardlyReadableText']
+
+#     # update itos
+#     itos.extend(readability_levels)
+
+#     # update stoi
+#     l, rl = len(itos), len(readability_levels)
+#     for r in range(rl):
+#         stoi[readability_levels[r]] = l - rl + r + 1
+    
+#     # dump new stoi dict
+#     with open("../objects/vocab_stoi.json", "w") as f:
+#         json.dump(stoi, f)
+
+#     # dump new itos dict
+#     with open("../objects/vocab_itos.json", "w") as f:
+#         json.dump(itos, f)
+
+#     return itos, stoi
+
+
+# Old utils function to match class name to class index
+# def parse_output_and_deduce_class(output, itos):
+#     '''
+#         This function takes as argument the output of a BabyLanguageModel model and parses it to retrieve the predicted value for ReadabilityLevel.
+
+#         @param output (tensor): a list of indexes corresponding to the generated tokens
+#         @param itos (list): the mapping from token indexes to their corresponding strings
+#     '''
+#     decoded_output = decode(output, itos)
+#     predicted_class = 3 # let's say we add a class "unable to classify"
+
+#     if 'EasilyReadableText' in decoded_output:
+#         predicted_class = 0
+#     elif 'StandardReadableText' in decoded_output:
+#         predicted_class = 1
+#     elif 'HardlyReadableText' in decoded_output:
+#         predicted_class = 2
+
+#     return predicted_class
+
+
 # def get_vocab_info(data):
 #     '''
 #         Create a vocabulary mapping with training data text processed as a bag of words. Default vocab_size is the number of different words in the whole dataset.

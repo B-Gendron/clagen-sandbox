@@ -27,6 +27,8 @@ warnings.filterwarnings('ignore')
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 
+from models import BabyLanguageModel, TrainableHead
+
 # -----------------------------------------------------------------------------------------
 # General purpose auxiliary functions
 # -----------------------------------------------------------------------------------------
@@ -107,157 +109,9 @@ def activate_gpu(force_cpu=False):
     return device
 
 
-def set_logger(target):
-    '''
-        Set a logger to be used when running experiments. 
-    '''
-    experiment = f'{target}_{get_datetime()}'
-    logging.getLogger(__name__).setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
-    fh = logging.FileHandler(f'./logs/{experiment}.log', mode="w")
-    fh.setFormatter(formatter)
-    fh.setLevel(logging.INFO)
-    logging.getLogger().addHandler(fh)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logging.debug(f"Experiment name : {experiment}")
-    return logger
-
-
 # -----------------------------------------------------------------------------------------
-# Data management
+# Preprocessing utils for training
 # -----------------------------------------------------------------------------------------
-
-def load_dataset(dataset_name):
-    '''
-        Load a dataset save in the huggingface format, located in the data folder.
-
-        @param dataset_name (str): the name of the dataset, i.e. the associated folder inside the data folder. This string should correspond to an existing dataset in the folder, otherwise an exception will be raised.
-
-        @return dataset (DatasetDict): the dataset as a DatasetDict object.
-    '''
-    path = f"./data/{dataset_name}"
-    if os.path.isdir(path):
-        dataset = DatasetDict.load_from_disk(f"../data/{dataset_name}")
-    else: 
-        raise Exception("No folder with the such name found in the data folder.")
-
-    return dataset
-
-
-def save_dataset(dataset, dataset_name, output_format='huggingface'):
-    '''
-        Save the dataset into a HuggingFace format using the save_to_disk method.
-
-        @param dataset (DatasetDict):      the dataset to save in a DatasetDict format
-        @param dataset_name (str):         the name to give to the file
-        @param output_format (str):        either 'huggingface' or 'json'. Default is 'huggingface'.
-    '''
-    if output_format == "huggingface":
-        dataset.save_to_disk(f'../data/{dataset_name}')
-    elif output_format == "json":
-        with open(f"data/{dataset_name}.json", 'w') as f:
-            json.dump(dataset, f)
-    else:
-        print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json")
-
-
-def save_batch_generations(batch_generations, batch_index):
-    file_path = f'../objects/batch_generations_{batch_index}.tsv'
-    with open(file_path, 'w', newline='') as f:
-        tsv_writer = csv.writer(f, delimiter='\t')
-
-        for row in batch_generations:
-            row = row.replace('\n', '\\n')
-            tsv_writer.writerow([row])
-
-    return file_path[3:] # remove ../ to make it relative
-
-def store_split_generations(split, file_paths, trues, experiment):
-    '''
-        This function concatenate generated sentences from all batches of the split 'split' into one tsv file. 
-
-        @param split (str):             the name of the split, either 'train', 'validation' or 'test'. Note that these are not proper splits as there is no dataset in this fine-tuning procedure
-        @param file_paths (list):       the list of paths to the generated sentences in each batch
-        @param trues (list):            all the gold readability level labels
-        @param experiment (str):        the name of the experiment (=folder where all logs are saved)
-    '''
-    readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
-    with open(f'../results/{experiment}/generations_{split}.tsv', 'a') as all_gens:
-        tsv_writer = csv.writer(all_gens, delimiter='\t')
-        # iterate through batch files
-        for i, path in enumerate(file_paths):
-            # store gold labels and generations for this batch
-            abs_path = f'../{path}'
-            with open(abs_path, 'r') as batch_gens:
-                for j, row in enumerate(batch_gens):
-                    tsv_writer.writerow([readability_levels_mapping[trues[i+j]], row])
-
-            # remove batch-wise generations file path
-            os.remove(abs_path)
-
-# -----------------------------------------------------------------------------------------
-# Training precedure utils
-# -----------------------------------------------------------------------------------------
-
-def get_labels_weights(training_set, device, num_labels=7, index=0, penalty=1e9, apply_penalty=True):
-    '''
-        @param training_set (DatsetDict): the training samples to compute the weights on. Can be the whole test set or just a batch
-        @param device
-        @param num_labels (int): the number of labels for multiclass classification. Default is the number of emotion labels in dailydialog
-        @param index (int): the index of the label to penalize
-        @param penalty (float): the magnitude of the penalty
-    
-    '''
-    labels = training_set['labels']
-    n = labels.size()[0]
-    labels_list = labels[labels != -1].flatten().tolist()
-    percentages = { l:Counter(labels_list)[l] / float(n) for l in range(num_labels) }
-    weights = [ 1-percentages[l] if l in percentages else 0.0 for l in list(range(num_labels)) ]
-    # weights[0] = 0.01 # almost remove the non emotion class
-    weights = torch.tensor(weights, device=device)
-
-    # add further penalty to no_emotion class
-    if apply_penalty:
-        weights[index] = weights[index]/penalty
-
-    # save tensor
-    # torch.save(weights, 'classes_weights.pt')
-    return weights
-
-
-def vocab_dicts(vocab):
-    stoi, itos = vocab.get_stoi(), vocab.get_itos()
-
-    # dump stoi dict
-    with open("../objects/vocab_stoi.json", "w") as f:
-        json.dump(stoi, f)
-
-    # dump itos dict
-    with open("../objects/vocab_itos.json", "w") as f:
-        json.dump(itos, f)
-
-    # return dicts to be used in training (encode function)
-    return stoi, itos
-
-# -----------------------------------------------------------------------------------------
-# Preprocessing utils
-# -----------------------------------------------------------------------------------------
-
-def add_sentencebert_random_vectors(embedding, size, max_length):
-    '''
-        This auxiliary function is to be used for Sentence BERT preprocessing. It adds the number of max_length-sized random vectors defined by the parameter size.
-
-        @param size (int):              the number of random vectors to generate.
-
-        @return vectors (list):         the list of length size of generated random vectors.
-    '''
-    # DescribeResult(nobs=3840, minmax=(-0.20482617616653442, 0.17243704199790955), mean=0.00021893562853630052, variance=0.0026047970850628303, skewness=-0.06372909078235393, kurtosis=-0.001260392396507104)
-    mean = 0.00021893562853630052
-    variance = 0.0026047970850628303
-    for _ in range(size):
-        embedding.append([random.gauss(mu=mean, sigma=sqrt(variance)) for _ in range(max_length)])
-    return embedding
 
 def encode(stoi, text):
     '''
@@ -303,7 +157,7 @@ def load_vocab_mappings():
     return itos, stoi
 
 # -----------------------------------------------------------------------------------------
-# Prompt utils
+# Fine-tuning utils
 # -----------------------------------------------------------------------------------------
 
 def parse_indexes(levels_dict):
@@ -380,7 +234,7 @@ def random_prompt(concept, classes, hf=False):
                 return prompt, k-1
 
 
-def generate_from_random_prompts(args, model, stoi, itos, hf=False):
+def generate_from_random_prompts(args, hf=False):
     concept = 'ReadabilityLevel'
     classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
     # try with random IDs instead of concept names
@@ -388,9 +242,10 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
     classes = [f'{concept}{i}' for i in range(3)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
-    if hf == 'llama' or hf == 'adapters':
-        # pipe = args['pipe'] # retrieve pipe (if necessary)
-        tokenizer = args['tokenizer'] # retrieve tokenizer (if necessary)
+    if hf:
+        tokenizer = args['tokenizer'] # retrieve tokenizer
+        model = args['model']
+        base_model = args['model']
         for i in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
@@ -400,7 +255,7 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
             prompt = tokenizer(prompt, return_tensors="pt").to(args['device'])
             output = model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part
             result = tokenizer.decode(output)
-            generation = result[result.find(':')+1:result.find('\n')+1]
+            generation = result[result.find(':')+1:result.find('\n')]
             output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], tokenizer, args, padding_length=20)
             batch_ids.append(output_ids)
             print(f'Sample {i}: \t {generation}')
@@ -408,6 +263,8 @@ def generate_from_random_prompts(args, model, stoi, itos, hf=False):
             batch_generations.append(generation)
 
     else:
+        itos, stoi = load_vocab_mappings()
+        model = args['model']
         for _ in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
@@ -427,10 +284,6 @@ def get_and_pad_ids(output, tokenizer, args, padding_length=20):
     '''
         To be documented.
     '''
-    # pad_length = max(padding_length - len(output), 0)
-    # pad_index = tokenizer.convert_tokens_to_ids('<pad>')
-    # padded_output = torch.cat([output, torch.tensor([pad_index] * pad_length).to(args['device'])])
-
     current_length = output.shape[1]
     
     if current_length >= padding_length:
@@ -442,27 +295,6 @@ def get_and_pad_ids(output, tokenizer, args, padding_length=20):
     padded_output = torch.cat((output, padding), dim=1)
     return padded_output
 
-    
-    return padded_output
-
-def parse_output_and_deduce_class(output, itos):
-    '''
-        This function takes as argument the output of a BabyLanguageModel model and parses it to retrieve the predicted value for ReadabilityLevel.
-
-        @param output (tensor): a list of indexes corresponding to the generated tokens
-        @param itos (list): the mapping from token indexes to their corresponding strings
-    '''
-    decoded_output = decode(output, itos)
-    predicted_class = 3 # let's say we add a class "unable to classify"
-
-    if 'EasilyReadableText' in decoded_output:
-        predicted_class = 0
-    elif 'StandardReadableText' in decoded_output:
-        predicted_class = 1
-    elif 'HardlyReadableText' in decoded_output:
-        predicted_class = 2
-
-    return predicted_class
 
 def smooth_input(x_input, max_prop=0.6):
     '''
@@ -485,40 +317,35 @@ def smooth_input(x_input, max_prop=0.6):
 
     return torch.stack(new_classes_vectors)
 
-# -----------------------------------------------------------------------------------------
-# Ontology concept learning utils
-# -----------------------------------------------------------------------------------------
 
-def extend_vocab_with_readability_levels(itos, stoi):
-    '''
-        This function adds the useful ontology concepts in the vocabulary used for generation. 
-        /!\ This function overwrites the json files contraining itos and stoi mappings 
+def setup_model_babylm(args, model_name):
 
-        @param itos
-        @param stoi
+    # load pretrained model weights
+    model = BabyLanguageModel(args)
+    if args['device'] == 'cpu':
+        model.load_state_dict(torch.load(model_name, map_location=torch.device('cpu')))
+    else:
+        model.load_state_dict(torch.load(model_name))
+    model.to(args['device'])
 
-        @return itos
-        @return stoi
-    '''
-    readability_levels = ['EasilyReadableText', 'StandardReadableText', 'HardlyReadableText']
-
-    # update itos
-    itos.extend(readability_levels)
-
-    # update stoi
-    l, rl = len(itos), len(readability_levels)
-    for r in range(rl):
-        stoi[readability_levels[r]] = l - rl + r + 1
+    # freeze all layers except model.lm_head
+    for p in model.token_embedding_table.parameters(): p.requires_grad = False
+    for p in model.position_embedding_table.parameters(): p.requires_grad = False
+    for p in model.blocks.parameters(): p.requires_grad = False
+    for p in model.ln_f.parameters(): p.requires_grad = False
+    for p in model.lm_head.parameters(): p.requires_grad = True
     
-    # dump new stoi dict
-    with open("../objects/vocab_stoi.json", "w") as f:
-        json.dump(stoi, f)
+    # store model
+    args.update({'model':model})
 
-    # dump new itos dict
-    with open("../objects/vocab_itos.json", "w") as f:
-        json.dump(itos, f)
+    # setup finetuning model
+    finetuning_model = TrainableHead(args)
+    for p in finetuning_model.pool.parameters(): p.requires_grad = False
+    for p in finetuning_model.anti_pool.parameters(): p.requires_grad = False
+    for p in finetuning_model.lm_head.parameters(): p.requires_grad = True
+    finetuning_model.lm_head.weight = model.lm_head.weight
 
-    return itos, stoi
+    return finetuning_model
 
 
 def create_batch_individual(batch_index, file_path):
@@ -529,119 +356,3 @@ def create_batch_individual(batch_index, file_path):
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
-
-# -----------------------------------------------------------------------------------------
-# Fine-tuning utils
-# -----------------------------------------------------------------------------------------
-
-def transfer_weights(source, target):
-    target.self_attn.q_proj.weight = source.self_attn.q_proj.weight
-    target.self_attn.k_proj.weight = source.self_attn.k_proj.weight
-    target.self_attn.v_proj.weight = source.self_attn.v_proj.weight
-    target.self_attn.o_proj.weight = source.self_attn.o_proj.weight
-    target.mlp.gate_proj.weight = source.mlp.gate_proj.weight
-    target.mlp.up_proj.weight = source.mlp.up_proj.weight
-    target.mlp.down_proj.weight = source.mlp.down_proj.weight
-    target.input_layernorm.weight = source.input_layernorm.weight
-    target.post_attention_layernorm.weight = source.post_attention_layernorm.weight 
-
-# -----------------------------------------------------------------------------------------
-# Results logging utils
-# -----------------------------------------------------------------------------------------
-
-def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
-    '''
-        This function saves the trues and preds at each epoch for train and validation and for each run on test set (several runs are performed to ensure stability)
-
-        @target (str):              either 'train', 'validation' or 'test'
-        @trues (tensor):            the gold labels for sentence readability levels
-        @preds (tensor):            the readability levels of the generated sentences
-        @epoch_or_iter (int):       the # of the epoch (train and val sets) or the iter (test set)
-    '''
-    with open(f'../results/{experiment}/predictions_{target}.csv', 'a+', newline='') as f:
-        write = csv.writer(f)
-
-        # Write data in columns
-        for i in range(len(trues)):
-            write.writerow([ trues[i], preds[i], epoch_or_iter ])
-
-
-def log_all_metrics(experiment):
-    '''
-        This function browses the files containing trues and preds for each set (train, val, test) and computes standard classification metrics + MCC on it
-
-        @param experiment (str):        name of the experiment
-
-        @return metrics (dict)
-    '''
-    # train set
-    for target in ['train', 'validation', 'test']:
-
-        with open(f'../results/{experiment}/predictions_{target}.csv', 'rb', newline='') as f:
-            
-            pass
-    # val set
-
-    # test set
-
-# -----------------------------------------------------------------------------------------
-# Display utils
-# -----------------------------------------------------------------------------------------
-
-def plot_loss(target, args, loss_list, display=True):
-    '''
-        Plots a simple curve showing the different values of the validation loss for each epoch.
-
-        @param target (str):     indicates if the evaluation is on validation or on training
-        @param args (dict):      a dictionnary that contains the model parameters
-        @param loss_list (list): a list of losses which length corresponds to the number of epochs
-        @param display (bool):   a parameter to indicate if the graph should be automatially shown to the user when the function is called (default = True)
-    '''
-    fig = plt.figure()
-    plt.plot(range(len(loss_list)), loss_list)
-    plt.xlabel('Epochs')
-    plt.ylabel(f'Triplet loss on {target} set')
-    plt.title('epochs: {}, batch size: {}, lr: {}, optimizer:{}'.format(args['max_eps'], args['train_bsize'], args['lr'], 'Adam'))
-
-    if display:
-        plt.show()
-
-    plt.savefig(f"./{target}_losses.png")
-
-
-def plot_accuracies(target, args, acc_list, display=True):
-    '''
-        Plots a simple curve showing the different values of the accuracy for each epoch.
-
-        @param acc_list (list):  a list of accuracies which length corresponds to the number of epochs
-        @param args (dict):      a dictionnary that contains the model parameters
-        @param display (bool):   a parameter to indicate if the graph should be automatially shown to the user when the function is called (default = True)
-    '''
-    fig = plt.figure()   
-    plt.plot(range(len(acc_list)), acc_list)
-    plt.xlabel('Epochs')
-    plt.ylabel(f'Accuracy on {target} set (percentage)')
-    plt.title('epochs: {}, batch size: {}, lr: {}, optimizer:{}'.format(args['max_eps'], args['train_bsize'], args['lr'], 'Adam'))
-    if display:
-        plt.show()
-
-    plt.savefig(f"./{target}_accuracies.png")
-
-
-def display_evaluation_report(task_name, trues, preds):
-    '''
-        This function provides a display with many classification metrics given the ground truth labels and the predicted labels for a certain task.
-
-        @param task_name (str): the name of the task to display along with the metrics
-        @param trues (list): ground truth labels
-        @param preds (list): the associated predicted labels
-    '''
-    print(colored(40*"-", 'blue'))
-    print(colored(f"Evaluation report for {task_name} task", 'blue'))
-    print(40*"-")
-    print("")
-    print(colored("Classification report", 'cyan'))
-    print(classification_report(trues, preds))
-    print("")
-    print(colored("F1 score: ", 'cyan'), f1_score(trues, preds))
-    print(colored(roc_auc_score(trues, preds), 'cyan'))

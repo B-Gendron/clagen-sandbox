@@ -1,40 +1,20 @@
 # torch utils
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch.utils.data import Dataset
 torch.manual_seed(42)
 
-# BAD PRACTICE set floats to half precision for the whole script
-# torch.set_default_dtype(torch.float16)
-
 # general purpose modules
-from glob import glob
 import os
 import subprocess
-import numpy as np
-from datasets import load_dataset
 from tqdm import tqdm
 import argparse
-import pandas as pd
-import json
-from termcolor import colored
-from collections import Counter
-import logging
 from torch.utils.tensorboard import SummaryWriter
 from torchtext.vocab import build_vocab_from_iterator, Vocab
-from torchtext.data import get_tokenizer
 from nltk.tokenize import TweetTokenizer
-# import nltk
-# nltk.download('punkt')
-from transformers import BertTokenizer, BertTokenizerFast
 
-# tokenize = get_tokenizer("basic_english")
-# tokenize = BertTokenizerFast.from_pretrained("bert-base-uncased") # changer max_length à plus de 512
 tokenizer = TweetTokenizer()
 
 # from other scripts
-from utils import activate_gpu, get_datetime, vocab_dicts, encode, decode, extend_vocab_with_readability_levels
+from utils import activate_gpu, get_datetime, vocab_dicts, encode 
 from models import BabyLanguageModel
     
     
@@ -215,7 +195,6 @@ if __name__ == "__main__":
 
     # save stoi and itos dicts
     stoi, itos = vocab_dicts(vocab)
-    # itos, stoi = extend_vocab_with_readability_levels(itos, stoi)
 
     # hyperparameters default config
     args = {
