@@ -1,30 +1,13 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-import numpy as np
 import json
 import pickle
 import argparse
 import io
-import pandas as pd
 from termcolor import colored
-from torchtext.vocab import build_vocab_from_iterator
 from nltk.tokenize import TweetTokenizer
 
 from train import *
 from utils import encode, decode
-
-class CPU_Unpickler(pickle.Unpickler):
-    """
-        This class is supposed to help running something on CPU when it is based on objects computed on GPU. 
-        From: https://github.com/pytorch/pytorch/issues/16797#issuecomment-633423219 
-    """
-    def find_class(self, module, name):
-        if module == 'torch.storage' and name == '_load_from_bytes':
-            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
-        else: return super().find_class(module, name)
-
 
 
 def generate_from_prompt(prompt_text, tokenizer, model, stoi, itos, args):
