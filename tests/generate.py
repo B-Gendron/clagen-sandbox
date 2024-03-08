@@ -6,8 +6,8 @@ import io
 from termcolor import colored
 from nltk.tokenize import TweetTokenizer
 
-from train import *
-from utils import encode, decode
+from code.train import *
+from code.utils import encode, decode
 
 
 def generate_from_prompt(prompt_text, tokenizer, model, stoi, itos, args):
