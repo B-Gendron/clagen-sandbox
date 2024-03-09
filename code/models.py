@@ -6,10 +6,31 @@ import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaModel
 from transformers.models.llama.configuration_llama import LlamaConfig
 
-from utils import smooth_input
-
 # set default tensor type
 torch.set_default_dtype(torch.float16)
+
+
+def smooth_input(x_input, max_prop=0.6):
+    '''
+        This function is used in TrainableHeadAdapters model forward to smooth the one-hot encoding of the input to a 60/20/20 like vector (in its default config). It is meant to be used with n_rl classes and a max_prop which allows an equal repartition of other proportion over other labels.
+ 
+        @param x_input (torch.Tensor):
+        @param max_prop (float):
+    '''
+    n_rl = x_input.size()[1]
+    # check if it is possible to use this max-prop and compute the other proportions out of it
+    assert int((1-max_prop)*100 % (n_rl-1)) == 0 
+    # compute the minimal proportion since it can be computed
+    min_prop = (1-max_prop)/(n_rl-1) 
+    new_classes_vectors = []
+    for classes_one_hot in x_input:
+        i = torch.argmax(classes_one_hot)
+        x = torch.full((n_rl,), min_prop)
+        x[i] = max_prop
+        new_classes_vectors.append(x)
+
+    return torch.stack(new_classes_vectors)
+
 
 class Head(nn.Module):
     """ one head of self-attention """

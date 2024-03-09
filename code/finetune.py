@@ -107,25 +107,26 @@ def test(args, finetuning_model, target, experiment, hf=False):
     file_paths = []
 
     for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
-        batch_labels, batch_generations = generate_from_random_prompts(args, hf=hf)
-        # save the generated sentences to further look at it
+        # generate sentences with a specific RL
+        batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=hf)
         file_path = save_batch_generations(batch_generations, batch_index)
         file_paths.append(file_path)
 
-        # what we call 'trues' here refers to the RL that the generated sentence SHOULD have
+        # trues are the RL that the generated sentence should have
         trues.extend(batch_labels)
         create_batch_individual(batch_index, file_path)
         generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
         preds.extend(generations_rl)
 
-        # deduce predictions "probabilities" from predictions
+        # prediction probabilities go through finetuning model
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
-        # pass the "probas" through the finetuning model to compute loss and update main model head
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
-        input_ids = torch.randint(0, 32000, (32,)).unsqueeze(-1).to(args['device'])
-        output_probas = finetuning_model(input_ids=input_ids, x_input=generations_probas)
-        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device']))
+        output_probas = finetuning_model(input_ids=torch.stack(batch_ids).squeeze(), x_input=generations_probas)
+
+        # training step
+        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
         loss_it.append(loss.item())
+        print(loss_it)
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
@@ -228,7 +229,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
             model_name,
             low_cpu_mem_usage=True,
             return_dict=True,
-            torch_dtype=torch.float16,
+            torch_dtype=torch.bfloat16,
             device_map=args['device'],
         )
         for p in model.parameters(): p.requires_grad = False
@@ -289,7 +290,7 @@ if __name__ == "__main__":
     # print(f"Decoder block #{d_block} will be updated")
 
     args = {'vocab_size':239267,        # new vocab size corresponding to the new dataset
-            'batch_size':5,            # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':32,            # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,            # Transformer block size in the language model
             'train_iters':100,          # number of train batches to consider in one episode
             'eval_iters':10,            # number of validation/test batches to consider in one episode
@@ -306,13 +307,13 @@ if __name__ == "__main__":
         }
 
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
-    # model_name = "meta-llama/Llama-2-7b-chat-hf"
-    model_name = "google/gemma-2b-it"
+    model_name = "meta-llama/Llama-2-7b-chat-hf"
+    # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
-    # args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096}) # for llama
-    args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
+    args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096}) # for llama
+    # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
-    run_exp(args, model_name, '0503_gemma_finetuning', hf=True)
+    run_exp(args, model_name, '0803_llama2_finetuning', hf=True)
 
 
 
