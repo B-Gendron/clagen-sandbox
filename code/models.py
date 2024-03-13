@@ -218,25 +218,37 @@ class TrainableHeadAdapters(nn.Module):
     '''
         An auxiliary model to update the babylm model lm_head layer using generation redability levels predictions.
     '''
-    def __init__(self, args, n_rl=3):
+    def __init__(self, args):
         super(TrainableHeadAdapters, self).__init__()
         vocab_size = args['vocab_size']
-        self.pool = nn.Linear(20*vocab_size, n_rl) # torch.Size([32, 20, vocab_size]) --> torch.Size([32, 3])
+        max_new_tokens = args['max_new_tokens']
+        self.pool = nn.Linear(max_new_tokens*vocab_size, vocab_size) 
+        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(p=0.5)
+        self.classification_layer = nn.Linear(vocab_size, 2) # [32, vocab_size] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
         self.softmax = nn.Softmax(dim=-1)
 
         self.model = args['model']
         self.args = args
         self.penalty = 1e-1
 
-    def forward(self, input_ids, x_input):
+    def forward(self, input_ids):
         '''
-            Fake a forward path through the model using a compliant input (a tensor of completely random input_ids)
+            b = batch_size (default=32)
+            t = max_new_tokens (default=20)
+            v = vocab_size (default=32000 if llama, another number I don't remeber if gemma)
         '''
+        # forward path inside the model
         x = self.model(input_ids)
-        # print("after applying model:", x)
-        x = self.pool(x[0].view(x[0].size(0), -1).half())
-        # print("after pooling:", x)
-        x = self.penalty*self.softmax(x[0]) + smooth_input(x_input).to(self.args['device'])
+
+        # dimension reduction to match with classification layer
+        x = self.pool(x[0].view(x[0].size(0), -1).half()) # [b, t, v] --> [b, v]
+        x = self.relu(x)
+        x = self.dropout(x)
+
+        # classification layer with output softmax
+        x = self.classification_layer(x) # [b, v] --> [b, 2]
+        x = self.softmax(x)
 
         return x
 

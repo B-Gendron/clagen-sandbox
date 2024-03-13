@@ -62,7 +62,9 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
         # prediction probabilities go through finetuning model
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
-        output_probas = finetuning_model(input_ids=torch.stack(batch_ids).squeeze(), x_input=generations_probas)
+        output = finetuning_model(input_ids=torch.stack(batch_ids).squeeze())
+        print(output)
+        exit()
 
         # training step
         loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
@@ -227,10 +229,10 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         # TODO encapsuler tout ça dans des fonctions pour plus de clarté et pour pouvoir paramétrer tout ça !
         model = AutoModelForCausalLM.from_pretrained(  
             model_name,
-            low_cpu_mem_usage=True,
-            return_dict=True,
-            torch_dtype=torch.bfloat16,
-            device_map=args['device'],
+            low_cpu_mem_usage=True,         # recommanded param
+            return_dict=True,               # not used for now
+            torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
+            device_map=args['device'],      # send to the right device
         )
         for p in model.parameters(): p.requires_grad = False
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
@@ -260,6 +262,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
         model = get_peft_model(model, config)
         args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
+        args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
         finetuning_model = TrainableHeadAdapters(args)
         finetuning_model.to(args['device'])
 

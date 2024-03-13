@@ -252,7 +252,7 @@ def generate_from_random_prompts(args, hf=False):
             batch_labels.append(label)
             # perform generation
             prompt = tokenizer(prompt, return_tensors="pt").to(args['device'])
-            output = model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part
+            output = model.generate(**prompt, max_new_tokens=args['max_new_tokens'], repetition_penalty=1.5)[0] # this contains the prompt and the generated part
             result = tokenizer.decode(output)
             generation = result[result.find(':')+1:result.find('\n')]
             output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], tokenizer, args, padding_length=20)
