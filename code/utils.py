@@ -226,7 +226,7 @@ def random_prompt(concept, classes, hf=False):
     n = len(classes)
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
-            if hf == 'llama' or hf == 'adapters':
+            if hf:
                 prompt = f"Generate a sentence for which {concept} is {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
                 return prompt, k-1
             else: 
@@ -250,7 +250,6 @@ def generate_from_random_prompts(args, hf=False):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
             batch_labels.append(label)
-
             # perform generation
             prompt = tokenizer(prompt, return_tensors="pt").to(args['device'])
             output = model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part

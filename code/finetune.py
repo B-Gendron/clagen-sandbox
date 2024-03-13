@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, peft_model
 import os
 from tqdm import tqdm
 import argparse
@@ -13,7 +13,7 @@ from torch.utils.tensorboard import SummaryWriter
 # from other scripts
 from utils import *
 from logging_utils import *
-from models import BabyLanguageModel, TrainableHead, TrainableHeadAdapters
+from models import BabyLanguageModel, TrainableHead, TrainableHeadAdapters, BinaryTrainableModel
 
 # disable hf tokenizer parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -233,7 +233,6 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
             device_map=args['device'],
         )
         for p in model.parameters(): p.requires_grad = False
-
         tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         args.update({'tokenizer':tokenizer})
         tokenizer.pad_token = tokenizer.eos_token
@@ -310,7 +309,7 @@ if __name__ == "__main__":
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
-    args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096}) # for llama
+    args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096, 'n_layers':33}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
     run_exp(args, model_name, '0803_llama2_finetuning', hf=True)

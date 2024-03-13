@@ -276,30 +276,114 @@ The docs list the following coarse-grained tags used for the pos and pos_ attrib
   <rdfs:subClassOf rdf:resource="#FullText"/>
 </owl:Class>
 
-<owl:NamedIndividual rdf:about="#0_0_utt_7">
+<owl:NamedIndividual rdf:about="#0_0_utt_1259113">
   <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_0_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
+  <containsToken rdf:resource="#0_0_5_tok_12333698124728187681"/>
+  <containsToken rdf:resource="#0_0_0_tok_12731191880880189974"/>
+  <containsToken rdf:resource="#0_0_2_tok_5097672513440128799"/>
+  <containsToken rdf:resource="#0_0_1_tok_2593208677638477497"/>
+  <containsToken rdf:resource="#0_0_4_tok_15873186554868950905"/>
+  <containsToken rdf:resource="#0_0_3_tok_959164148857638496"/>
+  <containsToken rdf:resource="#0_0_6_tok_3530701750044741661"/>
+  <rdf:type rdf:resource="#StandardReadableText"/>
+  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Yes,_I'm_feeling_generous_today!&lt;/s</fullText>
+  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">5.12</hasAutoReadabilityScore>
+  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">8.667</hasColeReadabilityScore>
+  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">4.45</hasFKGLReadabilityScore>
+  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">9.067</hasFOGIReadabilityScore>
   <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">9.067</hasAverageReadabilityScore>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_0_0_tok_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_0_0_tok_12731191880880189974">
   <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_0_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
+  <hasLemma rdf:resource="#0_0_0_lem_12731191880880189974"/>
+  <hasPOS rdf:resource="#INTJ"/>
+  <hasTag rdf:resource="#UH"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Yes</tokenString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_0_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_0_1_tok_2593208677638477497">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_0_1_lem_2593208677638477497"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%2C"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_2_tok_5097672513440128799">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_0_2_lem_4690420944186131903"/>
+  <hasPOS rdf:resource="#PRON"/>
+  <hasTag rdf:resource="#PRP"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">I</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_3_tok_959164148857638496">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_0_3_lem_10382539506755952630"/>
+  <hasPOS rdf:resource="#AUX"/>
+  <hasTag rdf:resource="#VBP"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">'m</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_4_tok_15873186554868950905">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_0_4_lem_5741770584995928333"/>
+  <hasPOS rdf:resource="#VERB"/>
+  <hasTag rdf:resource="#VBG"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">feeling</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_5_tok_12333698124728187681">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_0_5_lem_12333698124728187681"/>
+  <hasPOS rdf:resource="#ADJ"/>
+  <hasTag rdf:resource="#JJ"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">generous</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_6_tok_3530701750044741661">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_0_6_lem_5907549820857472985"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NNS"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">today!&lt;/s</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_0_lem_12731191880880189974">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">yes</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#INTJ">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">INTJ</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#UH">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">UH</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_1_lem_2593208677638477497">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#PUNCT">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PUNCT</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#%2C">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_2_lem_4690420944186131903">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">I</lemmaString>
 </owl:NamedIndividual>
 
 <owl:NamedIndividual rdf:about="#PRON">
@@ -307,815 +391,641 @@ The docs list the following coarse-grained tags used for the pos and pos_ attrib
   <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PRON</hasPOSString>
 </owl:NamedIndividual>
 
+<owl:NamedIndividual rdf:about="#PRP">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PRP</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_3_lem_10382539506755952630">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">be</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#AUX">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">AUX</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#VBP">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">VBP</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_4_lem_5741770584995928333">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">feel</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#VERB">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">VERB</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#VBG">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">VBG</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_5_lem_12333698124728187681">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">generous</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#ADJ">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ADJ</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#JJ">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">JJ</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_0_6_lem_5907549820857472985">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">today!&lt;/</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#NOUN">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NOUN</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#NNS">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NNS</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_utt_11821175">
+  <rdf:type rdf:resource="#FullText"/>
+  <containsToken rdf:resource="#0_1_4_tok_15884554869126768810"/>
+  <containsToken rdf:resource="#0_1_15_tok_15884554869126768810"/>
+  <containsToken rdf:resource="#0_1_5_tok_15884554869126768810"/>
+  <containsToken rdf:resource="#0_1_16_tok_15884554869126768810"/>
+  <containsToken rdf:resource="#0_1_6_tok_7425985699627899538"/>
+  <containsToken rdf:resource="#0_1_7_tok_5439657043933447811"/>
+  <containsToken rdf:resource="#0_1_8_tok_10919746644895126889"/>
+  <containsToken rdf:resource="#0_1_9_tok_17941481089985911736"/>
+  <containsToken rdf:resource="#0_1_10_tok_5640369432778651323"/>
+  <containsToken rdf:resource="#0_1_0_tok_15884554869126768810"/>
+  <containsToken rdf:resource="#0_1_11_tok_227504873216781231"/>
+  <containsToken rdf:resource="#0_1_1_tok_16037325823156266367"/>
+  <containsToken rdf:resource="#0_1_12_tok_15723228619950769035"/>
+  <containsToken rdf:resource="#0_1_2_tok_899618643364689362"/>
+  <containsToken rdf:resource="#0_1_13_tok_12646065887601541794"/>
+  <containsToken rdf:resource="#0_1_3_tok_2593208677638477497"/>
+  <containsToken rdf:resource="#0_1_14_tok_15884554869126768810"/>
+  <rdf:type rdf:resource="#EasilyReadableText"/>
+  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"_For_example,_""The_cat_purred_contentedly_on_my_lap."""</fullText>
+  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">1.753</hasAutoReadabilityScore>
+  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">3.756</hasColeReadabilityScore>
+  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">3.209</hasFKGLReadabilityScore>
+  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">6.244</hasFOGIReadabilityScore>
+  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">4.04</hasSMOGReadabilityScore>
+  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">6.244</hasAverageReadabilityScore>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_0_tok_15884554869126768810">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_0_lem_15884554869126768810"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%60%60"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_1_tok_16037325823156266367">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_1_lem_16037325823156266367"/>
+  <hasPOS rdf:resource="#ADP"/>
+  <hasTag rdf:resource="#IN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">For</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_2_tok_899618643364689362">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_2_lem_899618643364689362"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">example</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_3_tok_2593208677638477497">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_3_lem_2593208677638477497"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%2C"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_4_tok_15884554869126768810">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_4_lem_15884554869126768810"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%60%60"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_5_tok_15884554869126768810">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_5_lem_15884554869126768810"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%60%60"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_6_tok_7425985699627899538">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_6_lem_7425985699627899538"/>
+  <hasPOS rdf:resource="#DET"/>
+  <hasTag rdf:resource="#DT"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_7_tok_5439657043933447811">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_7_lem_5439657043933447811"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cat</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_8_tok_10919746644895126889">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_8_lem_2684197448930491628"/>
+  <hasPOS rdf:resource="#VERB"/>
+  <hasTag rdf:resource="#VBD"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">purred</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_9_tok_17941481089985911736">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_9_lem_17941481089985911736"/>
+  <hasPOS rdf:resource="#ADV"/>
+  <hasTag rdf:resource="#RB"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">contentedly</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_10_tok_5640369432778651323">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_10_lem_5640369432778651323"/>
+  <hasPOS rdf:resource="#ADP"/>
+  <hasTag rdf:resource="#IN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">on</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_11_tok_227504873216781231">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_11_lem_227504873216781231"/>
+  <hasPOS rdf:resource="#PRON"/>
+  <hasTag rdf:resource="#PRP%24"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">my</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_12_tok_15723228619950769035">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_12_lem_15723228619950769035"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lap</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_13_tok_12646065887601541794">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_13_lem_12646065887601541794"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#."/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">.</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_14_tok_15884554869126768810">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_14_lem_15884554869126768810"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%27%27"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_15_tok_15884554869126768810">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_15_lem_15884554869126768810"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%60%60"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_16_tok_15884554869126768810">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_1_16_lem_15884554869126768810"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%60%60"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_0_lem_15884554869126768810">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#%60%60">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">``</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_1_lem_16037325823156266367">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">for</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#ADP">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ADP</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#IN">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">IN</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_2_lem_899618643364689362">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">example</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#NN">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NN</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_3_lem_2593208677638477497">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_4_lem_15884554869126768810">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_5_lem_15884554869126768810">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_6_lem_7425985699627899538">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#DET">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DET</hasPOSString>
+</owl:NamedIndividual>
+
 <owl:NamedIndividual rdf:about="#DT">
   <rdf:type rdf:resource="#TokenTag"/>
   <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DT</hasTagString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_1_utt_7">
+<owl:NamedIndividual rdf:about="#0_1_7_lem_5439657043933447811">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">cat</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_8_lem_2684197448930491628">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">purr</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#VBD">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">VBD</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_9_lem_17941481089985911736">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">contentedly</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#ADV">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">ADV</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#RB">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">RB</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_10_lem_5640369432778651323">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">on</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_11_lem_227504873216781231">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">my</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#PRP%24">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PRP$</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_12_lem_15723228619950769035">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">lap</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_13_lem_12646065887601541794">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">.</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#.">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">.</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_14_lem_15884554869126768810">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#%27%27">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">''</hasTagString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_15_lem_15884554869126768810">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_1_16_lem_15884554869126768810">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">"</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_utt_37491112">
   <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_1_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
+  <containsToken rdf:resource="#0_2_7_tok_2593208677638477497"/>
+  <containsToken rdf:resource="#0_2_2_tok_4522981160172931067"/>
+  <containsToken rdf:resource="#0_2_13_tok_1248239241591158246"/>
+  <containsToken rdf:resource="#0_2_8_tok_11235406971919280924"/>
+  <containsToken rdf:resource="#0_2_3_tok_9492612516460955585"/>
+  <containsToken rdf:resource="#0_2_14_tok_7462649471125461151"/>
+  <containsToken rdf:resource="#0_2_9_tok_16428057658620181782"/>
+  <containsToken rdf:resource="#0_2_4_tok_10066841407251338481"/>
+  <containsToken rdf:resource="#0_2_10_tok_16787406772640934737"/>
+  <containsToken rdf:resource="#0_2_0_tok_3002984154512732771"/>
+  <containsToken rdf:resource="#0_2_5_tok_12513610393978129441"/>
+  <containsToken rdf:resource="#0_2_11_tok_14527154806029863691"/>
+  <containsToken rdf:resource="#0_2_6_tok_1882817931903534611"/>
+  <containsToken rdf:resource="#0_2_1_tok_7425985699627899538"/>
+  <containsToken rdf:resource="#0_2_12_tok_6972273034787869740"/>
+  <rdf:type rdf:resource="#StandardReadableText"/>
+  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In_the_25_years_since_its_launch,_NASA's_Hubble_Space_Telescope_has_capture</fullText>
+  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">6.429</hasAutoReadabilityScore>
+  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">8.126</hasColeReadabilityScore>
+  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">2.513</hasFKGLReadabilityScore>
+  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">8.457</hasFOGIReadabilityScore>
   <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">8.457</hasAverageReadabilityScore>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_1_0_tok_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_0_tok_3002984154512732771">
   <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_1_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
+  <hasLemma rdf:resource="#0_2_0_lem_3002984154512732771"/>
+  <hasPOS rdf:resource="#ADP"/>
+  <hasTag rdf:resource="#IN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">In</tokenString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_1_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_1_tok_7425985699627899538">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_1_lem_7425985699627899538"/>
+  <hasPOS rdf:resource="#DET"/>
+  <hasTag rdf:resource="#DT"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_2_tok_4522981160172931067">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_2_lem_4522981160172931067"/>
+  <hasPOS rdf:resource="#NUM"/>
+  <hasTag rdf:resource="#CD"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">25</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_3_tok_9492612516460955585">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_3_lem_14889849580704678361"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NNS"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">years</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_4_tok_10066841407251338481">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_4_lem_10066841407251338481"/>
+  <hasPOS rdf:resource="#SCONJ"/>
+  <hasTag rdf:resource="#IN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">since</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_5_tok_12513610393978129441">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_5_lem_12513610393978129441"/>
+  <hasPOS rdf:resource="#PRON"/>
+  <hasTag rdf:resource="#PRP%24"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">its</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_6_tok_1882817931903534611">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_6_lem_1882817931903534611"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">launch</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_7_tok_2593208677638477497">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_7_lem_2593208677638477497"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <hasTag rdf:resource="#%2C"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_8_tok_11235406971919280924">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_8_lem_13126542985326679209"/>
+  <hasPOS rdf:resource="#PROPN"/>
+  <hasTag rdf:resource="#NNP"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NASA</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_9_tok_16428057658620181782">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_9_lem_16428057658620181782"/>
+  <hasPOS rdf:resource="#PART"/>
+  <hasTag rdf:resource="#POS"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">'s</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_10_tok_16787406772640934737">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_10_lem_15243986351640018717"/>
+  <hasPOS rdf:resource="#PROPN"/>
+  <hasTag rdf:resource="#NNP"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hubble</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_11_tok_14527154806029863691">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_11_lem_17675128748742035241"/>
+  <hasPOS rdf:resource="#PROPN"/>
+  <hasTag rdf:resource="#NNP"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Space</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_12_tok_6972273034787869740">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_12_lem_5393484483375969310"/>
+  <hasPOS rdf:resource="#PROPN"/>
+  <hasTag rdf:resource="#NNP"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Telescope</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_13_tok_1248239241591158246">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_13_lem_14692702688101715474"/>
+  <hasPOS rdf:resource="#VERB"/>
+  <hasTag rdf:resource="#VBZ"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">has</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_14_tok_7462649471125461151">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#0_2_14_lem_7462649471125461151"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <hasTag rdf:resource="#NN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">capture</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_0_lem_3002984154512732771">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">in</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#0_2_1_lem_7425985699627899538">
   <rdf:type rdf:resource="#Lemma"/>
   <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_2_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_2_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_2_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_2_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_2_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_2_lem_4522981160172931067">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">25</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_3_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_3_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+<owl:NamedIndividual rdf:about="#NUM">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NUM</hasPOSString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_3_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_3_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
+<owl:NamedIndividual rdf:about="#CD">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">CD</hasTagString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_3_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_3_lem_14889849580704678361">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">year</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_4_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_4_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_4_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_4_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_4_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_4_lem_10066841407251338481">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">since</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_5_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_5_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+<owl:NamedIndividual rdf:about="#SCONJ">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">SCONJ</hasPOSString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_5_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_5_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_5_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_5_lem_12513610393978129441">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">its</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_6_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_6_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_6_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_6_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_6_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_6_lem_1882817931903534611">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">launch</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_7_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_7_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_7_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_7_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_7_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_7_lem_2593208677638477497">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">,</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_8_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_8_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_8_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_8_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_8_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_8_lem_13126542985326679209">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NASA</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_9_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_9_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+<owl:NamedIndividual rdf:about="#PROPN">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PROPN</hasPOSString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_9_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_9_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
+<owl:NamedIndividual rdf:about="#NNP">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NNP</hasTagString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_9_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_9_lem_16428057658620181782">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">'s</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_10_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_10_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+<owl:NamedIndividual rdf:about="#PART">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PART</hasPOSString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_10_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_10_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
+<owl:NamedIndividual rdf:about="#POS">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">POS</hasTagString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_10_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_10_lem_15243986351640018717">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hubble</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_11_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_11_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_11_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_11_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_11_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_11_lem_17675128748742035241">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Space</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_12_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_12_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_12_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_12_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_12_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_12_lem_5393484483375969310">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Telescope</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_13_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_13_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_13_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_13_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_13_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_13_lem_14692702688101715474">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">have</lemmaString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_14_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_14_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
+<owl:NamedIndividual rdf:about="#VBZ">
+  <rdf:type rdf:resource="#TokenTag"/>
+  <hasTagString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">VBZ</hasTagString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_14_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_14_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_14_0_lem_7425985699627899538">
+<owl:NamedIndividual rdf:about="#0_2_14_lem_7462649471125461151">
   <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_15_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_15_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_15_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_15_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_15_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_16_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_16_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_16_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_16_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_16_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_17_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_17_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_17_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_17_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_17_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_18_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_18_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_18_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_18_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_18_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_19_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_19_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_19_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_19_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_19_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_20_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_20_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_20_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_20_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_20_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_21_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_21_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_21_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_21_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_21_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_22_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_22_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_22_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_22_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_22_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_23_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_23_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_23_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_23_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_23_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_24_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_24_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_24_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_24_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_24_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_25_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_25_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_25_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_25_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_25_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_26_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_26_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_26_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_26_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_26_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_27_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_27_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_27_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_27_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_27_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_28_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_28_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_28_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_28_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_28_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_29_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_29_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_29_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_29_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_29_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_30_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_30_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_30_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_30_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_30_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_31_utt_7">
-  <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_31_0_tok_7425985699627899538"/>
-  <rdf:type rdf:resource="#EasilyReadableText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</fullText>
-  <hasAutoReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-6.8</hasAutoReadabilityScore>
-  <hasColeReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-27.76</hasColeReadabilityScore>
-  <hasFKGLReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">-3.4</hasFKGLReadabilityScore>
-  <hasFOGIReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasFOGIReadabilityScore>
-  <hasSMOGReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.0</hasSMOGReadabilityScore>
-  <hasAverageReadabilityScore rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">0.4</hasAverageReadabilityScore>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_31_0_tok_7425985699627899538">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_31_0_lem_7425985699627899538"/>
-  <hasPOS rdf:resource="#PRON"/>
-  <hasTag rdf:resource="#DT"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">The</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_31_0_lem_7425985699627899538">
-  <rdf:type rdf:resource="#Lemma"/>
-  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">the</lemmaString>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">capture</lemmaString>
 </owl:NamedIndividual>
 
 

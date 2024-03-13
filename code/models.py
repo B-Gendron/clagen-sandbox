@@ -3,8 +3,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaModel
+from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaForCausalLM
 from transformers.models.llama.configuration_llama import LlamaConfig
+from transformers.generation import utils
 
 # set default tensor type
 torch.set_default_dtype(torch.float16)
@@ -175,38 +176,6 @@ class BabyLanguageModel(nn.Module):
             idx = torch.cat((idx, idx_next), dim=1) # (B, T+1)
         return idx
 
-# class LlamaTrainableDecoderBlock(nn.Module):
-#     def __init__(self, args, n_rl=3):
-#         super(LlamaTrainableDecoderBlock, self).__init__()
-
-#         # layers for updating one of llama decoders
-#         self.anti_pool_llama = nn.Linear(n_rl, 4096)
-#         self.pool_llama = nn.Linear(4096, n_rl)
-#         self.attn_q_proj = nn.Linear(in_features=4096, out_features=4096)
-#         self.attn_k_proj = nn.Linear(in_features=4096, out_features=4096)
-#         self.attn_v_proj = nn.Linear(in_features=4096, out_features=4096)
-#         self.attn_o_proj = nn.Linear(in_features=4096, out_features=4096)
-#         self.gate_proj = nn.Linear(in_features=4096, out_features=11008)
-#         self.up_proj = nn.Linear(in_features=4096, out_features=11008)
-#         self.down_proj = nn.Linear(in_features=11008, out_features=4096)
-#         self.input_layernorm = LlamaRMSNorm(hidden_size=4096)
-#         self.post_attn_layernorm = LlamaRMSNorm(hidden_size=4096)
-
-#         self.args = args
-
-#     def forward(self, x):
-#         x = self.anti_pool_llama(x)
-#         x = self.attn_q_proj(x)
-#         x = self.attn_k_proj(x)
-#         x = self.attn_v_proj(x)
-#         x = self.attn_o_proj(x)
-#         x = self.gate_proj(x)
-#         x = self.up_proj(x)
-#         x = self.down_proj(x)
-#         x = self.input_layernorm(x)
-#         x = self.post_attn_layernorm(x)
-
-#         return x
 
 class TrainableHead(nn.Module):
     '''
@@ -256,19 +225,6 @@ class TrainableHeadAdapters(nn.Module):
         self.softmax = nn.Softmax(dim=-1)
 
         self.model = args['model']
-
-        # freeze all layers here except the adapters, otherwise the whole model will be updated!
-        # for p in self.model.parameters(): p.requires_grad = False
-        # for i in range(0, 32):
-        #     prefix_layers = self.model.base_model.model.model.layers[i].self_attn
-        #     attention_layers = [prefix_layers.q_proj, prefix_layers.k_proj, prefix_layers.v_proj, prefix_layers.o_proj]
-        #     for attn in attention_layers:
-        #         for p in attn.lora_dropout.parameters(): p.requires_grad = True
-        #         for p in attn.lora_A.parameters(): p.requires_grad = True
-        #         for p in attn.lora_B.parameters(): p.requires_grad = True
-        #         for p in attn.lora_embedding_A.parameters(): p.requires_grad = True
-        #         for p in attn.lora_embedding_B.parameters(): p.requires_grad = True
-
         self.args = args
         self.penalty = 1e-1
 
@@ -281,5 +237,30 @@ class TrainableHeadAdapters(nn.Module):
         x = self.pool(x[0].view(x[0].size(0), -1).half())
         # print("after pooling:", x)
         x = self.penalty*self.softmax(x[0]) + smooth_input(x_input).to(self.args['device'])
+
+        return x
+
+
+class BinaryTrainableModel(nn.Module):
+    '''
+        TODO put this in draft
+        The "auxiliary model" used for the binary classification approach, which is unfortunately not adapted to our usecase :/
+    '''
+    def __init__(self, args):
+        super(BinaryTrainableModel, self).__init__()
+        n_embd = args['n_embd']
+        self.linear = nn.Linear(args['n_layers']*n_embd, n_embd)
+        self.classification_layer = nn.Linear(n_embd, 2) # binary classification scenario using 2 output neurons + softmax (1 neuron + sigmoid seem to cause problems to colleagues...)
+        self.softmax = nn.Softmax(dim=-1)
+        self.args = args
+
+    def forward(self, hidden_states):
+        '''
+            Fake a forward path through the model using a compliant input (a tensor of completely random input_ids)
+        '''
+        hs = torch.squeeze(hidden_states).half() # [32, 33, 1, 4096] --> [32, 33, 4096]
+        x = self.linear(hs.view(self.args['batch_size'], -1)) # [32, 33, 4096] --> [32, 4096]
+        x = self.classification_layer(x) # [32, 4096] --> [32, 2]
+        x = self.softmax(x)
 
         return x

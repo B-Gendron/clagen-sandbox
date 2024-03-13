@@ -54,6 +54,54 @@
         # args.update({'pipe':pipe})
 
 
+# class LlamaTrainableDecoderBlock(nn.Module):
+#     def __init__(self, args, n_rl=3):
+#         super(LlamaTrainableDecoderBlock, self).__init__()
+
+#         # layers for updating one of llama decoders
+#         self.anti_pool_llama = nn.Linear(n_rl, 4096)
+#         self.pool_llama = nn.Linear(4096, n_rl)
+#         self.attn_q_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.attn_k_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.attn_v_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.attn_o_proj = nn.Linear(in_features=4096, out_features=4096)
+#         self.gate_proj = nn.Linear(in_features=4096, out_features=11008)
+#         self.up_proj = nn.Linear(in_features=4096, out_features=11008)
+#         self.down_proj = nn.Linear(in_features=11008, out_features=4096)
+#         self.input_layernorm = LlamaRMSNorm(hidden_size=4096)
+#         self.post_attn_layernorm = LlamaRMSNorm(hidden_size=4096)
+
+#         self.args = args
+
+#     def forward(self, x):
+#         x = self.anti_pool_llama(x)
+#         x = self.attn_q_proj(x)
+#         x = self.attn_k_proj(x)
+#         x = self.attn_v_proj(x)
+#         x = self.attn_o_proj(x)
+#         x = self.gate_proj(x)
+#         x = self.up_proj(x)
+#         x = self.down_proj(x)
+#         x = self.input_layernorm(x)
+#         x = self.post_attn_layernorm(x)
+
+#         return x
+
+# Still about model classes, this was in TrainableHeadAdapters:
+
+    # freeze all layers here except the adapters, otherwise the whole model will be updated!
+    # for p in self.model.parameters(): p.requires_grad = False
+    # for i in range(0, 32):
+    #     prefix_layers = self.model.base_model.model.model.layers[i].self_attn
+    #     attention_layers = [prefix_layers.q_proj, prefix_layers.k_proj, prefix_layers.v_proj, prefix_layers.o_proj]
+    #     for attn in attention_layers:
+    #         for p in attn.lora_dropout.parameters(): p.requires_grad = True
+    #         for p in attn.lora_A.parameters(): p.requires_grad = True
+    #         for p in attn.lora_B.parameters(): p.requires_grad = True
+    #         for p in attn.lora_embedding_A.parameters(): p.requires_grad = True
+    #         for p in attn.lora_embedding_B.parameters(): p.requires_grad = True
+
+
 # This utils function is for tuning pre-trained decoders directly (without adapters, and only for llama models)
 # def transfer_weights(source, target):
 #     target.self_attn.q_proj.weight = source.self_attn.q_proj.weight
