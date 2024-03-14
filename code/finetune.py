@@ -41,7 +41,8 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
     finetuning_model.train()
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'], fused=torch.float16)
-    ce_loss = nn.CrossEntropyLoss()
+    weights = torch.tensor([1.0, 2.0], device=args['device']) # double proba of getting 1 (same class) as there are 3 different classes, therefore twice more chances to be right when saying they are not same
+    ce_loss = nn.CrossEntropyLoss(weight=weights)
     writer = args['writer']
     loss_it = []
     trues, preds = [], []
@@ -62,12 +63,12 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
         # prediction probabilities go through finetuning model
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
+        gold_label = is_same(batch_labels, generations_rl)
         output = finetuning_model(input_ids=torch.stack(batch_ids).squeeze())
-        print(output)
-        exit()
+        # print(output) # this to check if the output is as desired
 
         # training step
-        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
+        loss = ce_loss(output, torch.tensor(gold_label).to(args['device'])) 
         loss.backward()
         optimizer.step()
         loss_it.append(loss.item())
@@ -104,7 +105,8 @@ def test(args, finetuning_model, target, experiment, hf=False):
     finetuning_model.eval()
     writer = args['writer']
     loss_it = []
-    ce_loss = nn.CrossEntropyLoss()
+    weights = torch.tensor([1.0, 2.0], device=args['device']) # double proba of getting 1 (same class) as there are 3 different classes, therefore twice more chances to be right when saying they are not same
+    ce_loss = nn.CrossEntropyLoss(weight=weights)
     trues, preds = [], []
     file_paths = []
 
@@ -123,10 +125,12 @@ def test(args, finetuning_model, target, experiment, hf=False):
         # prediction probabilities go through finetuning model
         generations_probas = [[int(j == i) for j in range(3)] for i in generations_rl]
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
-        output_probas = finetuning_model(input_ids=torch.stack(batch_ids).squeeze(), x_input=generations_probas)
+        gold_label = is_same(batch_labels, generations_rl)
+        output = finetuning_model(input_ids=torch.stack(batch_ids).squeeze())
+        # print(output) # this to check if the output is as desired
 
         # training step
-        loss = ce_loss(output_probas, torch.tensor(batch_labels).to(args['device'])) 
+        loss = ce_loss(output, torch.tensor(gold_label).to(args['device'])) 
         loss_it.append(loss.item())
         print(loss_it)
 
@@ -198,7 +202,7 @@ def run_on_several_test_sets(args, finetuning_model, experiment, episodes=5, hf=
     test_losses = []
 
     for i in range(episodes):
-        test_loss, test_trues, test_preds = test(args, finetuning_model, 'test', hf=hf)
+        test_loss, test_trues, test_preds = test(args, finetuning_model, 'test', experiment, hf=hf)
         save_epoch_data('test', test_trues, test_preds, i, experiment)
 
         test_losses.append(test_loss)
@@ -246,7 +250,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                 lora_alpha=64,
                 target_modules=[
                     # "q_proj",
-                    # "k_proj",
+                    "k_proj",
                     "v_proj",
                     # "o_proj",
                     # "gate_proj",
@@ -254,7 +258,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                     # "down_proj",
                     # "lm_head",
                 ],
-                layers_to_transform=[3, 4, 5],  # avoid top layers, this modifies the representation too much
+                layers_to_transform=[3, 4, 5, 29],  # avoid top layers, this modifies the representation too much
                 bias="lora_only",               # should be better than default setting in our case
                 lora_dropout=0.05,              # conventional setting
                 # task_type=TaskType.SEQ_CLS,
@@ -315,7 +319,7 @@ if __name__ == "__main__":
     args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096, 'n_layers':33}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
-    run_exp(args, model_name, '0803_llama2_finetuning', hf=True)
+    run_exp(args, model_name, '1403_llama2_finetuning_binary', hf=True)
 
 
 

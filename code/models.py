@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.init as init
 import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaForCausalLM
 from transformers.models.llama.configuration_llama import LlamaConfig
@@ -222,10 +223,10 @@ class TrainableHeadAdapters(nn.Module):
         super(TrainableHeadAdapters, self).__init__()
         vocab_size = args['vocab_size']
         max_new_tokens = args['max_new_tokens']
-        self.pool = nn.Linear(max_new_tokens*vocab_size, vocab_size) 
+        self.pool = nn.Linear(max_new_tokens*vocab_size, 128) # [20*32000, 128]
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=0.5)
-        self.classification_layer = nn.Linear(vocab_size, 2) # [32, vocab_size] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
+        self.classification_layer = nn.Linear(128, 2) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
         self.softmax = nn.Softmax(dim=-1)
 
         self.model = args['model']
@@ -237,17 +238,18 @@ class TrainableHeadAdapters(nn.Module):
             b = batch_size (default=32)
             t = max_new_tokens (default=20)
             v = vocab_size (default=32000 if llama, another number I don't remeber if gemma)
+            inter = intermediate size to avoid to have too many parameters (set to 128 here)
         '''
         # forward path inside the model
         x = self.model(input_ids)
 
         # dimension reduction to match with classification layer
-        x = self.pool(x[0].view(x[0].size(0), -1).half()) # [b, t, v] --> [b, v]
+        x = self.pool(x[0].view(x[0].size(0), -1).half()) # [b, t, inter] --> [b, inter]
         x = self.relu(x)
         x = self.dropout(x)
 
         # classification layer with output softmax
-        x = self.classification_layer(x) # [b, v] --> [b, 2]
+        x = self.classification_layer(x) # [b, inter] --> [b, 2]
         x = self.softmax(x)
 
         return x

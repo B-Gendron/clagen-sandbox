@@ -295,6 +295,19 @@ def get_and_pad_ids(output, tokenizer, args, padding_length=20):
     return padded_output
 
 
+def is_same(trues, preds):
+    '''
+        This function is intented to be used a finetuning time. 
+        It compares the desired labels (i.e. readability levels in our case) to the actual class of the generated sentences. 
+        It returns, for each element of the batch, 1 if true/pred classes are identical, 0 otherwise.
+
+        @param trues (list): the expected readability levels in our case
+        @param preds (list): the readability levels of generated sentences in our case
+    '''
+    return [1 if p == t else 0 for p, t in zip(preds, trues)]
+
+
+
 def setup_model_babylm(args, model_name):
 
     # load pretrained model weights
