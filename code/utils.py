@@ -304,7 +304,8 @@ def is_same(trues, preds):
         @param trues (list): the expected readability levels in our case
         @param preds (list): the readability levels of generated sentences in our case
     '''
-    return [1 if p == t else 0 for p, t in zip(preds, trues)]
+    res = [1 if p == t else 0 for p, t in zip(preds, trues)]
+    return torch.tensor(res, dtype=torch.float16)
 
 
 

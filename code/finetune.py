@@ -43,7 +43,8 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'], fused=torch.float16)
     weights = torch.tensor([1.0, 2.0], device=args['device']) # double proba of getting 1 (same class) as there are 3 different classes, therefore twice more chances to be right when saying they are not same
-    ce_loss = nn.CrossEntropyLoss(weight=weights)
+    # ce_loss = nn.CrossEntropyLoss(weight=weights)
+    bce_loss = nn.BCELoss()
     writer = args['writer']
     loss_it = []
     trues, preds = [], []
@@ -66,12 +67,14 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
         gold_label = is_same(batch_labels, generations_rl)
         output = finetuning_model(input_ids=torch.stack(batch_ids).squeeze())
-        # print(output) # this to check if the output is as desired
+        gold_labels = gold_label.to(args['device'])
 
         # training step
-        loss = ce_loss(output, torch.tensor(gold_label).to(args['device'])) 
+        loss = bce_loss(output.squeeze(), gold_labels) 
+        for n, p in args['model'].base_model.model.model.layers[3].self_attn.k_proj.lora_A.default.named_parameters(): print(n, p.grad)
         loss.backward()
         optimizer.step()
+        for n, p in args['model'].base_model.model.model.layers[3].self_attn.k_proj.lora_A.default.named_parameters(): print(n, p.grad)
         loss_it.append(loss.item())
         optimizer.zero_grad()
         print(loss_it)
@@ -129,10 +132,11 @@ def test(args, finetuning_model, target, experiment, hf=False):
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
         gold_label = is_same(batch_labels, generations_rl)
         output = finetuning_model(input_ids=torch.stack(batch_ids).squeeze())
+        gold_labels = torch.tensor(gold_label).to(args['device'])
         # print(output) # this to check if the output is as desired
 
         # training step
-        loss = ce_loss(output, torch.tensor(gold_label).to(args['device'])) 
+        loss = ce_loss(output, gold_labels) 
         loss_it.append(loss.item())
         print(loss_it)
 
@@ -301,7 +305,7 @@ if __name__ == "__main__":
     # print(f"Decoder block #{d_block} will be updated")
 
     args = {'vocab_size':239267,        # new vocab size corresponding to the new dataset
-            'batch_size':32,            # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':5,            # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,            # Transformer block size in the language model
             'train_iters':100,          # number of train batches to consider in one episode
             'eval_iters':10,            # number of validation/test batches to consider in one episode
