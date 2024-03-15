@@ -22,6 +22,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 torch.set_default_dtype(torch.float16)
 torch.set_printoptions(precision=10)
 
+all_train_losses, all_val_losses = [], []
 
 def train(args, finetuning_model, epoch, experiment, hf=False):
     '''
@@ -77,6 +78,7 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
+    all_train_losses.extend(loss_it) # save all the losses of this epoch
     loss_it_avg = sum(loss_it)/len(loss_it)
 
     # print useful information about the training progress and scores on this training set's full pass
@@ -134,6 +136,7 @@ def test(args, finetuning_model, target, experiment, hf=False):
         loss_it.append(loss.item())
         print(loss_it)
 
+    all_val_losses.extend(loss_it) # save all the losses of this epoch
     loss_it_avg = sum(loss_it)/len(loss_it)
 
     # append batch generations to split generations
@@ -172,7 +175,9 @@ def run_episodes(args, finetuning_model, experiment, hf=False):
     for ep in range(args['max_eps']):
         # perform training and validation runs
         _, train_trues, train_preds = train(args, finetuning_model, ep, experiment, hf=hf)
+        print(all_train_losses)
         val_loss, val_trues, val_preds = test(args, finetuning_model, 'validation', experiment, hf=hf)
+        print(all_val_losses)
  
         # save epoch trues and preds for train and validation
         save_epoch_data('train', train_trues, train_preds, ep, experiment)
