@@ -226,7 +226,7 @@ class TrainableHeadAdapters(nn.Module):
         self.pool = nn.Linear(max_new_tokens*vocab_size, 128) # [20*32000, 128]
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=0.5)
-        self.classification_layer = nn.Linear(128, 1) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
+        self.classification_layer = nn.Linear(128, 2) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
         self.softmax = nn.Softmax(dim=-1)
         self.sigmoid = nn.Sigmoid()
 
@@ -250,8 +250,8 @@ class TrainableHeadAdapters(nn.Module):
         x = self.dropout(x)
 
         # classification layer with output softmax
-        x = self.classification_layer(x) # [b, inter] --> [b, 1]
-        x = self.sigmoid(x)
+        x = self.classification_layer(x) # [b, inter] --> [b, 2]
+        x = self.softmax(x)
 
         return x
 

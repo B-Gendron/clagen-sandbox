@@ -160,6 +160,16 @@ def load_vocab_mappings():
 # Fine-tuning utils
 # -----------------------------------------------------------------------------------------
 
+def select_target_modules(target_modules, selection):
+    # Create a dictionary mapping first letters to full module names
+    module_dict = {module[0]: module for module in target_modules}
+    
+    # Filter modules based on the first letters in the param
+    subset = [module_dict[letter] for letter in selection if letter in module_dict]
+    
+    return subset
+
+
 def parse_indexes(levels_dict):
     '''
         This auxiliary function parses and retrieves the utterance indexes from the readability level dictionnary when an utterance is reffered to using the ontology identifier. It return a dictionary with the same format than the input, containing only the indexes instead of the complete identifier.
@@ -245,7 +255,7 @@ def generate_from_random_prompts(args, hf=False):
     if hf:
         tokenizer = args['tokenizer'] # retrieve tokenizer
         model = args['model']
-        base_model = args['model']
+        base_model = args['model'] # this is useful for lm-score
         for i in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
@@ -304,8 +314,7 @@ def is_same(trues, preds):
         @param trues (list): the expected readability levels in our case
         @param preds (list): the readability levels of generated sentences in our case
     '''
-    res = [1 if p == t else 0 for p, t in zip(preds, trues)]
-    return torch.tensor(res, dtype=torch.float16)
+    return [1 if p == t else 0 for p, t in zip(preds, trues)]
 
 
 

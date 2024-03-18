@@ -92,8 +92,8 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
 # -----------------------------------------------------------------------------------------
 
 
-def save_batch_generations(batch_generations, batch_index):
-    file_path = f'../objects/batch_generations_{batch_index}.tsv'
+def save_batch_generations(batch_generations, batch_index, experiment):
+    file_path = f'../objects/batch_generations_{batch_index}_{experiment}.tsv'
     with open(file_path, 'w', newline='') as f:
         tsv_writer = csv.writer(f, delimiter='\t')
 

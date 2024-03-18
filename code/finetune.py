@@ -43,8 +43,7 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
     for p in finetuning_model.pool.parameters(): p.requires_grad = False
     optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'], fused=torch.float16)
     weights = torch.tensor([1.0, 2.0], device=args['device']) # double proba of getting 1 (same class) as there are 3 different classes, therefore twice more chances to be right when saying they are not same
-    # ce_loss = nn.CrossEntropyLoss(weight=weights)
-    bce_loss = nn.BCELoss()
+    ce_loss = nn.CrossEntropyLoss(weight=weights)
     writer = args['writer']
     loss_it = []
     trues, preds = [], []
@@ -53,7 +52,7 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
         # generate sentences with a specific RL
         batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=hf)
-        file_path = save_batch_generations(batch_generations, batch_index)
+        file_path = save_batch_generations(batch_generations, batch_index, experiment)
         file_paths.append(file_path)
 
         # trues are the RL that the generated sentence should have
@@ -67,14 +66,11 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
         generations_probas = torch.tensor(generations_probas, dtype=torch.float16, requires_grad=True).to(args['device'])
         gold_label = is_same(batch_labels, generations_rl)
         output = finetuning_model(input_ids=torch.stack(batch_ids).squeeze())
-        gold_labels = gold_label.to(args['device'])
-
+        gold_labels = torch.tensor(gold_label).to(args['device'])
         # training step
-        loss = bce_loss(output.squeeze(), gold_labels) 
-        for n, p in args['model'].base_model.model.model.layers[3].self_attn.k_proj.lora_A.default.named_parameters(): print(n, p.grad)
+        loss = ce_loss(output, gold_labels) 
         loss.backward()
         optimizer.step()
-        for n, p in args['model'].base_model.model.model.layers[3].self_attn.k_proj.lora_A.default.named_parameters(): print(n, p.grad)
         loss_it.append(loss.item())
         optimizer.zero_grad()
         print(loss_it)
@@ -118,7 +114,7 @@ def test(args, finetuning_model, target, experiment, hf=False):
     for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
         # generate sentences with a specific RL
         batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=hf)
-        file_path = save_batch_generations(batch_generations, batch_index)
+        file_path = save_batch_generations(batch_generations, batch_index, experiment)
         file_paths.append(file_path)
 
         # trues are the RL that the generated sentence should have
@@ -254,24 +250,25 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         model.config.pad_token_id = model.config.eos_token_id
         tokenizer.padding_side = "right"
 
+        target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules'])
         config = LoraConfig(
-                r=32,
-                lora_alpha=64,
-                target_modules=[
-                    # "q_proj",
-                    "k_proj",
-                    "v_proj",
-                    # "o_proj",
-                    # "gate_proj",
-                    # "up_proj",
-                    # "down_proj",
-                    # "lm_head",
-                ],
+                r=args['rank'],                             # rank of lora module
+                lora_alpha=2*args['rank'],                  # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
+                target_modules=target_modules,
                 layers_to_transform=[3, 4, 5, 29],  # avoid top layers, this modifies the representation too much
                 bias="lora_only",               # should be better than default setting in our case
                 lora_dropout=0.05,              # conventional setting
-                # task_type=TaskType.SEQ_CLS,
             )
+        print(40*"-")
+        print("LoRA config:")
+        print(f"\t- rank = {config.r}")
+        print(f"\t- alpha = {config.lora_alpha}")
+        print(f"\t- target modules = {config.target_modules}")
+        print(f"\t- layers to transform = {config.layers_to_transform}")
+        print(f"\t- bias = {config.bias}")
+        print(f"\t- dropout = {config.lora_dropout}")
+        print(40*"-")
+
         args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
         model = get_peft_model(model, config)
         args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
@@ -298,37 +295,49 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-
-    parser.add_argument("-d", "--dblock", help="The index of the Transfomer docoder block to update.", type=int, default=0)
+    parser.add_argument("-d", "--dblock", help="The index of the Transfomer docoder block to update.", type=int, default=0) # unused for now
+    parser.add_argument("-r", "--rank", help="Rank of LoRA layers", type=int, default=4)
+    parser.add_argument("-m", "--target-modules", help="a string that points attention layers where to put LoRA adapters. The string concatenates the first letter of each desired module.", type=str, default='qv')
     arg = parser.parse_args()
-    d_block = arg.dblock
-    # print(f"Decoder block #{d_block} will be updated")
 
-    args = {'vocab_size':239267,        # new vocab size corresponding to the new dataset
-            'batch_size':5,            # size of the batch, the greater bsize the greater number of data samples
-            'block_size':64,            # Transformer block size in the language model
-            'train_iters':100,          # number of train batches to consider in one episode
-            'eval_iters':10,            # number of validation/test batches to consider in one episode
-            'lr':1e-4,                 # learning rate
-            'device':activate_gpu(),    # set device for training. Desable force_cpu to run on gpu if available
-            'max_eps':10,               # number of episodes (max of episodes in case of early stopping)
-            'n_embd':64,                # embedding size
-            'n_heads':8,                # number of attention heads for one transformer block
-            'n_layers':24,              # number of Transformer layers in the language model
-            'dropout':0.3,              # dropout rate
+    d_block = arg.dblock
+    rank = arg.rank
+    target_modules = arg.target_modules
+
+    args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
+            'batch_size':32,                     # size of the batch, the greater bsize the greater number of data samples
+            'block_size':64,                    # Transformer block size in the language model
+            'train_iters':100,                    # number of train batches to consider in one episode
+            'eval_iters':10,                    # number of validation/test batches to consider in one episode
+            'lr':1e-3,                          # learning rate
+            'rank':rank,                        # rank in LoRA config
+            'target_modules':target_modules,    # target modules in LoRA config
+            'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
+            'max_eps':10,                       # number of episodes (max of episodes in case of early stopping)
+            'n_embd':64,                        # embedding size
+            'n_heads':8,                        # number of attention heads for one transformer block   
+            'n_layers':24,                      # number of Transformer layers in the language model    
+            'dropout':0.3,                      # dropout rate  
             'writer':SummaryWriter(f"../logs/{get_datetime()}"), # Tensorboard util
-            'hf':False,                 # False if BabyLM, otherwise llama, falcon, mistral,... 
+            'hf':False,                         # False if BabyLM, otherwise llama, falcon, mistral,..  . 
             'd_block':d_block
         }
+    
+    print(40*"-")
+    print("Fine-tuning config:")
+    for k, v in args.items():
+        if k not in ['rank', 'target_modules']:
+            print(f"\t- {k} = {v}")
+    print(40*"-")
 
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
-    args.update({'hf':'adapters', 'vocab_size':32000, 'n_embd':4096, 'n_layers':33}) # for llama
+    args.update({'hf':True, 'vocab_size':32000, 'n_embd':4096, 'n_layers':33}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
-    run_exp(args, model_name, '1403_llama2_finetuning_binary', hf=True)
+    run_exp(args, model_name, f"llama2_{args['rank']}_{args['target_modules']}", hf=True)
 
 
 
