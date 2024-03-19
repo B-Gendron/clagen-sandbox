@@ -223,10 +223,10 @@ class TrainableHeadAdapters(nn.Module):
         super(TrainableHeadAdapters, self).__init__()
         vocab_size = args['vocab_size']
         max_new_tokens = args['max_new_tokens']
-        self.pool = nn.Linear(max_new_tokens*vocab_size, 128) # [20*32000, 128]
+        # self.pool = nn.Linear(max_new_tokens*vocab_size, 128) # [20*32000, 128]
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=0.5)
-        self.classification_layer = nn.Linear(128, 2) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
+        self.classification_layer = nn.Linear(vocab_size, 2) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
         self.softmax = nn.Softmax(dim=-1)
         self.sigmoid = nn.Sigmoid()
 
@@ -244,13 +244,14 @@ class TrainableHeadAdapters(nn.Module):
         # forward path inside the model
         x = self.model(input_ids)
 
-        # dimension reduction to match with classification layer
-        x = self.pool(x[0].view(x[0].size(0), -1).half()) # [b, t, inter] --> [b, inter]
-        x = self.relu(x)
-        x = self.dropout(x)
+        # mean pooling (induces NaN)
+        # x = torch.mean(x[0], dim=1).half()
+
+        # retrieve last item amongst t (no more NaN problems)
+        x = x[0][:, -1, :].half()
 
         # classification layer with output softmax
-        x = self.classification_layer(x) # [b, inter] --> [b, 2]
+        x = self.classification_layer(x) # [b, inter] --> [b, 2] this layer is NOT frozen :) 
         x = self.softmax(x)
 
         return x

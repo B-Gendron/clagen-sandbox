@@ -21,6 +21,8 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 torch.set_printoptions(precision=10)
+torch.backends.cuda.enable_mem_efficient_sdp(False)
+torch.backends.cuda.enable_flash_sdp(False)
 
 all_train_losses, all_val_losses = [], []
 
@@ -40,7 +42,7 @@ def train(args, finetuning_model, epoch, experiment, hf=False):
     '''
     # setup training config + outputs storage
     finetuning_model.train()
-    for p in finetuning_model.pool.parameters(): p.requires_grad = False
+    # for p in finetuning_model.pool.parameters(): p.requires_grad = False
     optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'], fused=torch.float16)
     weights = torch.tensor([1.0, 2.0], device=args['device']) # double proba of getting 1 (same class) as there are 3 different classes, therefore twice more chances to be right when saying they are not same
     ce_loss = nn.CrossEntropyLoss(weight=weights)
@@ -175,7 +177,7 @@ def run_episodes(args, finetuning_model, experiment, hf=False):
     for ep in range(args['max_eps']):
         # perform training and validation runs
         _, train_trues, train_preds = train(args, finetuning_model, ep, experiment, hf=hf)
-        print(all_train_losses)
+        print(all_train_losses) # change to print the concat in the end
         val_loss, val_trues, val_preds = test(args, finetuning_model, 'validation', experiment, hf=hf)
         print(all_val_losses)
  
@@ -305,7 +307,7 @@ if __name__ == "__main__":
     target_modules = arg.target_modules
 
     args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
-            'batch_size':32,                     # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':3,                     # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
@@ -323,19 +325,19 @@ if __name__ == "__main__":
             'd_block':d_block
         }
     
-    print(40*"-")
-    print("Fine-tuning config:")
-    for k, v in args.items():
-        if k not in ['rank', 'target_modules']:
-            print(f"\t- {k} = {v}")
-    print(40*"-")
-
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
     args.update({'hf':True, 'vocab_size':32000, 'n_embd':4096, 'n_layers':33}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
+
+    print(40*"-")
+    print("Fine-tuning config:")
+    for k, v in args.items():
+        if k not in ['rank', 'target_modules']:
+            print(f"\t- {k} = {v}")
+    print(40*"-")
 
     run_exp(args, model_name, f"llama2_{args['rank']}_{args['target_modules']}", hf=True)
 
