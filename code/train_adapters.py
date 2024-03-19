@@ -21,7 +21,7 @@ from models import TrainableHeadAdapters
 
 MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
 
-class WikiTalkDataset(torch.utils.data.Dataset):
+class DailyDialogLlamaTokenized(torch.utils.data.Dataset):
     '''
         Dataset class for wikitalk pages dataset
     '''
@@ -38,8 +38,7 @@ class WikiTalkDataset(torch.utils.data.Dataset):
     
     def __getitem__(self, idx):
         item = {
-            'dial_id':      np.array(self._data[idx]['dial_id']),
-            'utt_id':       np.array(self._data[idx]['utt_id']), 
+            'emotion':      np.array(self._data[idx]['emotion']), 
             'embedding':    np.array(self._data[idx]['embedding']) # this embedding is now the one from llama2 tokenizer !
         }
         return item
@@ -149,9 +148,9 @@ def run_exp(args, model_name, experiment, episodes=10):
 
 if __name__ == "__main__":
 
-    wikitalk = load_from_disk("../wikitalk")
-    args, train_loader, val_loader, test_loader = get_args_and_dataloaders(wikitalk, WikiTalkDataset)
-    print(next(iter(train_loader))['embedding'])
+    dd_llama_tokenized = load_from_disk("../dd_llama2_tokenized")
+    args, train_loader, val_loader, test_loader = get_args_and_dataloaders(dd_llama_tokenized, DailyDialogLlamaTokenized)
+    print(next(iter(train_loader)))
     exit()
 
     parser = argparse.ArgumentParser()

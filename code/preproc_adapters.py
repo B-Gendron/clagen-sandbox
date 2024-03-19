@@ -30,7 +30,7 @@ def apply_lm_tokenizer(entry, tokenizer, args):
     # pad emotions
     n = len(emotions)
     if n < utterance_limit:
-        emotions.extend([0 for _ in range(utterance_limit-n)])
+        emotions.extend([-1 for _ in range(utterance_limit-n)])
     elif n > utterance_limit:
         emotions = emotions[:utterance_limit]
 
