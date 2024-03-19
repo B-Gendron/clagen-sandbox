@@ -239,7 +239,6 @@ class TrainableHeadAdapters(nn.Module):
             b = batch_size (default=32)
             t = max_new_tokens (default=20)
             v = vocab_size (default=32000 if llama, another number I don't remeber if gemma)
-            inter = intermediate size to avoid to have too many parameters (set to 128 here)
         '''
         # forward path inside the model
         x = self.model(input_ids)
@@ -251,7 +250,7 @@ class TrainableHeadAdapters(nn.Module):
         x = x[0][:, -1, :].half()
 
         # classification layer with output softmax
-        x = self.classification_layer(x) # [b, inter] --> [b, 2] this layer is NOT frozen :) 
+        x = self.classification_layer(x) # [b, vocab_size] --> [b, 2] this layer is NOT frozen :) 
         x = self.softmax(x)
 
         return x

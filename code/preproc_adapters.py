@@ -3,23 +3,17 @@ import os
 import subprocess
 import json
 from datasets import Dataset, load_dataset
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets.dataset_dict import DatasetDict
-from sentence_transformers import SentenceTransformer
 import argparse
-from nltk.tokenize import TweetTokenizer
-tokenizer = TweetTokenizer()
 
 from utils import *
-
-# ce n'est pas ce qu'on veut ! On veut encoder avec le vocabulaire qui a servi pour le préentrainement de babyLM, comme ça ensuite on peut décoder et fournir le texte en prompt au modèle.
-# on prend les entrées 1 par 1
-    # - on encode
-    # - on pad
+from train_adapters import MODEL_NAME
 
 
-def apply_sentence_bert(entry, stoi, max_length):
+def apply_lm_tokenizer(entry, tokenizer, args):
     '''
-        Encode the text of one dialog using the vocabulary mapping that has been used to pretrained the BabyLanguageModel
+        Uses the desired tokenizer to encode dialogues from wikitalk dataset
 
         @param entry
         @param stoi
@@ -27,7 +21,9 @@ def apply_sentence_bert(entry, stoi, max_length):
 
         @param result
     '''
+    # setting preprocessing params
     utterance_limit = 10
+    max_length = args['max_length']
     text = entry['text']
     dial_id = entry['dial_id']
     utt_id = entry['utt_id']
@@ -35,7 +31,7 @@ def apply_sentence_bert(entry, stoi, max_length):
     # pad utterance ids
     n = len(utt_id)
     if n < utterance_limit:
-        utt_id.extend([-1 for _ in range(utterance_limit-n)])
+        utt_id.extend([0 for _ in range(utterance_limit-n)])
     elif n > utterance_limit:
         utt_id = utt_id[:utterance_limit]
 
@@ -43,13 +39,12 @@ def apply_sentence_bert(entry, stoi, max_length):
     encoded_dialog = []
     for utterance in text:
         # perform encoding
-        tokenized_utterance = tokenizer.tokenize(utterance.lower())
-        encoded_utterance = encode(stoi, tokenized_utterance)
+        encoded_utterance = tokenizer(utterance)['input_ids']
 
         # pad utterance
         n = len(encoded_utterance)
         if n < max_length:
-            encoded_utterance.extend([-1 for _ in range(max_length-n)])
+            encoded_utterance.extend([0 for _ in range(max_length-n)])
         elif n > max_length:
             encoded_utterance = encoded_utterance[:max_length]
 
@@ -59,7 +54,7 @@ def apply_sentence_bert(entry, stoi, max_length):
     # pad at dialog level
     n = len(encoded_dialog)
     if n < utterance_limit:
-        encoded_dialog.extend([[-1 for _ in range(max_length)] for _ in range(utterance_limit-n)])
+        encoded_dialog.extend([[0 for _ in range(max_length)] for _ in range(utterance_limit-n)])
     elif n > utterance_limit:
         encoded_dialog = encoded_dialog[:utterance_limit]
 
@@ -67,7 +62,7 @@ def apply_sentence_bert(entry, stoi, max_length):
     return result
 
 
-def prepare_data(dataset, stoi, max_length):
+def prepare_data(dataset, stoi, args):
     '''
         A function to wrap up the preprocessing procedure using sentence transformers (S-BERT);
 
@@ -77,9 +72,8 @@ def prepare_data(dataset, stoi, max_length):
 
         @return resulting_dataset
     '''
-
     for split in ['train', 'validation', 'test']:
-        dataset[split] = dataset[split].map(lambda e: apply_sentence_bert(e, stoi, max_length))
+        dataset[split] = dataset[split].map(lambda e: apply_lm_tokenizer(e, stoi, args))
 
     processed_dataset = {
         'train':Dataset.from_dict({
@@ -104,18 +98,15 @@ def prepare_data(dataset, stoi, max_length):
 
 if __name__ == '__main__':
 
-    itos, stoi = load_vocab_mappings()
-
     # Load data if it does not already exist
     if not os.path.exists("../../OntoUttPreprocessing/data"):
         subprocess.call(['sh', '../run_ontoUttPreprocessing.sh data'])
 
     wikitalk_utterances = datasets.load_from_disk("../../OntoUttPreprocessing/data/processed_utterances_wikitalk")
-
-    args = {'device': activate_gpu()}
-
-    max_length = 256
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
+    args = {'max_length':20}
 
     print(colored(f"Start preprocessing...", 'yellow'))
-    tokenized_data = prepare_data(wikitalk_utterances, stoi, max_length)
+    tokenized_data = prepare_data(wikitalk_utterances, tokenizer, args)
+    print(tokenized_data['train'][0])
     tokenized_data.save_to_disk('../wikitalk')
