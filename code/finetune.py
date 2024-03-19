@@ -275,7 +275,7 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
         model = get_peft_model(model, config)
         args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
         args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
-        finetuning_model = TrainableHeadAdapters(args)
+        finetuning_model = TrainableHeadAdapters(args, nb_classes=2)
         finetuning_model.to(args['device'])
 
     else:

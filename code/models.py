@@ -219,14 +219,14 @@ class TrainableHeadAdapters(nn.Module):
     '''
         An auxiliary model to update the babylm model lm_head layer using generation redability levels predictions.
     '''
-    def __init__(self, args):
+    def __init__(self, args, nb_classes):
         super(TrainableHeadAdapters, self).__init__()
         vocab_size = args['vocab_size']
         max_new_tokens = args['max_new_tokens']
         # self.pool = nn.Linear(max_new_tokens*vocab_size, 128) # [20*32000, 128]
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(p=0.5)
-        self.classification_layer = nn.Linear(vocab_size, 2) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
+        self.classification_layer = nn.Linear(vocab_size, nb_classes) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
         self.softmax = nn.Softmax(dim=-1)
         self.sigmoid = nn.Sigmoid()
 

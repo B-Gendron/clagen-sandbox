@@ -40,7 +40,7 @@ class WikiTalkDataset(torch.utils.data.Dataset):
         item = {
             'dial_id':      np.array(self._data[idx]['dial_id']),
             'utt_id':       np.array(self._data[idx]['utt_id']), 
-            'embedding':    np.array(self._data[idx]['embedding']) # this embedding is inteded to be computed using llama2 tokenizer
+            'embedding':    np.array(self._data[idx]['embedding']) # this embedding is now the one from llama2 tokenizer !
         }
         return item
     
@@ -64,8 +64,24 @@ def get_args_and_dataloaders(dataset, dataset_class):
     return args, train_loader, val_loader, test_loader
 
 
-def run_epochs():
+def train(args, finetuning_model, ep, experiment):
     pass
+
+def test(args, finetuning_model, target, experiment):
+    pass
+
+def run_epochs(args, finetuning_model, experiment):
+    val_losses = []
+
+    for ep in range(args['max_eps']):
+        # perform training and validation runs
+        train(args, finetuning_model, ep, experiment)
+        val_loss, _, _= test(args, finetuning_model, 'validation', experiment)
+
+        # save val loss for this epoch
+        val_losses.append(val_loss)
+
+    return val_losses
 
 def run_exp(args, model_name, experiment, episodes=10):
     '''
@@ -135,7 +151,8 @@ if __name__ == "__main__":
 
     wikitalk = load_from_disk("../wikitalk")
     args, train_loader, val_loader, test_loader = get_args_and_dataloaders(wikitalk, WikiTalkDataset)
-    print(next(iter(train_loader)))
+    print(next(iter(train_loader))['embedding'])
+    exit()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--rank", help="Rank of LoRA layers", type=int, default=4)

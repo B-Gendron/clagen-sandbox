@@ -24,16 +24,15 @@ def apply_lm_tokenizer(entry, tokenizer, args):
     # setting preprocessing params
     utterance_limit = 10
     max_length = args['max_length']
-    text = entry['text']
-    dial_id = entry['dial_id']
-    utt_id = entry['utt_id']
+    text = entry['dialog']
+    emotions = entry['emotion']
 
-    # pad utterance ids
-    n = len(utt_id)
+    # pad emotions
+    n = len(emotions)
     if n < utterance_limit:
-        utt_id.extend([0 for _ in range(utterance_limit-n)])
+        emotions.extend([0 for _ in range(utterance_limit-n)])
     elif n > utterance_limit:
-        utt_id = utt_id[:utterance_limit]
+        emotions = emotions[:utterance_limit]
 
     # encode sentences
     encoded_dialog = []
@@ -58,7 +57,7 @@ def apply_lm_tokenizer(entry, tokenizer, args):
     elif n > utterance_limit:
         encoded_dialog = encoded_dialog[:utterance_limit]
 
-    result = {'dial_id': dial_id, 'utt_id': utt_id, 'embedding': encoded_dialog}
+    result = {'emotion': emotions, 'embedding': encoded_dialog}
     return result
 
 
@@ -77,18 +76,15 @@ def prepare_data(dataset, stoi, args):
 
     processed_dataset = {
         'train':Dataset.from_dict({
-            'dial_id': dataset['train']['dial_id'],
-            'utt_id': dataset['train']['utt_id'],
+            'emotion': dataset['train']['emotion'],
             'embedding': dataset['train']['embedding']
             }),
         'validation': Dataset.from_dict({
-            'dial_id': dataset['validation']['dial_id'],
-            'utt_id': dataset['validation']['utt_id'],
+            'emotion': dataset['validation']['emotion'],
             'embedding': dataset['validation']['embedding']
             }),
         'test':Dataset.from_dict({
-            'dial_id': dataset['test']['dial_id'],
-            'utt_id': dataset['test']['utt_id'],
+            'emotion': dataset['test']['emotion'],
             'embedding': dataset['test']['embedding']
             })
         }
@@ -102,11 +98,12 @@ if __name__ == '__main__':
     if not os.path.exists("../../OntoUttPreprocessing/data"):
         subprocess.call(['sh', '../run_ontoUttPreprocessing.sh data'])
 
-    wikitalk_utterances = datasets.load_from_disk("../../OntoUttPreprocessing/data/processed_utterances_wikitalk")
+    dailydialog = load_dataset('daily_dialog')
+    print(dailydialog['train'][0])
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
     args = {'max_length':20}
 
     print(colored(f"Start preprocessing...", 'yellow'))
-    tokenized_data = prepare_data(wikitalk_utterances, tokenizer, args)
+    tokenized_data = prepare_data(dailydialog, tokenizer, args)
     print(tokenized_data['train'][0])
-    tokenized_data.save_to_disk('../wikitalk')
+    tokenized_data.save_to_disk('../dd_llama2_tokenized')
