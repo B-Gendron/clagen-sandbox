@@ -1,6 +1,7 @@
 # torch utils
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 
@@ -19,11 +20,17 @@ from termcolor import colored
 from utils import *
 from models import TrainableHeadAdapters
 
+# set default tensor type
+torch.set_default_dtype(torch.float32)
+torch.set_printoptions(precision=10)
+torch.backends.cuda.enable_mem_efficient_sdp(False)
+torch.backends.cuda.enable_flash_sdp(False)
+
 MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
 
-class DailyDialogLlamaTokenized(torch.utils.data.Dataset):
+class TweetAirlineLlamaTokenized(torch.utils.data.Dataset):
     '''
-        Dataset class for wikitalk pages dataset
+        Dataset class for twitter airline sentiment dataset
     '''
     def __init__(self, data, args):
         self._data = data
@@ -38,8 +45,8 @@ class DailyDialogLlamaTokenized(torch.utils.data.Dataset):
     
     def __getitem__(self, idx):
         item = {
-            'emotion':      np.array(self._data[idx]['emotion']), 
-            'embedding':    np.array(self._data[idx]['embedding']) # this embedding is now the one from llama2 tokenizer !
+            'sentiment':    np.array(self._data[idx]['sentiment']), 
+            'input_ids':    np.array(self._data[idx]['embedding']) # this embedding is now the one from llama2 tokenizer !
         }
         return item
     
@@ -58,31 +65,62 @@ def get_args_and_dataloaders(dataset, dataset_class):
     '''
     args = {'train_bsize': 32, 'eval_bsize': 1, 'lr': 0.00001, 'spreading':False}
     train_loader = DataLoader(dataset=dataset_class(dataset["train"], args=args), pin_memory=True, batch_size=args['train_bsize'], shuffle=True, drop_last=True)
-    val_loader   = DataLoader(dataset=dataset_class(dataset["validation"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
-    test_loader  = DataLoader(dataset=dataset_class(dataset["test"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
-    return args, train_loader, val_loader, test_loader
+    val_loader   = DataLoader(dataset=dataset_class(dataset["val"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
+    # test_loader  = DataLoader(dataset=dataset_class(dataset["test"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
+    return args, train_loader, val_loader
 
 
-def train(args, finetuning_model, ep, experiment):
+def train(args, finetuning_model, train_loader, ep):
+    finetuning_model.train()
+    device = args['device']
+    loss_it = []
+    ce_loss = nn.CrossEntropyLoss()
+    optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'])
+
+    for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (ep+1), total=train_loader.__len__()):
+
+        batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
+
+        # check if there is at least one emotional labels, otherviwe NaN issues
+        # if not torch.all(batch['emotion'] == 0).item():
+        
+        # remove all zeros utterances (and the associated labels)
+        # non_zero_indexes = torch.nonzero(~torch.all(batch['input_ids']==0, dim=1)).squeeze()
+        # batch['input_ids'] = batch['input_ids'][non_zero_indexes]
+        # batch['emotion'] = batch['emotion'][non_zero_indexes]
+
+        output_probas = finetuning_model(batch['input_ids'])
+        print(output_probas, batch['sentiment'])
+        loss = ce_loss(output_probas, batch['sentiment'])
+        loss.backward()
+        optimizer.step()
+
+        loss_it.append(loss.item())
+        optimizer.zero_grad()
+        print(loss_it)
+
+    loss_it_avg = sum(loss_it)/len(loss_it)
+
+    # print useful information about the training progress and scores on this training set's full pass
+    print("Epoch %s/%s - %s : (%s %s)" % (colored(str(ep+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg))
+
+def test(args, finetuning_model, loader, target):
     pass
 
-def test(args, finetuning_model, target, experiment):
-    pass
-
-def run_epochs(args, finetuning_model, experiment):
+def run_epochs(args, finetuning_model, train_loader, val_loader, experiment):
     val_losses = []
 
     for ep in range(args['max_eps']):
         # perform training and validation runs
-        train(args, finetuning_model, ep, experiment)
-        val_loss, _, _= test(args, finetuning_model, 'validation', experiment)
+        train(args, finetuning_model, train_loader, ep)
+        val_loss, _, _= test(args, finetuning_model, 'validation', val_loader, experiment)
 
         # save val loss for this epoch
         val_losses.append(val_loss)
 
     return val_losses
 
-def run_exp(args, model_name, experiment, episodes=10):
+def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10):
     '''
         Run an end-to-end finetuning.
 
@@ -137,21 +175,19 @@ def run_exp(args, model_name, experiment, episodes=10):
     model = get_peft_model(model, config)
     args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
     args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
-    finetuning_model = TrainableHeadAdapters(args)
+    finetuning_model = TrainableHeadAdapters(args, nb_classes=2)
     finetuning_model.to(args['device'])
 
     # run training and validation
-    val_losses = run_epochs(args, finetuning_model, experiment)
+    val_losses = run_epochs(args, finetuning_model, train_loader, val_loader, experiment)
 
     return val_losses
 
 
 if __name__ == "__main__":
 
-    dd_llama_tokenized = load_from_disk("../dd_llama2_tokenized")
-    args, train_loader, val_loader, test_loader = get_args_and_dataloaders(dd_llama_tokenized, DailyDialogLlamaTokenized)
-    print(next(iter(train_loader)))
-    exit()
+    dd_llama_tokenized = load_from_disk("../tweet_airline_llama2_tokenized")
+    args, train_loader, val_loader = get_args_and_dataloaders(dd_llama_tokenized, TweetAirlineLlamaTokenized)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--rank", help="Rank of LoRA layers", type=int, default=4)
@@ -166,7 +202,7 @@ if __name__ == "__main__":
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
-            'lr':1e-3,                          # learning rate
+            'lr':1e-1,                          # learning rate
             'rank':rank,                        # rank in LoRA config
             'target_modules':target_modules,    # target modules in LoRA config
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
@@ -178,4 +214,4 @@ if __name__ == "__main__":
             'hf':False,                         # False if BabyLM, otherwise llama, falcon, mistral,..  . 
         }
     
-    run_exp(args, MODEL_NAME, 'test_lora_usual_conditions')
+    run_exp(args, MODEL_NAME, train_loader, val_loader, 'test_lora_usual_conditions')

@@ -356,3 +356,9 @@ def create_batch_individual(batch_index, file_path):
         subprocess.run(command, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
+
+
+def remove_zero_filled_subtensors(tensor, labels):
+    non_zero_indices = torch.nonzero(~torch.all(tensor == 0, dim=1)).squeeze()
+    non_zero_labels = [labels[i] for i in non_zero_indices]
+    return tensor[non_zero_indices], non_zero_labels

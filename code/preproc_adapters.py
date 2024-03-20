@@ -1,11 +1,14 @@
 import datasets
+from datasets import load_from_disk
 import os 
 import subprocess
 import json
 from datasets import Dataset, load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets.dataset_dict import DatasetDict
+from sklearn.model_selection import train_test_split
 import argparse
+import pandas as pd
 
 from utils import *
 from train_adapters import MODEL_NAME
@@ -22,42 +25,21 @@ def apply_lm_tokenizer(entry, tokenizer, args):
         @param result
     '''
     # setting preprocessing params
-    utterance_limit = 10
     max_length = args['max_length']
-    text = entry['dialog']
-    emotions = entry['emotion']
+    text = entry['text']
+    emotion = entry['sentiment']
 
-    # pad emotions
-    n = len(emotions)
-    if n < utterance_limit:
-        emotions.extend([-1 for _ in range(utterance_limit-n)])
-    elif n > utterance_limit:
-        emotions = emotions[:utterance_limit]
+    # perform encoding
+    encoded_utterance = tokenizer(text)['input_ids']
 
-    # encode sentences
-    encoded_dialog = []
-    for utterance in text:
-        # perform encoding
-        encoded_utterance = tokenizer(utterance)['input_ids']
+    # pad utterance
+    n = len(encoded_utterance)
+    if n < max_length:
+        encoded_utterance.extend([0 for _ in range(max_length-n)])
+    elif n > max_length:
+        encoded_utterance = encoded_utterance[:max_length]
 
-        # pad utterance
-        n = len(encoded_utterance)
-        if n < max_length:
-            encoded_utterance.extend([0 for _ in range(max_length-n)])
-        elif n > max_length:
-            encoded_utterance = encoded_utterance[:max_length]
-
-        # store the padded utterance representation
-        encoded_dialog.append(encoded_utterance)
-
-    # pad at dialog level
-    n = len(encoded_dialog)
-    if n < utterance_limit:
-        encoded_dialog.extend([[0 for _ in range(max_length)] for _ in range(utterance_limit-n)])
-    elif n > utterance_limit:
-        encoded_dialog = encoded_dialog[:utterance_limit]
-
-    result = {'emotion': emotions, 'embedding': encoded_dialog}
+    result = {'sentiment': 0 if emotion=='negative' else 1, 'embedding': encoded_utterance}
     return result
 
 
@@ -71,21 +53,18 @@ def prepare_data(dataset, stoi, args):
 
         @return resulting_dataset
     '''
-    for split in ['train', 'validation', 'test']:
+    # map each utterance to its encoding using llama2 tokenizer
+    for split in ['train', 'val']:
         dataset[split] = dataset[split].map(lambda e: apply_lm_tokenizer(e, stoi, args))
 
     processed_dataset = {
         'train':Dataset.from_dict({
-            'emotion': dataset['train']['emotion'],
+            'sentiment': dataset['train']['sentiment'],
             'embedding': dataset['train']['embedding']
             }),
-        'validation': Dataset.from_dict({
-            'emotion': dataset['validation']['emotion'],
-            'embedding': dataset['validation']['embedding']
-            }),
-        'test':Dataset.from_dict({
-            'emotion': dataset['test']['emotion'],
-            'embedding': dataset['test']['embedding']
+        'val': Dataset.from_dict({
+            'sentiment': dataset['val']['sentiment'],
+            'embedding': dataset['val']['embedding']
             })
         }
     
@@ -94,16 +73,35 @@ def prepare_data(dataset, stoi, args):
 
 if __name__ == '__main__':
 
+    # data = load_from_disk('../tweet_airline_llama2_tokenized')
+    # print(data['train'][40:80])
+    # exit()
+
     # Load data if it does not already exist
     if not os.path.exists("../../OntoUttPreprocessing/data"):
         subprocess.call(['sh', '../run_ontoUttPreprocessing.sh data'])
 
-    dailydialog = load_dataset('daily_dialog')
-    print(dailydialog['train'][0])
+    # dailydialog = load_dataset('daily_dialog')
+
+    # data for binary sentiment analysis
+    data = pd.read_csv('../Twitter US Airline Sentiment.csv')
+    data = data[['text','airline_sentiment']]
+    data = data[data.airline_sentiment != "neutral"]
+    X_train, X_test, y_train, y_test = train_test_split(data['text'], data['airline_sentiment'], random_state=42, test_size=0.2)
+    sentiment_dataset = {
+    'train':Dataset.from_dict({
+        'sentiment': y_train,
+        'text':X_train
+        }),
+    'val': Dataset.from_dict({
+        'sentiment': y_test,
+        'text': X_test
+        })
+    }
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
     args = {'max_length':20}
 
     print(colored(f"Start preprocessing...", 'yellow'))
-    tokenized_data = prepare_data(dailydialog, tokenizer, args)
+    tokenized_data = prepare_data(sentiment_dataset, tokenizer, args)
     print(tokenized_data['train'][0])
-    tokenized_data.save_to_disk('../dd_llama2_tokenized')
+    tokenized_data.save_to_disk('../tweet_airline_llama2_tokenized')
