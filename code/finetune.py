@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import LoraConfig, get_peft_model, peft_model
+from peft import LoraConfig, get_peft_model, peft_model, TaskType
 import os
 from tqdm import tqdm
 import argparse
@@ -257,9 +257,10 @@ def run_exp(args, model_name, experiment, episodes=10, hf=False):
                 r=args['rank'],                             # rank of lora module
                 lora_alpha=2*args['rank'],                  # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
                 target_modules=target_modules,
-                layers_to_transform=[3, 4, 5, 29],  # avoid top layers, this modifies the representation too much
+                # layers_to_transform=[3, 4, 5, 29],  # avoid top layers, this modifies the representation too much
                 bias="lora_only",               # should be better than default setting in our case
-                lora_dropout=0.05,              # conventional setting
+                lora_dropout=0.1,              # conventional setting
+                task_type=TaskType.SEQ_CLS
             )
         print(40*"-")
         print("LoRA config:")

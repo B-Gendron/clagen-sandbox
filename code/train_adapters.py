@@ -4,9 +4,9 @@ import torch.nn as nn
 from tqdm import tqdm
 import torch.nn.functional as F
 from torch.utils.data import Dataset
-
+from sklearn.metrics import accuracy_score
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from peft import LoraConfig, get_peft_model, peft_model
+from peft import LoraConfig, get_peft_model, peft_model, TaskType
 
 # general purpose modules
 import os
@@ -63,7 +63,7 @@ def get_args_and_dataloaders(dataset, dataset_class):
         @return val_loader (dataloader):    the dataloader that contains the validation samples
         @return test_loader (dataloader):   the dataloader that contains the test samples
     '''
-    args = {'train_bsize': 32, 'eval_bsize': 1, 'lr': 0.00001, 'spreading':False}
+    args = {'train_bsize': 128, 'eval_bsize': 8}
     train_loader = DataLoader(dataset=dataset_class(dataset["train"], args=args), pin_memory=True, batch_size=args['train_bsize'], shuffle=True, drop_last=True)
     val_loader   = DataLoader(dataset=dataset_class(dataset["val"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
     # test_loader  = DataLoader(dataset=dataset_class(dataset["test"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
@@ -73,9 +73,9 @@ def get_args_and_dataloaders(dataset, dataset_class):
 def train(args, finetuning_model, train_loader, ep):
     finetuning_model.train()
     device = args['device']
-    loss_it = []
+    loss_it, all_trues, all_preds = [], [], []
     ce_loss = nn.CrossEntropyLoss()
-    optimizer = torch.optim.AdamW(finetuning_model.parameters(), lr=args['lr'])
+    optimizer = torch.optim.SGD(finetuning_model.parameters(), lr=args['lr'], momentum=0.9, weight_decay=0.001)
 
     for it, batch in tqdm(enumerate(train_loader), desc="Epoch %s: " % (ep+1), total=train_loader.__len__()):
 
@@ -90,22 +90,43 @@ def train(args, finetuning_model, train_loader, ep):
         # batch['emotion'] = batch['emotion'][non_zero_indexes]
 
         output_probas = finetuning_model(batch['input_ids'])
-        print(output_probas, batch['sentiment'])
+        # print(output_probas)
         loss = ce_loss(output_probas, batch['sentiment'])
         loss.backward()
         optimizer.step()
 
+        trues = batch['sentiment'].tolist()
+        preds = torch.argmax(output_probas, dim=1).tolist()
+        all_trues.extend(trues), all_preds.extend(preds)
+
         loss_it.append(loss.item())
         optimizer.zero_grad()
-        print(loss_it)
+    # print(loss_it)
+
+    acc = accuracy_score(all_trues, all_preds)
+    loss_it_avg = sum(loss_it)/len(loss_it)
+
+    # print useful information about the training progress and scores on this training set's full pass
+    print("Epoch %s/%s - %s : (%s %s) (%s %s)" % (colored(str(ep+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), acc))
+
+def test(args, finetuning_model, loader, target):
+    finetuning_model.eval()
+    device = args['device']
+    loss_it = []
+    ce_loss = nn.CrossEntropyLoss()
+    
+    for it, batch in tqdm(enumerate(loader), total=loader.__len__()):
+
+        batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
+
+        output_probas = finetuning_model(batch['input_ids'])
+        loss = ce_loss(output_probas, batch['sentiment'])
+        loss_it.append(loss.item())
 
     loss_it_avg = sum(loss_it)/len(loss_it)
 
     # print useful information about the training progress and scores on this training set's full pass
-    print("Epoch %s/%s - %s : (%s %s)" % (colored(str(ep+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg))
-
-def test(args, finetuning_model, loader, target):
-    pass
+    print("%s : (%s %s)" % (colored(target, 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg))
 
 def run_epochs(args, finetuning_model, train_loader, val_loader, experiment):
     val_losses = []
@@ -113,10 +134,7 @@ def run_epochs(args, finetuning_model, train_loader, val_loader, experiment):
     for ep in range(args['max_eps']):
         # perform training and validation runs
         train(args, finetuning_model, train_loader, ep)
-        val_loss, _, _= test(args, finetuning_model, 'validation', val_loader, experiment)
-
-        # save val loss for this epoch
-        val_losses.append(val_loss)
+        test(args, finetuning_model, val_loader, 'Validation')
 
     return val_losses
 
@@ -157,9 +175,10 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
             r=args['rank'],                             # rank of lora module
             lora_alpha=2*args['rank'],                  # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
             target_modules=target_modules,
-            layers_to_transform=[3, 4, 5, 29],  # avoid top layers, this modifies the representation too much
+            # layers_to_transform=[2, 6,10, 14, 18, 22, 26, 30],  # avoid top layers, this modifies the representation too much
             bias="lora_only",               # should be better than default setting in our case
             lora_dropout=0.05,              # conventional setting
+            task_type=TaskType.SEQ_CLS
         )
     print(40*"-")
     print("LoRA config:")
@@ -172,12 +191,12 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
     print(40*"-")
 
     args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
-    model = get_peft_model(model, config)
+    # model = get_peft_model(model, config)
+    # model.print_trainable_parameters()
     args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
     args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
     finetuning_model = TrainableHeadAdapters(args, nb_classes=2)
     finetuning_model.to(args['device'])
-
     # run training and validation
     val_losses = run_epochs(args, finetuning_model, train_loader, val_loader, experiment)
 
@@ -202,11 +221,11 @@ if __name__ == "__main__":
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
-            'lr':1e-1,                          # learning rate
+            'lr':1e-3,                          # learning rate
             'rank':rank,                        # rank in LoRA config
             'target_modules':target_modules,    # target modules in LoRA config
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
-            'max_eps':10,                       # number of episodes (max of episodes in case of early stopping)
+            'max_eps':40,                       # number of episodes (max of episodes in case of early stopping)
             'n_embd':4096,                        # embedding size
             'n_heads':8,                        # number of attention heads for one transformer block   
             'n_layers':33,                      # number of Transformer layers in the language model    

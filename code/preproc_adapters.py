@@ -87,7 +87,24 @@ if __name__ == '__main__':
     data = pd.read_csv('../Twitter US Airline Sentiment.csv')
     data = data[['text','airline_sentiment']]
     data = data[data.airline_sentiment != "neutral"]
-    X_train, X_test, y_train, y_test = train_test_split(data['text'], data['airline_sentiment'], random_state=42, test_size=0.2)
+
+    positive_df = data[data['airline_sentiment'] == 'positive']
+    negative_df = data[data['airline_sentiment'] == 'negative']
+
+    # Determine the number of samples needed from each DataFrame to achieve 50/50 distribution
+    num_samples = min(len(positive_df), len(negative_df))
+
+    # Sample from each DataFrame
+    positive_sampled = positive_df.sample(n=num_samples, random_state=42)
+    negative_sampled = negative_df.sample(n=num_samples, random_state=42)
+
+    # Concatenate the sampled DataFrames back together
+    balanced_df = pd.concat([positive_sampled, negative_sampled])
+
+    # Shuffle the concatenated DataFrame to randomize the order
+    balanced_df = balanced_df.sample(frac=1, random_state=42).reset_index(drop=True)
+
+    X_train, X_test, y_train, y_test = train_test_split(balanced_df['text'], balanced_df['airline_sentiment'], random_state=42, test_size=0.2)
     sentiment_dataset = {
     'train':Dataset.from_dict({
         'sentiment': y_train,
