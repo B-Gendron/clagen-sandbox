@@ -38,7 +38,6 @@ def train(args, epoch, experiment):
         @return preds (list):              list of the associated predictions to be stored later
     '''
     classification_model, generation_model = args['clf_model'], args['gen_model']
-
     classification_model.train()
     optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
     ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
@@ -48,6 +47,7 @@ def train(args, epoch, experiment):
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
+        for n, p in generation_model.base_model.model.model.layers[22].self_attn.q_proj.lora_A.default.named_parameters(): print('generation model:', p)
         # generate sentences with a specific RL
         batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=args['hf'])
         file_path = save_batch_generations(batch_generations, batch_index, experiment)
@@ -75,6 +75,9 @@ def train(args, epoch, experiment):
         # store predictions and gold labels from binary clf to display accuracy
         binary_preds.extend(torch.argmax(output_logits, dim=1).tolist())
         binary_trues.extend(gold_labels.tolist())
+
+        # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
+        update_adapter_weights(args, generation_model, classification_model)
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
@@ -329,7 +332,7 @@ if __name__ == "__main__":
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
-    args.update({'hf':True, 'vocab_size':32000, 'n_embd':4096, 'n_layers':33}) # for llama
+    args.update({'hf':True, 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
     display_finetuning_args(args)

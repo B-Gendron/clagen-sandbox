@@ -294,7 +294,6 @@ def get_and_pad_ids(output, args, padding_length=20):
         To be documented.
     '''
     current_length = output.shape[1]
-    print("type of the generated logits:", output.dtype)
     
     if current_length >= padding_length:
         return output[:, :padding_length]
@@ -317,6 +316,21 @@ def is_same(trues, preds):
     '''
     return [1 if p == t else 0 for p, t in zip(preds, trues)]
 
+
+def update_adapter_weights(args, g, c):
+    for i in range(args['n_layers']):
+        if 'q' in args['target_modules']:
+            g.base_model.model.model.layers[i].self_attn.q_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.q_proj.lora_A.default.weight
+            g.base_model.model.model.layers[i].self_attn.q_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.q_proj.lora_B.default.weight
+        if 'k' in args['target_modules']:
+            g.base_model.model.model.layers[i].self_attn.k_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.k_proj.lora_A.default.weight
+            g.base_model.model.model.layers[i].self_attn.k_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.k_proj.lora_B.default.weight
+        if 'v' in args['target_modules']:
+            g.base_model.model.model.layers[i].self_attn.v_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.v_proj.lora_A.default.weight
+            g.base_model.model.model.layers[i].self_attn.v_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.v_proj.lora_B.default.weight
+        if 'o' in args['target_modules']:
+            g.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight
+            g.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight
 
 
 def setup_model_babylm(args, model_name):
