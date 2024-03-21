@@ -5,7 +5,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from sklearn.metrics import accuracy_score
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification
 from peft import LoraConfig, get_peft_model, peft_model, TaskType
 
 # general purpose modules
@@ -21,10 +21,10 @@ from utils import *
 from models import TrainableHeadAdapters
 
 # set default tensor type
-torch.set_default_dtype(torch.float32)
-torch.set_printoptions(precision=10)
-torch.backends.cuda.enable_mem_efficient_sdp(False)
-torch.backends.cuda.enable_flash_sdp(False)
+# torch.set_default_dtype(torch.float32)
+# torch.set_printoptions(precision=10)
+# torch.backends.cuda.enable_mem_efficient_sdp(False)
+# torch.backends.cuda.enable_flash_sdp(False)
 
 MODEL_NAME = "meta-llama/Llama-2-7b-chat-hf"
 
@@ -89,8 +89,8 @@ def train(args, finetuning_model, train_loader, ep):
         # batch['input_ids'] = batch['input_ids'][non_zero_indexes]
         # batch['emotion'] = batch['emotion'][non_zero_indexes]
 
-        output_probas = finetuning_model(batch['input_ids'])
-        # print(output_probas)
+        output_probas = finetuning_model(batch['input_ids']).logits
+        # print(output_probas.logits.shape)
         loss = ce_loss(output_probas, batch['sentiment'])
         loss.backward()
         optimizer.step()
@@ -119,7 +119,7 @@ def test(args, finetuning_model, loader, target):
 
         batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
 
-        output_probas = finetuning_model(batch['input_ids'])
+        output_probas = finetuning_model(batch['input_ids']).logits
         loss = ce_loss(output_probas, batch['sentiment'])
         loss_it.append(loss.item())
 
@@ -156,7 +156,7 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
     if not os.path.exists(f'../results/{experiment}/'):
         os.makedirs(f'../results/{experiment}/')
 
-    model = AutoModelForCausalLM.from_pretrained(  
+    model = AutoModelForSequenceClassification.from_pretrained(  
         model_name,
         low_cpu_mem_usage=True,         # recommanded param
         return_dict=True,               # not used for now
@@ -191,14 +191,19 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
     print(40*"-")
 
     args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
-    # model = get_peft_model(model, config)
+    model = get_peft_model(model, config)
+    # print(model)
+    prompt = tokenizer('Hello everyone', return_tensors="pt").to(args['device'])
+    output = model.base_model.model.model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part
+    result = tokenizer.decode(output)
+    print('model.generate output', result)
     # model.print_trainable_parameters()
     args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
     args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
-    finetuning_model = TrainableHeadAdapters(args, nb_classes=2)
-    finetuning_model.to(args['device'])
+    # finetuning_model = TrainableHeadAdapters(args, nb_classes=2)
+    # finetuning_model.to(args['device'])
     # run training and validation
-    val_losses = run_epochs(args, finetuning_model, train_loader, val_loader, experiment)
+    val_losses = run_epochs(args, model, train_loader, val_loader, experiment)
 
     return val_losses
 
