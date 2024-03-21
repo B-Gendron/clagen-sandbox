@@ -9,7 +9,7 @@ from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.generation import utils
 
 # set default tensor type
-torch.set_default_dtype(torch.float32)
+# torch.set_default_dtype(torch.float32)
 
 
 def smooth_input(x_input, max_prop=0.6):

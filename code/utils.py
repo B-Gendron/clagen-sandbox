@@ -245,17 +245,17 @@ def random_prompt(concept, classes, hf=False):
 
 
 def generate_from_random_prompts(args, hf=False):
-    concept = 'ReadabilityLevel'
-    classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
+    # concept = 'ReadabilityLevel'
+    # classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
+
     # try with random IDs instead of concept names
     concept = 'C6468168'
     classes = [f'{concept}{i}' for i in range(3)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
     if hf:
-        tokenizer = args['tokenizer'] # retrieve tokenizer
-        model = args['model']
-        base_model = args['model'] # this is useful for lm-score
+        tokenizer = args['tokenizer']
+        model = args['gen_model']
         for i in range(args['batch_size']):
             # get a randomly selected prompt (uniform law)
             prompt, label = random_prompt(concept, classes, hf=hf)
@@ -294,6 +294,7 @@ def get_and_pad_ids(output, args, padding_length=20):
         To be documented.
     '''
     current_length = output.shape[1]
+    print("type of the generated logits:", output.dtype)
     
     if current_length >= padding_length:
         return output[:, :padding_length]

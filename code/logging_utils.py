@@ -184,3 +184,24 @@ def log_all_metrics(experiment):
     # val set
 
     # test set
+        
+
+def display_lora_config(config):
+    print(40*"-")
+    print("LoRA config:")
+    print(f"\t- rank = {config.r}")
+    print(f"\t- alpha = {config.lora_alpha}")
+    print(f"\t- target modules = {config.target_modules}")
+    print(f"\t- layers to transform = {config.layers_to_transform}")
+    print(f"\t- bias = {config.bias}")
+    print(f"\t- dropout = {config.lora_dropout}")
+    print(40*"-")
+
+
+def display_finetuning_args(args):
+    print(40*"-")
+    print("Fine-tuning config:")
+    for k, v in args.items():
+        if k not in ['rank', 'target_modules']:
+            print(f"\t- {k} = {v}")
+    print(40*"-")

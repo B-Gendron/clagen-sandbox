@@ -1,4 +1,9 @@
 # IN FINETUNING 
+
+# There is no need to fake probabilities anymore
+# generations_probas = torch.tensor([[int(j == i) for j in range(3)] for i in generations_rl], dtype=torch.float16, requires_grad=True).to(args['device'])
+
+
 # This setting is now useless because we finetune llama only with adapters
 
     # if hf == 'llama':
