@@ -89,7 +89,9 @@ def train(args, finetuning_model, train_loader, ep):
         # batch['input_ids'] = batch['input_ids'][non_zero_indexes]
         # batch['emotion'] = batch['emotion'][non_zero_indexes]
 
-        output_probas = finetuning_model(batch['input_ids']).logits
+        # print("="*20, "batch")
+        # print(batch)
+        output_probas = finetuning_model(batch['input_ids'])#.logits
         # print(output_probas.logits.shape)
         loss = ce_loss(output_probas, batch['sentiment'])
         loss.backward()
@@ -119,7 +121,7 @@ def test(args, finetuning_model, loader, target):
 
         batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
 
-        output_probas = finetuning_model(batch['input_ids']).logits
+        output_probas = finetuning_model(batch['input_ids'])#.logits
         loss = ce_loss(output_probas, batch['sentiment'])
         loss_it.append(loss.item())
 
@@ -156,13 +158,17 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
     if not os.path.exists(f'../results/{experiment}/'):
         os.makedirs(f'../results/{experiment}/')
 
-    model = AutoModelForSequenceClassification.from_pretrained(  
-        model_name,
-        low_cpu_mem_usage=True,         # recommanded param
-        return_dict=True,               # not used for now
-        torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
-        device_map=args['device'],      # send to the right device
-    )
+    # model = AutoModelForSequenceClassification.from_pretrained(  
+    #     model_name,
+    #     low_cpu_mem_usage=True,         # recommanded param
+    #     return_dict=True,               # not used for now
+    #     torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
+    #     device_map=args['device'],      # send to the right device
+    # )
+
+    model = TrainableHeadAdapters(args, nb_classes=2)
+    model.to(args['device'])
+
     for p in model.parameters(): p.requires_grad = False
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     args.update({'tokenizer':tokenizer})
@@ -192,12 +198,9 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
 
     args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
     model = get_peft_model(model, config)
-    # print(model)
-    # model.print_trainable_parameters()
     args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
     args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
-    # finetuning_model = TrainableHeadAdapters(args, nb_classes=2)
-    # finetuning_model.to(args['device'])
+
     # run training and validation
     val_losses = run_epochs(args, model, train_loader, val_loader, experiment)
 
