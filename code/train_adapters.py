@@ -193,10 +193,6 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
     args.update({'base_model': model}) # save the initial pretrained model without the adapters. This model will NOT be updated
     model = get_peft_model(model, config)
     # print(model)
-    prompt = tokenizer('Hello everyone', return_tensors="pt").to(args['device'])
-    output = model.base_model.model.model.generate(**prompt, max_new_tokens=20, repetition_penalty=1.5)[0] # this contains the prompt and the generated part
-    result = tokenizer.decode(output)
-    print('model.generate output', result)
     # model.print_trainable_parameters()
     args.update({'model':model}) # save the model with the adapters that will be updated in fine-tuning
     args.update({'max_new_tokens':20}) # set max new tokens (TODO uniformizer args keys)
