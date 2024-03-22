@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification, logging
+logging.set_verbosity_error()
 from peft import LoraConfig, get_peft_model, peft_model, TaskType
 import os
 from tqdm import tqdm
@@ -47,7 +48,6 @@ def train(args, epoch, experiment):
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
-        for n, p in generation_model.base_model.model.model.layers[22].self_attn.q_proj.lora_A.default.named_parameters(): print('generation model:', p)
         # generate sentences with a specific RL
         batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=args['hf'])
         file_path = save_batch_generations(batch_generations, batch_index, experiment)
@@ -204,7 +204,7 @@ def run_on_several_test_sets(args, experiment, episodes=5):
     test_losses = []
 
     for i in range(episodes):
-        test_loss, test_trues, test_preds = test(args, 'test', experiment, hf=args['hf'])
+        test_loss, test_trues, test_preds = test(args, 'test', experiment)
         save_epoch_data('test', test_trues, test_preds, i, experiment)
 
         test_losses.append(test_loss)
@@ -239,6 +239,7 @@ def run_exp(args, model_name, experiment, episodes=10):
             torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
             device_map=args['device'],      # send to the right device
         )
+        generation_model.post_init()
         classification_model = AutoModelForSequenceClassification.from_pretrained(
             model_name,
             low_cpu_mem_usage=True,         # recommanded param
@@ -246,6 +247,7 @@ def run_exp(args, model_name, experiment, episodes=10):
             torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
             device_map=args['device'],      # send to the right device
         )
+        classification_model.post_init()
 
         # freeze both models
         for p in generation_model.parameters(): p.requires_grad = False
@@ -266,13 +268,14 @@ def run_exp(args, model_name, experiment, episodes=10):
                 r=args['rank'],                       # rank of lora module
                 lora_alpha=2*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
                 target_modules=target_modules,
-                # layers_to_transform=[3, 4, 5, 29],  # avoid top layers, this modifies the representation too much (really?)
+                # layers_to_transform=[3, 4, 5, 27, 29],  # avoid top layers, this modifies the representation too much (really?)
                 bias="lora_only",                     # should be better than default setting in our case
                 lora_dropout=0.1,                     # conventional setting
                 # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
             )
         
         # display config details
+        args.update({'config': config})
         display_lora_config(config)
 
         # plug adapters + save both models
@@ -315,7 +318,7 @@ if __name__ == "__main__":
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
-            'lr':1e-3,                          # learning rate
+            'lr':5e-4,                          # learning rate
             'rank':rank,                        # rank in LoRA config
             'target_modules':target_modules,    # target modules in LoRA config
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
