@@ -268,9 +268,9 @@ def run_exp(args, model_name, experiment, episodes=10):
                 r=args['rank'],                       # rank of lora module
                 lora_alpha=2*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
                 target_modules=target_modules,
-                layers_to_transform=[3, 4, 5, 27, 29],  # avoid top layers, this modifies the representation too much (really?)
+                # layers_to_transform=[3, 4, 5, 27, 29],  # avoid top layers, this modifies the representation too much (really?)
                 bias="lora_only",                     # should be better than default setting in our case
-                lora_dropout=0.05,                     # conventional setting
+                lora_dropout=0.1,                     # conventional setting
                 # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
             )
         
@@ -318,7 +318,7 @@ if __name__ == "__main__":
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
-            'lr':1e-3,                          # learning rate
+            'lr':5e-4,                          # learning rate
             'rank':rank,                        # rank in LoRA config
             'target_modules':target_modules,    # target modules in LoRA config
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available

@@ -266,8 +266,9 @@ def generate_from_random_prompts(args, hf=False):
             result = tokenizer.decode(output)
             generation = result[result.find(':')+1:result.find('\n')]
             prompts_ids, generation_ids = prompt['input_ids'].squeeze(), tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'].squeeze()
+            # try to give the classifier model both prompt and generated sentence to access adequacy between RLv and sentence
             output_ids = get_and_pad_ids(torch.cat((prompts_ids, generation_ids), dim=0).unsqueeze(dim=0), args, padding_length=40)
-            print(output_ids)
+            # print(output_ids)
             batch_ids.append(output_ids)
             print(f'Sample {i}: \t {generation}')
             # store result
