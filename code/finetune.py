@@ -56,7 +56,7 @@ def train(args, epoch, experiment):
         # trues are the RL that the generated sentence should have
         trues.extend(batch_labels)
         create_batch_individual(batch_index, file_path, experiment)
-        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
+        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
         preds.extend(generations_rl)
 
         # get gold labels and classification model output

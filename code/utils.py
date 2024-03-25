@@ -184,8 +184,8 @@ def parse_indexes(levels_dict):
     for k in levels_dict.keys():
         for v in levels_dict[k]:
             # parse the utterance full name to retrieve its index
-            splitted_v = v.split('_')
-            index = splitted_v[3] # the 3rd element when individual_592.592_598_utt_21271711 is splitted by _ is 598, which is the utterance index
+            splitted_v = v.split('_')[::-1]
+            index = splitted_v[2] # the 3rd element when individual_592.592_598_utt_21271711 is splitted by _ is 598, which is the utterance index
             # store the readability class for the current index
             levels_indexes_dict[int(index)] = k
 
