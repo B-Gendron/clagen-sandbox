@@ -38,7 +38,6 @@ def train(args, epoch, experiment):
         @return trues (list):              list of gold labels to be stored later
         @return preds (list):              list of the associated predictions to be stored later
     '''
-    print(experiment)
     classification_model, generation_model = args['clf_model'], args['gen_model']
     classification_model.train()
     optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
