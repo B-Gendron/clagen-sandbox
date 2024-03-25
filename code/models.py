@@ -7,6 +7,8 @@ import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaDecoderLayer, LlamaForCausalLM
 from transformers.models.llama.configuration_llama import LlamaConfig
 from transformers.generation import utils
+from transformers import LlamaModel, AutoModel, LlamaPreTrainedModel, AutoConfig
+from typing import List, Optional, Tuple, Union
 
 # set default tensor type
 # torch.set_default_dtype(torch.float32)
@@ -222,35 +224,39 @@ class TrainableHeadAdapters(nn.Module):
     def __init__(self, args, nb_classes):
         super(TrainableHeadAdapters, self).__init__()
         vocab_size = args['vocab_size']
-        max_new_tokens = args['max_new_tokens']
-        # self.dropout = nn.Dropout(p=0.5)
-        self.model = args['model']
-        self.classification_layer = nn.Linear(vocab_size, nb_classes) # [32, 128] --> [32, 2] binary clf seen as multiclass clf to avoid num approx problems
-        self.layernorm = nn.LayerNorm(2)
-        self.relu = nn.ReLU()
+        self.model = AutoModel.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
+        self.config = AutoConfig.from_pretrained("meta-llama/Llama-2-7b-chat-hf")
+        self.score = nn.Linear(self.model.config.hidden_size, nb_classes, bias=False)
         self.softmax = nn.Softmax(dim=1)
 
-        self.args = args
-        self.penalty = 1e-1
-
-    def forward(self, input_ids):
+    def forward(self,
+                input_ids: torch.LongTensor = None,
+                # 🛑barbara, here we add the expected arguments even though we don't use them, in order to use the Lora from PEFT easily
+                attention_mask: Optional[torch.Tensor] = None,
+                position_ids: Optional[torch.LongTensor] = None,
+                past_key_values: Optional[List[torch.FloatTensor]] = None,
+                inputs_embeds: Optional[torch.FloatTensor] = None,
+                labels: Optional[torch.LongTensor] = None,
+                use_cache: Optional[bool] = None,
+                output_attentions: Optional[bool] = None,
+                output_hidden_states: Optional[bool] = None,
+                return_dict: Optional[bool] = None
+                ):
         '''
             b = batch_size (default=32)
             t = max_new_tokens (default=20)
             v = vocab_size (default=32000 if llama, another number I don't remeber if gemma)
         '''
-        # forward path inside the model
-        x = self.model(input_ids)
 
-        # mean pooling (induces NaN)
-        # x = torch.mean(x[0], dim=1).half()
+        transformer_outputs = self.model(input_ids)
+        hidden_states = transformer_outputs[0]
+        logits = self.score(hidden_states)
 
-        # retrieve last item amongst t (no more NaN problems) : put half again
-        x = x[0][:, -1, :].float()
-        x = self.classification_layer(x) # [b, vocab_size] --> [b, nb_classes] this layer is NOT frozen :) 
-        x = self.layernorm(x)
-        x = self.relu(x)
-        # x = self.softmax(x)
+        batch_size = input_ids.shape[0]
+        sequence_lengths = -1
+        pooled_logits = logits[torch.arange(batch_size, device=logits.device), sequence_lengths]
+        x = self.softmax(pooled_logits)
+        # 🛑barbara, in transformers they include the loss calculation in the model. I followed the other logic we are used to follow (loss in the train loop)
 
         return x
 
