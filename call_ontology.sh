@@ -1,14 +1,15 @@
 #!/bin/bash
 
 # Check if the correct number of arguments is provided
-if [ "$#" -ne 2 ]; then
-  echo "Usage: $0 <batch_index> <file_path>"
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 <batch_index> <file_path> <experiment>"
   exit 1
 fi
 
 # Assign the arguments to variables
 batch_index="$1"
 file_path="$2"
+experiment="$3"
 
 # Move to the other GitHub repo
 initial_path="../OntoGPT/code"
@@ -25,7 +26,7 @@ fi
 
 # Run the Python script with the provided arguments
 # echo Call ontology on batch...
-python3 "$script_path" -i "$batch_index" -p "$file_path"
+python3 "$script_path" -i "$batch_index" -p "$file_path" -e "$experiment"
 # echo Successfully saved ontology individual!
 
 cd $initial_path
