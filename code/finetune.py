@@ -38,7 +38,6 @@ def train(args, epoch, experiment):
         @return trues (list):              list of gold labels to be stored later
         @return preds (list):              list of the associated predictions to be stored later
     '''
-    print(experiment)
     classification_model, generation_model = args['clf_model'], args['gen_model']
     classification_model.train()
     optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
@@ -57,7 +56,7 @@ def train(args, epoch, experiment):
         # trues are the RL that the generated sentence should have
         trues.extend(batch_labels)
         create_batch_individual(batch_index, file_path, experiment)
-        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}.rdf')
+        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
         preds.extend(generations_rl)
 
         # get gold labels and classification model output
