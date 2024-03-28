@@ -2,9 +2,11 @@ import pandas as pd
 import lftk # for readability scores
 import spacy
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 import swifter # to parallelize apply on all available cores
 
 NLP = spacy.load('en_core_web_sm')
+tqdm.pandas()
 
 def calculate_scores(sentence):
     # extract scores
@@ -16,7 +18,7 @@ def calculate_scores(sentence):
 
 
 def update_scores(row):
-    scores = calculate_scores(row['Sentence'])
+    scores = calculate_scores(row['sentence'])
     for col, val in scores.items():
         row[col] = val
     return row
@@ -37,7 +39,7 @@ def display_scores_distributions(df):
         ax.set_xlabel('Value Range')
         ax.set_ylabel('Frequency')
 
-    plt.savefig('readability_scores_ditribution.png', dpi=300, bbox_inches='tight')
+    plt.savefig('../objects/readability_scores_ditribution.png', dpi=300, bbox_inches='tight')
     plt.tight_layout()
     plt.show()
 
@@ -67,4 +69,5 @@ if __name__=='__main__':
 
     # apply mapping + display distribution
     df = df.swifter.apply(update_scores, axis=1)
+    df.to_csv('../objects/readability_scores_dataframe.csv', index=False)
     display_scores_distributions(df)
