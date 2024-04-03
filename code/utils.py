@@ -220,6 +220,28 @@ def get_readability_levels(indiv_path):
 
     return labels
 
+
+def get_sentence_length(indiv_path):
+    '''
+        TODO update doc
+        A généraliser ! Pareil pour la fonction suivante
+
+        @param indiv_path (str):    the path to the batch ontology individual.     
+    '''
+    # get labels mapping for different sentence lengths
+    sentence_length_mapping = {'ShortFullText':0, 'LongFullText':1}
+    # retrieve the ontology individual
+    individual = get_ontology(indiv_path).load()
+    # crop first element as it simply corresponds to the class occurence
+    utterance_levels = {
+        'ShortFullText':        [str(i) for i in individual.search(is_a=individual.ShortFullText)[1:]],
+        'LongFullText':         [str(i) for i in individual.search(is_a=individual.LongFullText)[1:]]
+    }
+    utterance_levels = parse_indexes(utterance_levels)
+    labels = [readability_levels_mapping[v] for v in utterance_levels.values()]
+
+    return labels
+
 def random_prompt(concept, classes, hf=False):
     '''
         This auxiliary function allows to get a prompt that ask for a sentence belonging to a certain class among given classes. It is for now used for readability levels but is meant for a more general purpose.
@@ -247,10 +269,11 @@ def random_prompt(concept, classes, hf=False):
 def generate_from_random_prompts(args, hf=False):
     # concept = 'ReadabilityLevel'
     # classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
+    # classes = ['LongFullText', 'ShortFullText']
 
     # try with random IDs instead of concept names
     concept = 'C6468168'
-    classes = [f'{concept}{i}' for i in range(3)]
+    classes = [f'{concept}{i}' for i in range(2)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
     if hf:
