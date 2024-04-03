@@ -265,7 +265,6 @@ def generate_from_random_prompts(args, hf=False):
             output = model.generate(**prompt, max_new_tokens=args['max_new_tokens'], repetition_penalty=1.5)[0] # this contains the prompt and the generated part
             result = tokenizer.decode(output)
             generation = result[result.find(':')+1:result.find('\n')]
-            prompts_ids, generation_ids = prompt['input_ids'].squeeze(), tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'].squeeze()
             # try to give the classifier model both prompt and generated sentence to access adequacy between RLv and sentence --> bad idea (OOM) so back to initial setup
             output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], args, padding_length=40)
             # print(output_ids)

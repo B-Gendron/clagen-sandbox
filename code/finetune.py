@@ -39,7 +39,7 @@ def train(args, epoch, experiment):
         @return preds (list):              list of the associated predictions to be stored later
     '''
     classification_model, generation_model = args['clf_model'], args['gen_model']
-    classification_model.train()
+    # classification_model.train()
     optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
     ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
     writer = args['writer']
@@ -85,13 +85,13 @@ def train(args, epoch, experiment):
     loss_it_avg = sum(loss_it)/len(loss_it)
     acc = accuracy_score(binary_trues, binary_preds)
 
-    # print useful information about the training progress and scores on this training set's full pass
+    # # print useful information about the training progress and scores on this training set's full pass
     print("Epoch %s/%s - %s : (%s %s) (%s %s)" % (colored(str(epoch+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), acc))
  
-	# 🛑 add some metrics to keep with a label and the epoch index
+	# # 🛑 add some metrics to keep with a label and the epoch index
     writer.add_scalar("Loss/train", loss_it_avg, epoch)
 
-    return loss_it_avg, trues, preds
+    return loss_it, trues, preds
 
 
 def test(args, target, experiment):
@@ -108,36 +108,37 @@ def test(args, target, experiment):
     '''
     classification_model, generation_model = args['clf_model'], args['gen_model']
 
-    classification_model.train()
     ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
     writer = args['writer']
     loss_it = []
     trues, preds = [], []
     file_paths = []
 
-    for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
-        # generate sentences with a specific RL
-        batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=args['hf'])
-        file_path = save_batch_generations(batch_generations, batch_index, experiment)
-        file_paths.append(file_path)
+    with torch.no_grad():
 
-        # trues are the RL that the generated sentence should have
-        trues.extend(batch_labels)
-        create_batch_individual(batch_index, file_path, experiment)
-        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
-        preds.extend(generations_rl)
+        for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
+            # generate sentences with a specific RL
+            batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=args['hf'])
+            file_path = save_batch_generations(batch_generations, batch_index, experiment)
+            file_paths.append(file_path)
 
-        # get gold labels and classification model output
-        gold_labels = torch.tensor(is_same(batch_labels, generations_rl)).to(args['device'])
-        output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
+            # trues are the RL that the generated sentence should have
+            trues.extend(batch_labels)
+            create_batch_individual(batch_index, file_path, experiment)
+            generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
+            preds.extend(generations_rl)
 
-        # training step (loss computation w/ autocast to handle tensor type consistency)
-        with torch.autocast('cuda'):
-            loss = ce_loss(output_logits, gold_labels) 
-        loss_it.append(loss.item())
-        print(loss_it)
+            # get gold labels and classification model output
+            gold_labels = torch.tensor(is_same(batch_labels, generations_rl)).to(args['device'])
+            output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
 
-    all_val_losses.extend(loss_it) # save all the losses of this epoch
+            # training step (loss computation w/ autocast to handle tensor type consistency)
+            with torch.autocast('cuda'):
+                loss = ce_loss(output_logits, gold_labels) 
+            loss_it.append(loss.item())
+            print(loss_it)
+
+    # all_val_losses.extend(loss_it) # save all the losses of this epoch
     loss_it_avg = sum(loss_it)/len(loss_it)
 
     # append batch generations to split generations
@@ -154,7 +155,7 @@ def test(args, target, experiment):
 	# 🛑 add some metrics to keep with a label and the epoch index
     writer.add_scalar(f"Loss/{target}", loss_it_avg)
 
-    return loss_it_avg, trues, preds
+    return loss_it, trues, preds
 
 
 def run_episodes(args, experiment):
@@ -162,9 +163,6 @@ def run_episodes(args, experiment):
         Run all episodes of the fine-tuning (train + validation).
 
         @param args (dict):                 the hyperparameters for the training
-        @param model:                       the pretrained model to use for inference
-        @param stoi (dict):                 the string-to-index dict from the pretraining vocab
-        @param itos (list):                 the index-to-string list from the pretraining vocab
         @param experiment (str):            the name of the experiment
 
         @return val_losses (list):          the losses on validation sets (length = number of val_iters)
@@ -193,9 +191,6 @@ def run_on_several_test_sets(args, experiment, episodes=5):
         This function accounts for model stability by testing the model on different test sets depending on the number of episodes. Predictions are stored for each episode so all the classification metrics can be computed as well as their mean and standard deviation.
 
         @param args (dict):                 the hyperparameters for the training
-        @param model:                       the pretrained model to use for inference
-        @param stoi (dict):                 the string-to-index dict from the pretraining vocab
-        @param itos (list):                 the index-to-string list from the pretraining vocab
         @param experiment (str):            the name of the experiment
         @param episodes (int):              the number of test sets to infer on (default=10)
 
@@ -278,7 +273,7 @@ def run_exp(args, model_name, experiment, episodes=10):
         args.update({'config': config})
         display_lora_config(config)
 
-        # plug adapters + save both models
+        # plug adapters + save both models = here I remove adapters because I want to use raw llama model
         generation_model = get_peft_model(generation_model, config)
         classification_model = get_peft_model(classification_model, config)
         args.update({'gen_model': generation_model})
@@ -333,6 +328,9 @@ if __name__ == "__main__":
     
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
     model_name = "meta-llama/Llama-2-7b-chat-hf"
+    model_name = "meta-llama/Llama-2-13b-chat-hf"
+    # model_name = "HuggingFaceH4/zephyr-7b-beta"
+    # model_name = "mistralai/Mistral-7B-Instruct-v0.2"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
     args.update({'hf':True, 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
@@ -340,4 +338,5 @@ if __name__ == "__main__":
 
     display_finetuning_args(args)
 
-    run_exp(args, model_name, f"llama2_{args['rank']}_{args['target_modules']}")
+    run_exp(args, model_name, f"dummy_test")
+    # run_exp(args, model_name, f"length_llama2_7b_{args['rank']}_{args['target_modules']}")
