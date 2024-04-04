@@ -238,7 +238,7 @@ def get_sentence_length(indiv_path):
         'LongFullText':         [str(i) for i in individual.search(is_a=individual.LongFullText)[1:]]
     }
     utterance_levels = parse_indexes(utterance_levels)
-    labels = [readability_levels_mapping[v] for v in utterance_levels.values()]
+    labels = [sentence_length_mapping[v] for v in utterance_levels.values()]
 
     return labels
 
