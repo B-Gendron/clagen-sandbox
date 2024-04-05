@@ -120,42 +120,33 @@ The docs list the following coarse-grained tags used for the pos and pos_ attrib
   <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">A text is considered easily readable if its COLE readability socre does not exceed 7.67, which as be determined as the first quartile of the COLE distribution on a large corpus.</rdfs:comment>
 </owl:Class>
 
-<owl:NamedIndividual rdf:about="#0_0_utt_55">
+<owl:NamedIndividual rdf:about="#2_0_utt_5">
   <rdf:type rdf:resource="#FullText"/>
-  <containsToken rdf:resource="#0_0_0_tok_5983625672228268878"/>
-  <containsToken rdf:resource="#0_0_1_tok_5983625672228268878"/>
+  <containsToken rdf:resource="#2_0_0_tok_5983625672228268878"/>
   <rdf:type>
     <owl:Restriction>
       <owl:onProperty rdf:resource="#containsToken"/>
       <owl:allValuesFrom>
         <owl:Class>
           <owl:oneOf rdf:parseType="Collection">
-            <rdf:Description rdf:about="#0_0_0_tok_5983625672228268878"/>
-            <rdf:Description rdf:about="#0_0_1_tok_5983625672228268878"/>
+            <rdf:Description rdf:about="#2_0_0_tok_5983625672228268878"/>
           </owl:oneOf>
         </owl:Class>
       </owl:allValuesFrom>
     </owl:Restriction>
   </rdf:type>
   <rdf:type rdf:resource="#ShortFullText"/>
-  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello_hello</fullText>
+  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello</fullText>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_0_0_tok_5983625672228268878">
+<owl:NamedIndividual rdf:about="#2_0_0_tok_5983625672228268878">
   <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_0_0_lem_5983625672228268878"/>
+  <hasLemma rdf:resource="#2_0_0_lem_5983625672228268878"/>
   <hasPOS rdf:resource="#INTJ"/>
   <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello</tokenString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_0_1_tok_5983625672228268878">
-  <rdf:type rdf:resource="#Token"/>
-  <hasLemma rdf:resource="#0_0_1_lem_5983625672228268878"/>
-  <hasPOS rdf:resource="#INTJ"/>
-  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hello</tokenString>
-</owl:NamedIndividual>
-
-<owl:NamedIndividual rdf:about="#0_0_0_lem_5983625672228268878">
+<owl:NamedIndividual rdf:about="#2_0_0_lem_5983625672228268878">
   <rdf:type rdf:resource="#Lemma"/>
   <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hello</lemmaString>
 </owl:NamedIndividual>
@@ -165,15 +156,137 @@ The docs list the following coarse-grained tags used for the pos and pos_ attrib
   <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">INTJ</hasPOSString>
 </owl:NamedIndividual>
 
-<owl:NamedIndividual rdf:about="#0_0_1_lem_5983625672228268878">
+<owl:NamedIndividual rdf:about="#2_1_utt_51">
+  <rdf:type rdf:resource="#FullText"/>
+  <containsToken rdf:resource="#2_1_0_tok_5983625672228268878"/>
+  <containsToken rdf:resource="#2_1_1_tok_12646065887601541794"/>
+  <rdf:type>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#containsToken"/>
+      <owl:allValuesFrom>
+        <owl:Class>
+          <owl:oneOf rdf:parseType="Collection">
+            <rdf:Description rdf:about="#2_1_0_tok_5983625672228268878"/>
+            <rdf:Description rdf:about="#2_1_1_tok_12646065887601541794"/>
+          </owl:oneOf>
+        </owl:Class>
+      </owl:allValuesFrom>
+    </owl:Restriction>
+  </rdf:type>
+  <rdf:type rdf:resource="#ShortFullText"/>
+  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello.</fullText>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_1_0_tok_5983625672228268878">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#2_1_0_lem_5983625672228268878"/>
+  <hasPOS rdf:resource="#INTJ"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_1_1_tok_12646065887601541794">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#2_1_1_lem_12646065887601541794"/>
+  <hasPOS rdf:resource="#PUNCT"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">.</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_1_0_lem_5983625672228268878">
   <rdf:type rdf:resource="#Lemma"/>
   <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hello</lemmaString>
 </owl:NamedIndividual>
 
+<owl:NamedIndividual rdf:about="#2_1_1_lem_12646065887601541794">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">.</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#PUNCT">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PUNCT</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_utt_521">
+  <rdf:type rdf:resource="#FullText"/>
+  <containsToken rdf:resource="#2_2_0_tok_5983625672228268878"/>
+  <containsToken rdf:resource="#2_2_2_tok_18309932012808971453"/>
+  <containsToken rdf:resource="#2_2_1_tok_227504873216781231"/>
+  <rdf:type>
+    <owl:Restriction>
+      <owl:onProperty rdf:resource="#containsToken"/>
+      <owl:allValuesFrom>
+        <owl:Class>
+          <owl:oneOf rdf:parseType="Collection">
+            <rdf:Description rdf:about="#2_2_0_tok_5983625672228268878"/>
+            <rdf:Description rdf:about="#2_2_1_tok_227504873216781231"/>
+            <rdf:Description rdf:about="#2_2_2_tok_18309932012808971453"/>
+          </owl:oneOf>
+        </owl:Class>
+      </owl:allValuesFrom>
+    </owl:Restriction>
+  </rdf:type>
+  <rdf:type rdf:resource="#ShortFullText"/>
+  <fullText rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello_my_name</fullText>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_0_tok_5983625672228268878">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#2_2_0_lem_5983625672228268878"/>
+  <hasPOS rdf:resource="#INTJ"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Hello</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_1_tok_227504873216781231">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#2_2_1_lem_227504873216781231"/>
+  <hasPOS rdf:resource="#PRON"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">my</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_2_tok_18309932012808971453">
+  <rdf:type rdf:resource="#Token"/>
+  <hasLemma rdf:resource="#2_2_2_lem_18309932012808971453"/>
+  <hasPOS rdf:resource="#NOUN"/>
+  <tokenString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">name</tokenString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_0_lem_5983625672228268878">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">hello</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_1_lem_227504873216781231">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">my</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#PRON">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">PRON</hasPOSString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#2_2_2_lem_18309932012808971453">
+  <rdf:type rdf:resource="#Lemma"/>
+  <lemmaString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">name</lemmaString>
+</owl:NamedIndividual>
+
+<owl:NamedIndividual rdf:about="#NOUN">
+  <rdf:type rdf:resource="#TokenPOS"/>
+  <hasPOSString rdf:datatype="http://www.w3.org/2001/XMLSchema#string">NOUN</hasPOSString>
+</owl:NamedIndividual>
+
 <owl:AllDifferent>
   <owl:distinctMembers rdf:parseType="Collection">
-    <rdf:Description rdf:about="#0_0_0_tok_5983625672228268878"/>
-    <rdf:Description rdf:about="#0_0_1_tok_5983625672228268878"/>
+    <rdf:Description rdf:about="#2_2_0_tok_5983625672228268878"/>
+    <rdf:Description rdf:about="#2_2_1_tok_227504873216781231"/>
+    <rdf:Description rdf:about="#2_2_2_tok_18309932012808971453"/>
+  </owl:distinctMembers>
+</owl:AllDifferent>
+
+<owl:AllDifferent>
+  <owl:distinctMembers rdf:parseType="Collection">
+    <rdf:Description rdf:about="#2_1_0_tok_5983625672228268878"/>
+    <rdf:Description rdf:about="#2_1_1_tok_12646065887601541794"/>
   </owl:distinctMembers>
 </owl:AllDifferent>
 
