@@ -218,6 +218,8 @@ def get_readability_levels(indiv_path):
     utterance_levels = parse_indexes(utterance_levels)
     labels = [readability_levels_mapping[v] for v in utterance_levels.values()]
 
+    # individual.destroy()
+
     return labels
 
 
@@ -239,6 +241,8 @@ def get_sentence_length(indiv_path):
     }
     utterance_levels = parse_indexes(utterance_levels)
     labels = [sentence_length_mapping[v] for v in utterance_levels.values()]
+
+    individual.destroy()
 
     return labels
 
@@ -273,7 +277,7 @@ def generate_from_random_prompts(args, hf=False):
 
     # try with random IDs instead of concept names
     concept = 'C6468168'
-    classes = [f'{concept}{i}' for i in range(2)]
+    classes = [f'{concept}{i}' for i in range(3)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
     if hf:

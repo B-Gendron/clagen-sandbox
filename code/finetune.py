@@ -56,7 +56,7 @@ def train(args, epoch, experiment):
         # trues are the RL that the generated sentence should have
         trues.extend(batch_labels)
         create_batch_individual(batch_index, file_path, experiment)
-        generations_rl = get_sentence_length(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
+        generations_rl = get_readability_levels(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
         preds.extend(generations_rl)
 
         # get gold labels and classification model output
@@ -309,10 +309,10 @@ if __name__ == "__main__":
     target_modules = arg.target_modules
 
     args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
-            'batch_size':3,                     # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':32,                     # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,                    # Transformer block size in the language model
-            'train_iters':100,                    # number of train batches to consider in one episode
-            'eval_iters':10,                    # number of validation/test batches to consider in one episode
+            'train_iters':1000,                    # number of train batches to consider in one episode
+            'eval_iters':100,                    # number of validation/test batches to consider in one episode
             'lr':1e-3,                          # learning rate
             'rank':rank,                        # rank in LoRA config
             'target_modules':target_modules,    # target modules in LoRA config
