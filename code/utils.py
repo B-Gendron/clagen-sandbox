@@ -108,6 +108,13 @@ def activate_gpu(force_cpu=False):
             print('DEVICE = ', colored('CPU', "blue"))
     return device
 
+def pick_list(layers_list):
+    if layers_list == 1:
+        return [20, 22, 24, 26]
+    elif layers_list == 2:
+        return [13, 17, 21, 25]
+    else:
+        return [7, 12, 17, 22]
 
 # -----------------------------------------------------------------------------------------
 # Preprocessing utils for training
@@ -218,7 +225,7 @@ def get_readability_levels(indiv_path):
     utterance_levels = parse_indexes(utterance_levels)
     labels = [readability_levels_mapping[v] for v in utterance_levels.values()]
 
-    # individual.destroy()
+    individual.destroy()
 
     return labels
 

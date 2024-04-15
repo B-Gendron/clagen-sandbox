@@ -263,7 +263,7 @@ def run_exp(args, model_name, experiment, episodes=10):
                 r=args['rank'],                       # rank of lora module
                 lora_alpha=2*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
                 target_modules=target_modules,
-                layers_to_transform=[3, 5, 7, 9, 11, 23, 25, 27, 29],  # avoid top layers, this modifies the representation too much (really?)
+                # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
                 bias="lora_only",                     # should be better than default setting in our case
                 lora_dropout=0.1,                     # conventional setting
                 # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
@@ -303,16 +303,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-r", "--rank", help="Rank of LoRA layers", type=int, default=4)
     parser.add_argument("-m", "--target-modules", help="a string that points attention layers where to put LoRA adapters. The string concatenates the first letter of each desired module.", type=str, default='qv')
+    parser.add_argument("-l", "--layers-list", help="pick a list of layers between 1, 2 and 3", type=int, default=1)
     arg = parser.parse_args()
 
     rank = arg.rank
     target_modules = arg.target_modules
+    layers_list = arg.layers_list
 
     args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
             'batch_size':32,                     # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,                    # Transformer block size in the language model
-            'train_iters':1000,                    # number of train batches to consider in one episode
-            'eval_iters':100,                    # number of validation/test batches to consider in one episode
+            'train_iters':100,                    # number of train batches to consider in one episode
+            'eval_iters':10,                    # number of validation/test batches to consider in one episode
             'lr':1e-3,                          # learning rate
             'rank':rank,                        # rank in LoRA config
             'target_modules':target_modules,    # target modules in LoRA config
@@ -324,6 +326,7 @@ if __name__ == "__main__":
             'dropout':0.3,                      # dropout rate  
             'writer':SummaryWriter(f"../logs/{get_datetime()}"), # Tensorboard util
             'hf':False,                         # True is the model is loaded from huggingface models hub, false otherwise
+            # 'layers_list':pick_list(layers_list),
         }
     
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
@@ -338,5 +341,5 @@ if __name__ == "__main__":
 
     display_finetuning_args(args)
 
-    run_exp(args, model_name, f"dummy_test")
-    # run_exp(args, model_name, f"length_llama2_7b_{args['rank']}_{args['target_modules']}")
+   #  run_exp(args, model_name, f"dummy_test_{args['rank']}")
+    run_exp(args, model_name, f"llama2_7b_{args['rank']}_{args['target_modules']}")
