@@ -112,7 +112,8 @@ def store_split_generations(split, file_paths, trues, experiment):
         @param trues (list):            all the gold readability level labels
         @param experiment (str):        the name of the experiment (=folder where all logs are saved)
     '''
-    readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
+    # readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
+    sentence_length_mapping = {0:'ShortFullText', 1:'LongFullText'}
     with open(f'../results/{experiment}/generations_{split}.tsv', 'a') as all_gens:
         tsv_writer = csv.writer(all_gens, delimiter='\t')
         # iterate through batch files
@@ -121,7 +122,7 @@ def store_split_generations(split, file_paths, trues, experiment):
             abs_path = f'../{path}'
             with open(abs_path, 'r') as batch_gens:
                 for j, row in enumerate(batch_gens):
-                    tsv_writer.writerow([readability_levels_mapping[trues[i+j]], row])
+                    tsv_writer.writerow([sentence_length_mapping[trues[i+j]], row])
 
             # remove batch-wise generations file path
             os.remove(abs_path)

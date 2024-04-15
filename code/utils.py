@@ -270,7 +270,8 @@ def random_prompt(concept, classes, hf=False):
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
             if hf:
-                prompt = f"Generate a sentence for which {concept} is {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
+                prompt = f"This is a sentence for which concept {concept} is {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
+                # prompt = f"INSTRUCTION: Give an example sentence for which concept {concept} is {classes[k-1]}. ANSWER: Here is an example sentence for the given concept: '{rd.choice(np.array(start_of_sentence))}"
                 return prompt, k-1
             else: 
                 prompt = f"A sentence whose {concept} is {classes[k-1]}: The"
@@ -284,7 +285,7 @@ def generate_from_random_prompts(args, hf=False):
 
     # try with random IDs instead of concept names
     concept = 'C6468168'
-    classes = [f'{concept}{i}' for i in range(3)]
+    classes = [f'{concept}{i}' for i in range(2)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
     if hf:
@@ -297,13 +298,14 @@ def generate_from_random_prompts(args, hf=False):
             # perform generation
             prompt = tokenizer(prompt, return_tensors="pt").to(args['device'])
             output = model.generate(**prompt, max_new_tokens=args['max_new_tokens'], repetition_penalty=1.5)[0] # this contains the prompt and the generated part
-            result = tokenizer.decode(output)
+            result = tokenizer.decode(output, skip_special_tokens=True)
+            # generation = result[result.find('concept:')+len('concept'):]
             generation = result[result.find(':')+1:result.find('\n')]
             # try to give the classifier model both prompt and generated sentence to access adequacy between RLv and sentence --> bad idea (OOM) so back to initial setup
             output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], args, padding_length=40)
             # print(output_ids)
             batch_ids.append(output_ids)
-            print(f'Sample {i}: \t {generation}')
+            print(f'Sample {i}: \t | Class {label} | \t {generation}')
             # store result
             batch_generations.append(generation)
 
