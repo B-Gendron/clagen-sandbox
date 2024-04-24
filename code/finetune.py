@@ -58,26 +58,20 @@ def train(args, epoch, experiment):
         trues.extend(batch_labels)
         create_batch_individual(batch_index, file_path, experiment)
         generations_rl = get_sentence_length(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
-        print("Predicted labels: ", generations_rl)
         preds.extend(generations_rl)
 
         # get gold labels and classification model output
-        gold_labels = torch.tensor(is_same(batch_labels, generations_rl), device=args['device'])
-        # print("Gold labels: ", gold_labels)
+        # gold_labels = torch.tensor(is_same(batch_labels, generations_rl), device=args['device'])
         output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
 
         # training step (loss computation w/ autocast to handle tensor type consistency)
         with torch.autocast('cuda'):
-            loss = ce_loss(F.softmax(output_logits, dim=-1), torch.tensor(generations_rl, device=args['device'])) # is it better to use gold labels or generation labels (=preds)? 
+            loss = ce_loss(output_logits, torch.tensor(generations_rl, device=args['device'])) # is it better to use gold labels or generation labels (=preds)? 
         loss.backward()
         optimizer.step()
         loss_it.append(loss.item())
         optimizer.zero_grad()
         print(loss_it)
-
-        # store predictions and gold labels from binary clf to display accuracy
-        binary_preds.extend(torch.argmax(output_logits, dim=1).tolist())
-        binary_trues.extend(gold_labels.tolist())
 
         # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
         update_adapter_weights(args, generation_model, classification_model)
@@ -86,7 +80,7 @@ def train(args, epoch, experiment):
     store_split_generations('train', file_paths, trues, experiment)
     all_train_losses.extend(loss_it) # save all the losses of this epoch
     loss_it_avg = sum(loss_it)/len(loss_it)
-    acc = accuracy_score(binary_trues, binary_preds)
+    acc = accuracy_score(trues, preds)
 
     # # print useful information about the training progress and scores on this training set's full pass
     print("Epoch %s/%s - %s : (%s %s) (%s %s)" % (colored(str(epoch+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), acc))
@@ -137,7 +131,7 @@ def test(args, target, experiment):
 
             # training step (loss computation w/ autocast to handle tensor type consistency)
             with torch.autocast('cuda'):
-                loss = ce_loss(output_logits, gold_labels) 
+                loss = ce_loss(output_logits, torch.tensor(generations_rl, device=args['device']))
             loss_it.append(loss.item())
             print(loss_it)
 
@@ -151,6 +145,7 @@ def test(args, target, experiment):
     precision = precision_score(trues, preds, average='weighted', zero_division=0.0)
     recall = recall_score(trues, preds, average='weighted')
     f1 = f1_score(trues, preds, average='weighted')
+    all_val_losses.extend(loss_it)
 
     # print useful information about the training progress and scores on this training set's full pass
     print("%s : (%s %s) (%s %s) (%s %s) (%s %s) (%s %s)" % (colored(f'{target}', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), accuracy, colored('Precision: ', 'cyan'), precision, colored('Recall: ', 'cyan'), recall, colored('F1 score: ', 'cyan'), f1))
@@ -263,7 +258,7 @@ def run_exp(args, model_name, experiment, episodes=10):
         target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules'])
         config = LoraConfig(
                 r=args['rank'],                       # rank of lora module
-                lora_alpha=2*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
+                lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
                 target_modules=target_modules,
                 # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
                 bias="lora_only",                     # should be better than default setting in our case
@@ -271,7 +266,7 @@ def run_exp(args, model_name, experiment, episodes=10):
                 # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
                 # use_rslora=True
             )
-        
+
         # display config details
         args.update({'config': config})
         display_lora_config(config)
@@ -282,6 +277,8 @@ def run_exp(args, model_name, experiment, episodes=10):
         args.update({'gen_model': generation_model})
         args.update({'clf_model': classification_model}) 
 
+        # train the classification layer in the classifier
+        for p in classification_model.base_model.model.score.parameters(): p.requires_grad = True
         # send models to device
         generation_model.to(args['device'])
         classification_model.to(args['device'])
@@ -314,7 +311,7 @@ if __name__ == "__main__":
     layers_list = arg.layers_list
 
     args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
-            'batch_size':5,                     # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':32,                     # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
@@ -345,4 +342,4 @@ if __name__ == "__main__":
     display_finetuning_args(args)
 
    #  run_exp(args, model_name, f"dummy_test_{args['rank']}")
-    run_exp(args, model_name, f"llama2_7b_{args['rank']}_{args['target_modules']}")
+    run_exp(args, model_name, f"llama2_namedConceptsQuarterAlpha_{args['rank']}_{args['target_modules']}")

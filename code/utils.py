@@ -279,13 +279,13 @@ def random_prompt(concept, classes, hf=False):
 
 
 def generate_from_random_prompts(args, hf=False):
-    # concept = 'ReadabilityLevel'
+    concept = 'FullText'
     # classes = ['EasyReadableText', 'StandardReadableText', 'HardlyReadableText']
-    # classes = ['LongFullText', 'ShortFullText']
+    classes = ['ShortFullText', 'LongFullText']
 
     # try with random IDs instead of concept names
-    concept = 'C6468168'
-    classes = [f'{concept}{i}' for i in range(2)]
+    # concept = 'C6468168'
+    # classes = [f'{concept}{i}' for i in range(2)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
     if hf:
@@ -372,7 +372,7 @@ def update_adapter_weights(args, g, c):
         if 'o' in args['target_modules']:
             g.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight
             g.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight
-
+            
 
 def setup_model_babylm(args, model_name):
 
