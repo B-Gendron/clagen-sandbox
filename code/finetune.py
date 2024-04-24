@@ -334,15 +334,15 @@ if __name__ == "__main__":
         }
     
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
-    # model_name = "meta-llama/Llama-2-7b-chat-hf"
-    model_name = "google/flan-t5-xl"
+    model_name = "meta-llama/Llama-2-7b-chat-hf"
+    # model_name = "google/flan-t5-xl"
     # model_name = "meta-llama/Llama-2-13b-chat-hf"
     # model_name = "HuggingFaceH4/zephyr-7b-beta"
     # model_name = "mistralai/Mistral-7B-Instruct-v0.2"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
-    args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':12}) # for flan
-    # args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
+    # args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':12}) # for flan
+    args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
     display_finetuning_args(args)
