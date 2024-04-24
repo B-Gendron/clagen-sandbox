@@ -115,6 +115,17 @@ def pick_list(layers_list):
         return [13, 17, 21, 25]
     else:
         return [7, 12, 17, 22]
+    
+def hf_model_name(s):
+    '''
+        This function takes the name of a huggingface model and isolate the first part of the name of the model, after the first slash (/) and before the first dash (-).
+        The result is given in lower case.
+
+        This function is useful to generate a parameter name that can be evaluated during fine-tuning steps when processing differs depending on the model. For instance, when doing weight transfer, the layers are not named the same in different models.
+
+        @s (str):       the string of the huggingface model name
+    '''
+    return s.split('/')[1].split('-')[0].lower()
 
 # -----------------------------------------------------------------------------------------
 # Preprocessing utils for training
@@ -359,19 +370,36 @@ def update_adapter_weights(args, g, c):
     lora_config = args['config']
     layers_from_config = lora_config.layers_to_transform
     layers = layers_from_config if layers_from_config is not None else range(args['n_layers'])
-    for i in layers:
-        if 'q' in args['target_modules']:
-            g.base_model.model.model.layers[i].self_attn.q_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.q_proj.lora_A.default.weight
-            g.base_model.model.model.layers[i].self_attn.q_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.q_proj.lora_B.default.weight
-        if 'k' in args['target_modules']:
-            g.base_model.model.model.layers[i].self_attn.k_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.k_proj.lora_A.default.weight
-            g.base_model.model.model.layers[i].self_attn.k_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.k_proj.lora_B.default.weight
-        if 'v' in args['target_modules']:
-            g.base_model.model.model.layers[i].self_attn.v_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.v_proj.lora_A.default.weight
-            g.base_model.model.model.layers[i].self_attn.v_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.v_proj.lora_B.default.weight
-        if 'o' in args['target_modules']:
-            g.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight
-            g.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight
+
+    if args['hf_model'] == 'llama':
+        for i in layers:
+            if 'q' in args['target_modules']:
+                g.base_model.model.model.layers[i].self_attn.q_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.q_proj.lora_A.default.weight
+                g.base_model.model.model.layers[i].self_attn.q_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.q_proj.lora_B.default.weight
+            if 'k' in args['target_modules']:
+                g.base_model.model.model.layers[i].self_attn.k_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.k_proj.lora_A.default.weight
+                g.base_model.model.model.layers[i].self_attn.k_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.k_proj.lora_B.default.weight
+            if 'v' in args['target_modules']:
+                g.base_model.model.model.layers[i].self_attn.v_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.v_proj.lora_A.default.weight
+                g.base_model.model.model.layers[i].self_attn.v_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.v_proj.lora_B.default.weight
+            if 'o' in args['target_modules']:
+                g.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_A.default.weight
+                g.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight = c.base_model.model.model.layers[i].self_attn.o_proj.lora_B.default.weight
+
+    elif args['hf_model'] == 'flan':
+        for i in layers:
+            if 'q' in args['target_modules']:
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.q.lora_A.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.q.lora_A.default.weight
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.q.lora_B.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.q.lora_B.default.weight
+            if 'k' in args['target_modules']:
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.k.lora_A.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.k.lora_A.default.weight
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.k.lora_B.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.k.lora_B.default.weight
+            if 'v' in args['target_modules']:
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.v.lora_A.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.v.lora_A.default.weight
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.v.lora_B.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.v.lora_B.default.weight
+            if 'o' in args['target_modules']:
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.o.lora_A.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.o.lora_A.default.weight
+                g.base_model.model.encoder.block[i].layer[0].SelfAttention.o.lora_B.default.weight = c.base_model.model.transformer.encoder.block[i].layer[0].SelfAttention.o.lora_B.default.weight
 
 
 def setup_model_babylm(args, model_name):
