@@ -1,5 +1,7 @@
 # OntoGPT
 
+> *Important note: the following instructions are **outdated**. An up-to-date version of this repository documentation is coming soom.*
+
 The code for babyLLM is inspired from [this tutorial](https://colab.research.google.com/drive/1JMLa53HDuA-i7ZBmqV7ZnA3c_fvtXnx-?usp=sharing#scrollTo=nql_1ER53oCf). I will elaborate this in very near future, but here is just a very quick way to launch `babyLLM` training.  
 
 - Setup
