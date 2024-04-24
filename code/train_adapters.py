@@ -209,7 +209,7 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
 
 if __name__ == "__main__":
 
-    dd_llama_tokenized = load_from_disk("../tweet_airline_llama2_tokenized")
+    dd_llama_tokenized = load_from_disk("../data/tweet_airline_llama2_tokenized")
     args, train_loader, val_loader = get_args_and_dataloaders(dd_llama_tokenized, TweetAirlineLlamaTokenized)
 
     parser = argparse.ArgumentParser()
