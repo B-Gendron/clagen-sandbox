@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification, logging
+from transformers import AutoModelForCausalLM, T5ForConditionalGeneration, AutoTokenizer, AutoModelForSequenceClassification, logging
 logging.set_verbosity_error()
 from peft import LoraConfig, get_peft_model, peft_model, TaskType
 import os
@@ -62,6 +62,7 @@ def train(args, epoch, experiment):
 
         # get gold labels and classification model output
         # gold_labels = torch.tensor(is_same(batch_labels, generations_rl), device=args['device'])
+        # print("Gold labels: ", gold_labels)
         output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
 
         # training step (loss computation w/ autocast to handle tensor type consistency)
@@ -126,7 +127,7 @@ def test(args, target, experiment):
             preds.extend(generations_rl)
 
             # get gold labels and classification model output
-            gold_labels = torch.tensor(is_same(batch_labels, generations_rl)).to(args['device'])
+            # gold_labels = torch.tensor(is_same(batch_labels, generations_rl)).to(args['device'])
             output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
 
             # training step (loss computation w/ autocast to handle tensor type consistency)
@@ -225,7 +226,7 @@ def run_exp(args, model_name, experiment, episodes=10):
 
     if args['hf']:
         # instantiate 2 Llama models: one for generation and one for classification
-        generation_model = AutoModelForCausalLM.from_pretrained(  
+        generation_model = T5ForConditionalGeneration.from_pretrained(  
             model_name,
             low_cpu_mem_usage=True,         # recommanded param
             return_dict=True,               # not used for now
@@ -255,7 +256,10 @@ def run_exp(args, model_name, experiment, episodes=10):
         args.update({'tokenizer':tokenizer})
 
         # setup LoRA config for the adapters of both models (they NEED to be the same!)
-        target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules'])
+        if args['hf_model'] in ['llama', 'zephyr', 'mistral', 'gemma']:
+            target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules']) # for decoder-only model
+        if args['hf_model'] in ['flan']:
+            target_modules = select_target_modules(["q", "k", "v", "o", "lm_head"], args['target_modules']) # for encoder-decoder model
         config = LoraConfig(
                 r=args['rank'],                       # rank of lora module
                 lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
@@ -330,16 +334,18 @@ if __name__ == "__main__":
         }
     
     # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
-    model_name = "meta-llama/Llama-2-7b-chat-hf"
+    # model_name = "meta-llama/Llama-2-7b-chat-hf"
+    model_name = "google/flan-t5-xl"
     # model_name = "meta-llama/Llama-2-13b-chat-hf"
     # model_name = "HuggingFaceH4/zephyr-7b-beta"
     # model_name = "mistralai/Mistral-7B-Instruct-v0.2"
     # model_name = "google/gemma-2b-it"
     # update args to run finetuning trainable head with appropriate dimensions
-    args.update({'hf':True, 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
+    args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':12}) # for flan
+    # args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
     display_finetuning_args(args)
 
    #  run_exp(args, model_name, f"dummy_test_{args['rank']}")
-    run_exp(args, model_name, f"llama2_namedConceptsQuarterAlpha_{args['rank']}_{args['target_modules']}")
+    run_exp(args, model_name, f"{args['hf_model']}_{args['rank']}_{args['target_modules']}")
