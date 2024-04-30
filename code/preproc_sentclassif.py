@@ -112,7 +112,12 @@ if __name__ == '__main__':
 
     MODEL_NAME = arguments.model
     PATH = f'../data/{MODEL_NAME}_tokenized'
-    sentiment_dataset, tokenizer, args = get_data_tokenizer_args()
+    print(40*"-")
+    print("PREPROCESSING INFORMATION:")
+    print(f"Model name: \t{MODEL_NAME}")
+    print(f"Dataset location: \t{PATH}")
+    print(40*"-")
+    sentiment_dataset, tokenizer, args = get_data_tokenizer_args(MODEL_NAME)
 
     print(colored(f"Start preprocessing...", 'yellow'))
     tokenized_data = prepare_data(sentiment_dataset, tokenizer, args)
