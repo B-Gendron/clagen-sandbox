@@ -1,17 +1,11 @@
 import datasets
-from datasets import load_from_disk
-import os 
-import subprocess
-import json
-from datasets import Dataset, load_dataset
-from transformers import AutoModelForCausalLM, AutoTokenizer
+import argparse
+from datasets import Dataset
+from transformers import AutoTokenizer
 from datasets.dataset_dict import DatasetDict
 from sklearn.model_selection import train_test_split
-import argparse
 import pandas as pd
-
 from utils import *
-from train_adapters import MODEL_NAME
 
 
 def apply_lm_tokenizer(entry, tokenizer, args):
@@ -71,20 +65,10 @@ def prepare_data(dataset, stoi, args):
     resulting_dataset = DatasetDict(processed_dataset)
     return resulting_dataset
 
-if __name__ == '__main__':
 
-    # data = load_from_disk('../tweet_airline_llama2_tokenized')
-    # print(data['train'][40:80])
-    # exit()
-
-    # Load data if it does not already exist
-    if not os.path.exists("../../OntoUttPreprocessing/data"):
-        subprocess.call(['sh', '../run_ontoUttPreprocessing.sh data'])
-
-    # dailydialog = load_dataset('daily_dialog')
-
+def get_data_tokenizer_args(model_name):
     # data for binary sentiment analysis
-    data = pd.read_csv('../Twitter US Airline Sentiment.csv')
+    data = pd.read_csv('/kaggle/input/twitter-airline-sentiment/Tweets.csv')
     data = data[['text','airline_sentiment']]
     data = data[data.airline_sentiment != "neutral"]
 
@@ -115,10 +99,26 @@ if __name__ == '__main__':
         'text': X_test
         })
     }
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     args = {'max_length':20}
+
+    return sentiment_dataset, tokenizer, args
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', '--model', help="The name of the model to fine-tune. This is intended to be a path from huggingface models hub.", type=str, default="google-bert/bert-large-uncased")
+    arguments = parser.parse_args()
+
+    MODEL_NAME = arguments.model
+    PATH = f'../data/{MODEL_NAME}_tokenized'
+    sentiment_dataset, tokenizer, args = get_data_tokenizer_args()
 
     print(colored(f"Start preprocessing...", 'yellow'))
     tokenized_data = prepare_data(sentiment_dataset, tokenizer, args)
+
+    print(colored('Preprocessing finished. Saving dataset...', 'yellow'))
+    tokenized_data.save_to_disk(PATH)
+
+    print(colored(f'Dataset saved at {PATH}. An example of preprocessed data sample:', 'yellow'))
     print(tokenized_data['train'][0])
-    tokenized_data.save_to_disk('../tweet_airline_llama2_tokenized')
