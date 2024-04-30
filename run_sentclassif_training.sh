@@ -1,7 +1,7 @@
 #!/bin/bash
 cd code
 
-MODEL_NAME='google-bert/bert-large-uncased'
+MODEL_NAME='google-bert/bert-base-uncased'
 DATA_DIR="../data/${MODEL_NAME}_tokenized/train"
 
 # if the data has not been preprocessed for this model, then process it
