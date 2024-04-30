@@ -68,7 +68,7 @@ def prepare_data(dataset, stoi, args):
 
 def get_data_tokenizer_args(model_name):
     # data for binary sentiment analysis
-    data = pd.read_csv('/kaggle/input/twitter-airline-sentiment/Tweets.csv')
+    data = pd.read_csv('../data/Tweets.csv')
     data = data[['text','airline_sentiment']]
     data = data[data.airline_sentiment != "neutral"]
 

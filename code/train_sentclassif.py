@@ -18,6 +18,12 @@ from termcolor import colored
 # from other scripts
 from utils import *
 
+# set default tensor type
+torch.set_default_dtype(torch.float16)
+torch.set_printoptions(precision=10)
+torch.backends.cuda.enable_mem_efficient_sdp(False)
+torch.backends.cuda.enable_flash_sdp(False)
+
 class TweetAirlineLlamaTokenized(torch.utils.data.Dataset):
     '''
         Dataset class for twitter airline sentiment dataset
@@ -41,7 +47,7 @@ class TweetAirlineLlamaTokenized(torch.utils.data.Dataset):
         return item
     
 
-def get_args_and_dataloaders(dataset, dataset_class):
+def get_dataloaders(args, dataset, dataset_class):
     '''
         Instantiate the training hyperparameters and the dataloaders.
 
@@ -56,7 +62,7 @@ def get_args_and_dataloaders(dataset, dataset_class):
     train_loader = DataLoader(dataset=dataset_class(dataset["train"], args=args), pin_memory=True, batch_size=args['train_bsize'], shuffle=True, drop_last=True)
     val_loader   = DataLoader(dataset=dataset_class(dataset["val"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
     # test_loader  = DataLoader(dataset=dataset_class(dataset["test"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
-    return args, train_loader, val_loader
+    return train_loader, val_loader
 
 
 def train(args, finetuning_model, train_loader, ep):
@@ -70,10 +76,8 @@ def train(args, finetuning_model, train_loader, ep):
 
         batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
 
-        # print("="*20, "batch")
-        # print(batch)
-        output_probas = finetuning_model(batch['input_ids'])#.logits
-        # print(output_probas.logits.shape)
+        print(batch['input_ids'].size(), batch['sentiment'].size())
+        output_probas = finetuning_model(batch['input_ids']).logits
         loss = ce_loss(output_probas, batch['sentiment'])
         loss.backward()
         optimizer.step()
@@ -101,7 +105,7 @@ def test(args, finetuning_model, loader, target):
 
         batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
 
-        output_probas = finetuning_model(batch['input_ids'])#.logits
+        output_probas = finetuning_model(batch['input_ids']).logits
         loss = ce_loss(output_probas, batch['sentiment'])
         loss_it.append(loss.item())
 
@@ -145,10 +149,8 @@ def run_exp(args, model_name, train_loader, val_loader, experiment, episodes=10)
         torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
         device_map=args['device'],      # send to the right device
     )
-    print(model)
     model.to(args['device'])
 
-    for p in model.parameters(): p.requires_grad = False
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     args.update({'tokenizer':tokenizer})
     tokenizer.pad_token = tokenizer.eos_token
@@ -173,14 +175,14 @@ if __name__ == "__main__":
 
     MODEL_NAME = arg.model
     dd_llama_tokenized = load_from_disk("../data/tweet_airline_llama2_tokenized")
-    args, train_loader, val_loader = get_args_and_dataloaders(dd_llama_tokenized, TweetAirlineLlamaTokenized)
 
     args = {
-            'train_bsize':128,
+            'train_bsize':32,
             'eval_bsize':8,
             'lr':1e-3,                          # learning rate
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
             'max_eps':40,                       # number of episodes (max of episodes in case of early stopping)
         }
     
+    train_loader, val_loader = get_dataloaders(args, dd_llama_tokenized, TweetAirlineLlamaTokenized)
     run_exp(args, MODEL_NAME, train_loader, val_loader, 'finetune_bert_sentclassif')

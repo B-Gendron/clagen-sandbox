@@ -4,6 +4,7 @@ openwebtext
 objects/
 models/
 wikitalk/
+data/google-bert/
 bookreviews/
 wikitalk_sentencebert/
 wiki-corpus/
