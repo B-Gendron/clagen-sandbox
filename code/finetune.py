@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from transformers import AutoModelForCausalLM, T5ForConditionalGeneration, AutoTokenizer, AutoModelForSequenceClassification, logging
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification, logging
 logging.set_verbosity_error()
 from peft import LoraConfig, get_peft_model, peft_model, TaskType
 import os
@@ -10,7 +10,6 @@ from tqdm import tqdm
 import argparse
 from termcolor import colored
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from torch.utils.tensorboard import SummaryWriter
 
 # from other scripts
 from utils import *
@@ -22,28 +21,31 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 torch.set_printoptions(precision=10)
+
+# can't recall why I setup these
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_flash_sdp(False)
 
+# to display loss values for each iterations
 all_train_losses, all_val_losses = [], []
+
 
 def train(args, epoch, experiment):
     '''
-        A sequence of fine-tuning iterations for ontology-validation based fine-tuning. The aim is to understand and accurately generate different readability levels (RL) 
+        A sequence of fine-tuning iterations for classification-generation fine-tuning
 
         @param args (str):                 the hyperparameters for the training
         @param epoch (int):                the index of the current epoch
         @param experiment (str):           the experiment name
 
-        @return loss_it_avg (list):        the list of all the losses on each batch for the epoch
+        @return loss_it (list):            the list of all the losses on each batch for the epoch
         @return trues (list):              list of gold labels to be stored later
         @return preds (list):              list of the associated predictions to be stored later
     '''
     classification_model, generation_model = args['clf_model'], args['gen_model']
     classification_model.train()
     optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
-    ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
-    writer = args['writer']
+    ce_loss = nn.CrossEntropyLoss()
     loss_it = []
     trues, preds = [], []
     file_paths = []
@@ -86,9 +88,6 @@ def train(args, epoch, experiment):
 
     # # print useful information about the training progress and scores on this training set's full pass
     print("Epoch %s/%s - %s : (%s %s) (%s %s)" % (colored(str(epoch+1), 'blue'),args['max_eps'] , colored('Training', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), acc))
- 
-	# # 🛑 add some metrics to keep with a label and the epoch index
-    writer.add_scalar("Loss/train", loss_it_avg, epoch)
 
     return loss_it, trues, preds
 
@@ -105,10 +104,9 @@ def test(args, target, experiment):
         @return trues (list):              list of gold labels to be stored later
         @return preds (list):              list of the associated predictions to be stored later
     '''
-    classification_model, generation_model = args['clf_model'], args['gen_model']
+    classification_model = args['clf_model']
 
     ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
-    writer = args['writer']
     loss_it = []
     trues, preds = [], []
     file_paths = []
@@ -150,9 +148,6 @@ def test(args, target, experiment):
 
     # print useful information about the training progress and scores on this training set's full pass
     print("%s : (%s %s) (%s %s) (%s %s) (%s %s) (%s %s)" % (colored(f'{target}', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), accuracy, colored('Precision: ', 'cyan'), precision, colored('Recall: ', 'cyan'), recall, colored('F1 score: ', 'cyan'), f1))
-
-	# 🛑 add some metrics to keep with a label and the epoch index
-    writer.add_scalar(f"Loss/{target}", loss_it_avg)
 
     return loss_it, trues, preds
 
@@ -340,7 +335,6 @@ if __name__ == "__main__":
             'n_heads':8,                        # number of attention heads for one transformer block   
             'n_layers':24,                      # number of Transformer layers in the language model    
             'dropout':0.3,                      # dropout rate  
-            'writer':SummaryWriter(f"../logs/{get_datetime()}"), # Tensorboard util
             'hf':False,                         # True is the model is loaded from huggingface models hub, false otherwise
             # 'layers_list':pick_list(layers_list),
         }
