@@ -241,82 +241,74 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
     args.update({'ann_model':annotator_model})
     args.update({'ann_tokenizer':annotator_tokenizer})
 
+    # instantiate 2 Llama models: one for generation and one for classification
+    generation_model = AutoModelForCausalLM.from_pretrained(  
+        model_name,
+        low_cpu_mem_usage=True,         # recommanded param
+        return_dict=True,               # not used for now
+        torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
+        device_map=args['device'],      # send to the right device
+    )
+    generation_model.post_init()
+    classification_model = AutoModelForSequenceClassification.from_pretrained(
+        model_name,
+        low_cpu_mem_usage=True,         # recommanded param
+        return_dict=True,               # not used for now
+        torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
+        device_map=args['device'],      # send to the right device
+    )
+    classification_model.post_init()
+    # freeze both models
+    for p in generation_model.parameters(): p.requires_grad = False
+    for p in classification_model.parameters(): p.requires_grad = False
 
-    if args['hf']:
-        # instantiate 2 Llama models: one for generation and one for classification
-        generation_model = AutoModelForCausalLM.from_pretrained(  
-            model_name,
-            low_cpu_mem_usage=True,         # recommanded param
-            return_dict=True,               # not used for now
-            torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
-            device_map=args['device'],      # send to the right device
-        )
-        generation_model.post_init()
-        classification_model = AutoModelForSequenceClassification.from_pretrained(
-            model_name,
-            low_cpu_mem_usage=True,         # recommanded param
-            return_dict=True,               # not used for now
-            torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
-            device_map=args['device'],      # send to the right device
-        )
-        classification_model.post_init()
-        # freeze both models
-        for p in generation_model.parameters(): p.requires_grad = False
-        for p in classification_model.parameters(): p.requires_grad = False
+    # setup + save tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer.pad_token = tokenizer.eos_token
+    generation_model.config.pad_token_id = generation_model.config.eos_token_id
+    classification_model.config.pad_token_id = classification_model.config.eos_token_id
+    tokenizer.padding_side = "right"
+    args.update({'max_new_tokens':20})
+    args.update({'tokenizer':tokenizer})
 
-        # setup + save tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        tokenizer.pad_token = tokenizer.eos_token
-        generation_model.config.pad_token_id = generation_model.config.eos_token_id
-        classification_model.config.pad_token_id = classification_model.config.eos_token_id
-        tokenizer.padding_side = "right"
-        args.update({'max_new_tokens':20})
-        args.update({'tokenizer':tokenizer})
+    # setup LoRA config for the adapters of both models (they NEED to be the same!)
+    if args['hf_model'] in ['llama', 'zephyr', 'mistral', 'gemma']:
+        target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules']) # for decoder-only model
+    if args['hf_model'] in ['flan']:
+        target_modules = select_target_modules(["q", "k", "v", "o", "lm_head"], args['target_modules']) # for encoder-decoder model
 
-        # setup LoRA config for the adapters of both models (they NEED to be the same!)
-        if args['hf_model'] in ['llama', 'zephyr', 'mistral', 'gemma']:
-            target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules']) # for decoder-only model
-        if args['hf_model'] in ['flan']:
-            target_modules = select_target_modules(["q", "k", "v", "o", "lm_head"], args['target_modules']) # for encoder-decoder model
+    config = LoraConfig(
+        r=args['rank'],                       # rank of lora module
+        lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
+        target_modules=target_modules,
+        # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
+        bias="lora_only",                     # should be better than default setting in our case
+        lora_dropout=0.1,                     # conventional setting
+        # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
+        # use_rslora=True
+    )
 
-        config = LoraConfig(
-            r=args['rank'],                       # rank of lora module
-            lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
-            target_modules=target_modules,
-            # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
-            bias="lora_only",                     # should be better than default setting in our case
-            lora_dropout=0.1,                     # conventional setting
-            # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
-            # use_rslora=True
-        )
+    # display config details
+    args.update({'config': config})
+    display_lora_config(config)
 
-        # display config details
-        args.update({'config': config})
-        display_lora_config(config)
+    # plug adapters + save both models = here I remove adapters because I want to use raw llama model
+    generation_model = get_peft_model(generation_model, config)
+    classification_model = get_peft_model(classification_model, config)
+    args.update({'gen_model': generation_model})
+    args.update({'clf_model': classification_model}) 
 
-        # plug adapters + save both models = here I remove adapters because I want to use raw llama model
-        generation_model = get_peft_model(generation_model, config)
-        classification_model = get_peft_model(classification_model, config)
-        args.update({'gen_model': generation_model})
-        args.update({'clf_model': classification_model}) 
-
-        # train the classification layer in the classifier
-        for p in classification_model.base_model.model.score.parameters(): p.requires_grad = True
-        # send models to device
-        generation_model.to(args['device'])
-        classification_model.to(args['device'])
-    else:
-        
-        finetuning_model = setup_model_babylm(args, model_name)
+    # train the classification layer in the classifier
+    for p in classification_model.base_model.model.score.parameters(): p.requires_grad = True
+    # send models to device
+    generation_model.to(args['device'])
+    classification_model.to(args['device'])
 
     # run training and validation
     val_losses = run_episodes(args, experiment)
 
     # run test 
     test_losses = run_on_several_test_sets(args, experiment, episodes)
-
-    # log all classification metrics from saved trues/preds
-    ## TBC
 
     return val_losses, test_losses
 
