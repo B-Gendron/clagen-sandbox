@@ -7,9 +7,8 @@ DATA_DIR="../data/${MODEL_NAME}_tokenized"
 MODEL_FILE="../models/${MODEL_NAME}_best.pt"
 
 # potentially create the required directories to save data/models
-mkdir -p $(dirname '$MODEL_FILE')
-mkdir -p $(dirname '../data')
-mkdir -p $(dirname '$DATA_DIR')
+mkdir -p $(dirname $MODEL_FILE)
+mkdir -p $(dirname $DATA_DIR)
 
 # if the data has not been preprocessed for this model, then process it
 if [ ! -d "$DATA_DIR" ]; then
