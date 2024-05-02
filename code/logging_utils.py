@@ -113,7 +113,7 @@ def store_split_generations(split, file_paths, trues, experiment):
         @param experiment (str):        the name of the experiment (=folder where all logs are saved)
     '''
     # readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
-    sentence_length_mapping = {0:'ShortFullText', 1:'LongFullText'}
+    sentence_length_mapping = {0:'Negative', 1:'Positive'}
     with open(f'../results/{experiment}/generations_{split}.tsv', 'a') as all_gens:
         tsv_writer = csv.writer(all_gens, delimiter='\t')
         # iterate through batch files
