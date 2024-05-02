@@ -1,4 +1,4 @@
-# Classification-generation Large Language Models fine-tuning
+# Classification-generation LLMs fine-tuning
 
 ## How to use it very quickly
 
