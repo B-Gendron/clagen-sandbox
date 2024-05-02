@@ -102,7 +102,7 @@ def select_target_modules(target_modules, selection):
     return subset
 
 
-def random_prompt(concept, classes, hf=False):
+def random_prompt(concept, classes):
     '''
         This auxiliary function allows to get a prompt that ask for a sentence belonging to a certain class among given classes. It is for now used for readability levels but is meant for a more general purpose.
 
@@ -111,23 +111,18 @@ def random_prompt(concept, classes, hf=False):
 
         @return prompt (str):               the randomly selected prompt to use for generation
         @return class_index (int):          the index of the corresponding class that is asked in the prompt 
-        @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
     '''
     start_of_sentence = ['A', 'The', 'For', 'Yes', 'No', 'I']
     p = rd.uniform()
     n = len(classes)
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
-            if hf:
-                prompt = f"You are a client who recently puchased a new product and you want to write a review of this product to express your feelings. Here is the review with concept {concept} being {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
-                # prompt = f"INSTRUCTION: Give an example sentence for which concept {concept} is {classes[k-1]}. ANSWER: Here is an example sentence for the given concept: '{rd.choice(np.array(start_of_sentence))}"
-                return prompt, k-1
-            else: 
-                prompt = f"A sentence whose {concept} is {classes[k-1]}: The"
-                return prompt, k-1
+            prompt = f"You are a client who recently puchased a new product and you want to write a review of this product to express your feelings. Here is the review with concept {concept} being {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
+            # prompt = f"INSTRUCTION: Give an example sentence for which concept {concept} is {classes[k-1]}. ANSWER: Here is an example sentence for the given concept: '{rd.choice(np.array(start_of_sentence))}"
+            return prompt, k-1
 
 
-def generate_from_random_prompts(args, hf=False):
+def generate_from_random_prompts(args):
     concept = 'Sentiment'
     classes = [f'{concept}{i}' for i in range(2)]
     batch_labels, batch_generations, batch_ids = [], [], []
@@ -137,7 +132,7 @@ def generate_from_random_prompts(args, hf=False):
 
     for i in range(args['batch_size']):
         # get a randomly selected prompt (uniform law)
-        prompt, label = random_prompt(concept, classes, hf=hf)
+        prompt, label = random_prompt(concept, classes)
         batch_labels.append(label)
 
         # perform generation
