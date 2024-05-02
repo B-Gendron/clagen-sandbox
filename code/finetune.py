@@ -45,7 +45,7 @@ def train(args, epoch, experiment):
     ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
     writer = args['writer']
     loss_it = []
-    trues, preds, binary_trues, binary_preds = [], [], [], []
+    trues, preds = [], []
     file_paths = []
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
@@ -69,7 +69,7 @@ def train(args, epoch, experiment):
         optimizer.step()
         loss_it.append(loss.item())
         optimizer.zero_grad()
-        print(loss_it)
+        # print(loss_it)
 
         # TODO display asked and actual labels for each sentence to check if all this is coherent
         # print(f"Sample {i}: \t | Asked {label} | \t {generation}")
@@ -77,6 +77,7 @@ def train(args, epoch, experiment):
         # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
         update_adapter_weights(args, generation_model, classification_model)
 
+    # print(trues, preds)
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
     all_train_losses.extend(loss_it) # save all the losses of this epoch
@@ -132,7 +133,7 @@ def test(args, target, experiment):
             with torch.autocast('cuda'):
                 loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device']))
             loss_it.append(loss.item())
-            print(loss_it)
+            # print(loss_it)
 
     # all_val_losses.extend(loss_it) # save all the losses of this epoch
     loss_it_avg = sum(loss_it)/len(loss_it)
@@ -140,6 +141,7 @@ def test(args, target, experiment):
     # append batch generations to split generations
     store_split_generations(target, file_paths, trues, experiment)
 
+    # trues, preds = trues.cpu(), preds.cpu()
     accuracy = accuracy_score(trues, preds)
     precision = precision_score(trues, preds, average='weighted', zero_division=0.0)
     recall = recall_score(trues, preds, average='weighted')
