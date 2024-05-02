@@ -276,13 +276,13 @@ def random_prompt(concept, classes, hf=False):
         @return class_index (int):          the index of the corresponding class that is asked in the prompt 
         @param hf:                          False in case of local model, a huggingface model alias otherwise. Currently only 'llama' is supported
     '''
-    start_of_sentence = ['A', 'The', 'Yesterday', 'Hello', 'Here', 'In', 'For', 'Yes', 'Tomorrow', 'Today']
+    start_of_sentence = ['A', 'The', 'For', 'Yes', 'No', 'I']
     p = rd.uniform()
     n = len(classes)
     for k in range(1, n+1):
         if (k-1)/n < p < k/n:
             if hf:
-                prompt = f"This is a sentence for which concept {concept} is {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
+                prompt = f"You are a client who recently puchased a new product and you want to write a review of this product to express your feelings. Here is the review with concept {concept} being {classes[k-1]}: {rd.choice(np.array(start_of_sentence))}"
                 # prompt = f"INSTRUCTION: Give an example sentence for which concept {concept} is {classes[k-1]}. ANSWER: Here is an example sentence for the given concept: '{rd.choice(np.array(start_of_sentence))}"
                 return prompt, k-1
             else: 
@@ -296,7 +296,7 @@ def generate_from_random_prompts(args, hf=False):
     # classes = ['ShortFullText', 'LongFullText']
 
     # try with random IDs instead of concept names
-    concept = 'C6468168'
+    concept = 'Sentiment'
     classes = [f'{concept}{i}' for i in range(2)]
     batch_labels, batch_generations, batch_ids = [], [], []
 
@@ -315,7 +315,6 @@ def generate_from_random_prompts(args, hf=False):
             generation = result[result.find(':')+1:result.find('\n')]
             output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], args, padding_length=40)
             batch_ids.append(output_ids)
-            print(f'Sample {i}: \t | Class {label} | \t {generation}')
             # store result
             batch_generations.append(generation)
 
@@ -380,7 +379,6 @@ def get_sentiment_labels(file_path, args):
         # for each utterance in the file
         for i, utterance in enumerate(f):
             utterance = utterance.strip()
-            print("Initial utterance: ", utterance)
             # process sentence (tokenization + padding)
             encoded_utterance = tok(utterance)['input_ids']
             n = len(encoded_utterance)
@@ -388,12 +386,10 @@ def get_sentiment_labels(file_path, args):
                 encoded_utterance.extend([0 for _ in range(ml-n)])
             elif n > ml:
                 encoded_utterance = encoded_utterance[:ml]
-            print("Encoded utterance: ", encoded_utterance)
             # apply model and store label
-            sentiment_probas = annotator(torch.tensor(encoded_utterance, device=args['device'])).logits
-            print("Output probas: ", sentiment_probas)
+            tensor_utterance = torch.tensor(encoded_utterance, device=args['device']).unsqueeze(0)
+            sentiment_probas = annotator(tensor_utterance).logits
             sentiment = torch.argmax(sentiment_probas, dim=-1)
-            print("Class: ", sentiment)
             batch_sentiments.append(sentiment)
 
     return batch_sentiments
