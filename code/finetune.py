@@ -52,7 +52,7 @@ def train(args, epoch, experiment):
 
     for batch_index in tqdm(range(args['train_iters']), desc="Epoch %s: " % (epoch+1), total=args['train_iters']):
         # generate sentences with a specific RL
-        batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=args['hf'])
+        batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args)
         file_path = save_batch_generations(batch_generations, batch_index, experiment)
         file_paths.append(file_path)
 
@@ -106,7 +106,7 @@ def test(args, target, experiment):
     '''
     classification_model = args['clf_model']
 
-    ce_loss = nn.CrossEntropyLoss(weight=torch.tensor([1.0, 2.0], device=args['device']))
+    ce_loss = nn.CrossEntropyLoss()
     loss_it = []
     trues, preds = [], []
     file_paths = []
