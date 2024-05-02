@@ -1,11 +1,4 @@
 code/__pycache__
-openwebtext
-/plots
 objects/
 models/
-wikitalk/
 data/google-bert/
-bookreviews/
-wikitalk_sentencebert/
-wiki-corpus/
-dd_llama2_tokenized/
