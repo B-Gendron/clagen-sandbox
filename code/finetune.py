@@ -54,20 +54,17 @@ def train(args, epoch, experiment):
         file_path = save_batch_generations(batch_generations, batch_index, experiment)
         file_paths.append(file_path)
 
-        # trues are the RL that the generated sentence should have
+        # trues are the sentiments that the generated sentence should have
         trues.extend(batch_labels)
-        create_batch_individual(batch_index, file_path, experiment)
-        generations_rl = get_sentence_length(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
-        preds.extend(generations_rl)
+        gen_sentiments = get_sentiment_labels(file_path, args)
+        preds.extend(gen_sentiments)
 
-        # get gold labels and classification model output
-        # gold_labels = torch.tensor(is_same(batch_labels, generations_rl), device=args['device'])
-        # print("Gold labels: ", gold_labels)
+        # get classification model output
         output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
 
         # training step (loss computation w/ autocast to handle tensor type consistency)
         with torch.autocast('cuda'):
-            loss = ce_loss(output_logits, torch.tensor(generations_rl, device=args['device'])) # is it better to use gold labels or generation labels (=preds)? 
+            loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device'])) # is it better to use gold labels or generation labels (=preds)? 
         loss.backward()
         optimizer.step()
         loss_it.append(loss.item())
@@ -120,19 +117,17 @@ def test(args, target, experiment):
             file_path = save_batch_generations(batch_generations, batch_index, experiment)
             file_paths.append(file_path)
 
-            # trues are the RL that the generated sentence should have
+            # trues are the sentiments that the generated sentence should have
             trues.extend(batch_labels)
-            create_batch_individual(batch_index, file_path, experiment)
-            generations_rl = get_sentence_length(f'../rdf/individual_batch_{batch_index}_{experiment}.rdf')
-            preds.extend(generations_rl)
+            gen_sentiments = get_sentiment_labels(file_path, args)
+            preds.extend(gen_sentiments)
 
-            # get gold labels and classification model output
-            # gold_labels = torch.tensor(is_same(batch_labels, generations_rl)).to(args['device'])
+            # get classification model output
             output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
 
             # training step (loss computation w/ autocast to handle tensor type consistency)
             with torch.autocast('cuda'):
-                loss = ce_loss(output_logits, torch.tensor(generations_rl, device=args['device']))
+                loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device']))
             loss_it.append(loss.item())
             print(loss_it)
 
@@ -206,17 +201,18 @@ def run_on_several_test_sets(args, experiment, episodes=5):
     return test_losses
 
 
-def run_exp(args, model_name, experiment, episodes=10):
+def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
     '''
         Run an end-to-end finetuning.
 
-        @param args (dict):           the dict containing all the hyperparameters
-        @param model_name (str):      either from a local storage (hf=False), or from huggingface hub (hf=True)
-        @param experiment (str):      name of the experiment 
-        @param episodes (int):        number of times the test step should be performed (to compute descriptive stats on metrics)
+        @param args (dict):                 the dict containing all the hyperparameters
+        @param model_name (str):            either from a local storage (hf=False), or from huggingface hub (hf=True)
+        @param annotator_model_name (str):  the sentiment classifier model to use to annotate generated sentences
+        @param experiment (str):            name of the experiment 
+        @param episodes (int):              number of times the test step should be performed (to compute descriptive stats on metrics)
 
-        @return val_losses (list):    all val losses for all the 'epochs'
-        @return test_losses (list):   all test losses from all the episodes
+        @return val_losses (list):          all val losses for all the 'epochs'
+        @return test_losses (list):         all test losses from all the episodes
     '''
     print(colored(f'Start of the experiment {experiment}', 'green'))
 
@@ -224,9 +220,26 @@ def run_exp(args, model_name, experiment, episodes=10):
     if not os.path.exists(f'../results/{experiment}/'):
         os.makedirs(f'../results/{experiment}/')
 
+    # get our SOTA model for sentiment annotation
+    annotator_model = AutoModelForSequenceClassification.from_pretrained(  
+        annotator_model_name,
+        low_cpu_mem_usage=True,         # recommanded param
+        return_dict=True,               # not used for now
+        torch_dtype=torch.bfloat16,     # bfloat instead of float because it may help
+        device_map=args['device'],      # send to the right device
+    )
+    annotator_model.load_state_dict(torch.load(f'../models/{annotator_model_name}_best.pt'))
+    # get the associated tokenizer
+    annotator_tokenizer = AutoTokenizer.from_pretrained(annotator_model_name, trust_remote_code=True)
+
+    # save both annotator model and tokenizer
+    args.update({'ann_model':annotator_model})
+    args.update({'ann_tokenizer':annotator_tokenizer})
+
+
     if args['hf']:
         # instantiate 2 Llama models: one for generation and one for classification
-        generation_model = T5ForConditionalGeneration.from_pretrained(  
+        generation_model = AutoModelForCausalLM.from_pretrained(  
             model_name,
             low_cpu_mem_usage=True,         # recommanded param
             return_dict=True,               # not used for now
@@ -260,16 +273,17 @@ def run_exp(args, model_name, experiment, episodes=10):
             target_modules = select_target_modules(["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj", "lm_head"], args['target_modules']) # for decoder-only model
         if args['hf_model'] in ['flan']:
             target_modules = select_target_modules(["q", "k", "v", "o", "lm_head"], args['target_modules']) # for encoder-decoder model
+
         config = LoraConfig(
-                r=args['rank'],                       # rank of lora module
-                lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
-                target_modules=target_modules,
-                # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
-                bias="lora_only",                     # should be better than default setting in our case
-                lora_dropout=0.1,                     # conventional setting
-                # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
-                # use_rslora=True
-            )
+            r=args['rank'],                       # rank of lora module
+            lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
+            target_modules=target_modules,
+            # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
+            bias="lora_only",                     # should be better than default setting in our case
+            lora_dropout=0.1,                     # conventional setting
+            # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
+            # use_rslora=True
+        )
 
         # display config details
         args.update({'config': config})
@@ -315,7 +329,7 @@ if __name__ == "__main__":
     layers_list = arg.layers_list
 
     args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
-            'batch_size':32,                     # size of the batch, the greater bsize the greater number of data samples
+            'batch_size':3,                     # size of the batch, the greater bsize the greater number of data samples
             'block_size':64,                    # Transformer block size in the language model
             'train_iters':100,                    # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
@@ -324,6 +338,7 @@ if __name__ == "__main__":
             'target_modules':target_modules,    # target modules in LoRA config
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
             'max_eps':10,                       # number of episodes (max of episodes in case of early stopping)
+            'max_length':20,                    # the maximum length of generated sentences for sentiment analysis annotation
             'n_embd':64,                        # embedding size
             'n_heads':8,                        # number of attention heads for one transformer block   
             'n_layers':24,                      # number of Transformer layers in the language model    
@@ -347,5 +362,6 @@ if __name__ == "__main__":
 
     display_finetuning_args(args)
 
-   #  run_exp(args, model_name, f"dummy_test_{args['rank']}")
-    run_exp(args, model_name, f"{args['hf_model']}_{args['rank']}_{args['target_modules']}")
+    # run_exp(args, model_name, f"dummy_test_{args['rank']}")
+    annotator_model_name = 'google-bert/bert-base-uncased'
+    run_exp(args, model_name, annotator_model_name, f"{args['hf_model']}_{args['rank']}_{args['target_modules']}")
