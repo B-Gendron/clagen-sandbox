@@ -115,7 +115,7 @@ def test(args, target, experiment):
 
         for batch_index in tqdm(range(args['eval_iters']), total=args['eval_iters']):
             # generate sentences with a specific RL
-            batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args, hf=args['hf'])
+            batch_labels, batch_generations, batch_ids = generate_from_random_prompts(args)
             file_path = save_batch_generations(batch_generations, batch_index, experiment)
             file_paths.append(file_path)
 
@@ -166,7 +166,7 @@ def run_episodes(args, experiment):
     for ep in range(args['max_eps']):
         # perform training and validation runs
         _, train_trues, train_preds = train(args, ep, experiment)
-        print(all_train_losses) # change to print the concat in the end
+        print(all_train_losses)
         val_loss, val_trues, val_preds = test(args, 'validation', experiment)
         print(all_val_losses)
  
@@ -180,7 +180,7 @@ def run_episodes(args, experiment):
     return val_losses
 
 
-def run_on_several_test_sets(args, experiment, episodes=5):
+def run_on_several_test_sets(args, experiment, episodes=10):
     '''
         This function accounts for model stability by testing the model on different test sets depending on the number of episodes. Predictions are stored for each episode so all the classification metrics can be computed as well as their mean and standard deviation.
 
@@ -220,7 +220,7 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
     if not os.path.exists(f'../results/{experiment}/'):
         os.makedirs(f'../results/{experiment}/')
 
-    # get our SOTA model for sentiment annotation
+    # get our SOTA model for sentiment annotation + associated tokenizer
     annotator_model = AutoModelForSequenceClassification.from_pretrained(  
         annotator_model_name,
         low_cpu_mem_usage=True,         # recommanded param
@@ -229,7 +229,6 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
         device_map=args['device'],      # send to the right device
     )
     annotator_model.load_state_dict(torch.load(f'../models/{annotator_model_name}_best.pt'))
-    # get the associated tokenizer
     annotator_tokenizer = AutoTokenizer.from_pretrained(annotator_model_name, trust_remote_code=True)
 
     # save both annotator model and tokenizer
@@ -253,6 +252,7 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
         device_map=args['device'],      # send to the right device
     )
     classification_model.post_init()
+
     # freeze both models
     for p in generation_model.parameters(): p.requires_grad = False
     for p in classification_model.parameters(): p.requires_grad = False
@@ -274,13 +274,12 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
 
     config = LoraConfig(
         r=args['rank'],                       # rank of lora module
-        lora_alpha=(1/4)*args['rank'],            # resclaling weights parameters, therefore here alpha = 2*rank ("yelling at the model very loud"). Some suggest alpha = rank
-        target_modules=target_modules,
-        # layers_to_transform=args['layers_list'],  # avoid top layers, this modifies the representation too much (really?)
+        lora_alpha=(1/4)*args['rank'],        # resclaling factor for weights parameters
+        target_modules=target_modules,        # which attention modules to put adapters in
         bias="lora_only",                     # should be better than default setting in our case
         lora_dropout=0.1,                     # conventional setting
         # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
-        # use_rslora=True
+        # use_rslora=True                     # things get worse when I enable this
     )
 
     # display config details
@@ -295,6 +294,7 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
 
     # train the classification layer in the classifier
     for p in classification_model.base_model.model.score.parameters(): p.requires_grad = True
+
     # send models to device
     generation_model.to(args['device'])
     classification_model.to(args['device'])
@@ -320,10 +320,9 @@ if __name__ == "__main__":
     target_modules = arg.target_modules
     layers_list = arg.layers_list
 
-    args = {'vocab_size':239267,                # new vocab size corresponding to the new dataset
+    args = {
             'batch_size':3,                     # size of the batch, the greater bsize the greater number of data samples
-            'block_size':64,                    # Transformer block size in the language model
-            'train_iters':100,                    # number of train batches to consider in one episode
+            'train_iters':100,                  # number of train batches to consider in one episode
             'eval_iters':10,                    # number of validation/test batches to consider in one episode
             'lr':1e-4,                          # learning rate
             'rank':rank,                        # rank in LoRA config
@@ -331,28 +330,25 @@ if __name__ == "__main__":
             'device':activate_gpu(),            # set device for training. Desable force_cpu to run on gpu if available
             'max_eps':10,                       # number of episodes (max of episodes in case of early stopping)
             'max_length':20,                    # the maximum length of generated sentences for sentiment analysis annotation
-            'n_embd':64,                        # embedding size
-            'n_heads':8,                        # number of attention heads for one transformer block   
             'n_layers':24,                      # number of Transformer layers in the language model    
-            'dropout':0.3,                      # dropout rate  
-            'hf':False,                         # True is the model is loaded from huggingface models hub, false otherwise
-            # 'layers_list':pick_list(layers_list),
         }
     
-    # model_path = '../models/babyllm-gptlike_64_22012024223644_nq_params.pt'
+    # ANNOTATOR MODEL
+    annotator_model_name = 'google-bert/bert-base-uncased'
+    
+    # HUGGINGFACE MODELS
     model_name = "meta-llama/Llama-2-7b-chat-hf"
     # model_name = "google/flan-t5-xl"
     # model_name = "meta-llama/Llama-2-13b-chat-hf"
     # model_name = "HuggingFaceH4/zephyr-7b-beta"
     # model_name = "mistralai/Mistral-7B-Instruct-v0.2"
     # model_name = "google/gemma-2b-it"
-    # update args to run finetuning trainable head with appropriate dimensions
-    # args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':12}) # for flan
-    args.update({'hf':True, 'hf_model':hf_model_name(model_name), 'vocab_size':32000, 'n_embd':4096, 'n_layers':32}) # for llama
+
+    # ARGS SETUPS FOR THE DIFFERENT MODELS
+    # args.update({'hf_model':hf_model_name(model_name), 'n_layers':12}) # for flan
+    args.update({'hf_model':hf_model_name(model_name), 'n_layers':32}) # for llama
     # args.update({'hf':'adapters', 'vocab_size':256000, 'n_embd':2048}) # for gemma
 
     display_finetuning_args(args)
 
-    # run_exp(args, model_name, f"dummy_test_{args['rank']}")
-    annotator_model_name = 'google-bert/bert-base-uncased'
     run_exp(args, model_name, annotator_model_name, f"{args['hf_model']}_{args['rank']}_{args['target_modules']}")
