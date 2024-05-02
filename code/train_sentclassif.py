@@ -61,7 +61,6 @@ def get_dataloaders(args, dataset, dataset_class):
     '''
     train_loader = DataLoader(dataset=dataset_class(dataset["train"], args=args), pin_memory=True, batch_size=args['train_bsize'], shuffle=True, drop_last=True)
     val_loader   = DataLoader(dataset=dataset_class(dataset["val"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
-    # test_loader  = DataLoader(dataset=dataset_class(dataset["test"], args=args), pin_memory=True, batch_size=args['eval_bsize'], shuffle=True, drop_last=True)
     return train_loader, val_loader
 
 
@@ -76,7 +75,6 @@ def train(args, finetuning_model, train_loader, ep):
 
         batch = {'input_ids':batch['input_ids'].to(device), 'sentiment':batch['sentiment'].to(device)}
 
-        print(batch['input_ids'].size(), batch['sentiment'].size())
         output_probas = finetuning_model(batch['input_ids']).logits
         loss = ce_loss(output_probas, batch['sentiment'])
         loss.backward()
@@ -98,7 +96,7 @@ def train(args, finetuning_model, train_loader, ep):
 def test(args, finetuning_model, loader, target):
     finetuning_model.eval()
     device = args['device']
-    loss_it = []
+    loss_it, all_trues, all_preds = [], [], []
     ce_loss = nn.CrossEntropyLoss()
     
     for it, batch in tqdm(enumerate(loader), total=loader.__len__()):
@@ -109,20 +107,37 @@ def test(args, finetuning_model, loader, target):
         loss = ce_loss(output_probas, batch['sentiment'])
         loss_it.append(loss.item())
 
+        trues = batch['sentiment'].tolist()
+        preds = torch.argmax(output_probas, dim=1).tolist()
+        all_trues.extend(trues), all_preds.extend(preds)
+
+        loss_it.append(loss.item())
+
+    acc = accuracy_score(all_trues, all_preds)
     loss_it_avg = sum(loss_it)/len(loss_it)
 
     # print useful information about the training progress and scores on this training set's full pass
-    print("%s : (%s %s)" % (colored(target, 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg))
+    print("%s : (%s %s) (%s %s)" % (colored('Validation', 'blue'), colored('Average loss: ', 'cyan'), loss_it_avg, colored('Accuracy: ', 'cyan'), acc))
+
+    return acc
 
 def run_epochs(args, finetuning_model, train_loader, val_loader, experiment):
-    val_losses = []
+    best_acc = 0
+    best_model = finetuning_model
 
     for ep in range(args['max_eps']):
         # perform training and validation runs
         train(args, finetuning_model, train_loader, ep)
-        test(args, finetuning_model, val_loader, 'Validation')
+        acc = test(args, finetuning_model, val_loader, 'Validation')
 
-    return val_losses
+        # save best model
+        if acc > best_acc:
+            best_model = finetuning_model
+            best_acc = acc
+
+    print(colored(f"Training finished. Best model has a validation accuracy of {best_acc}.", 'yellow'))
+
+    return best_model
 
 def run_exp(args, model_name, train_loader, val_loader, experiment):
     '''
@@ -149,17 +164,9 @@ def run_exp(args, model_name, train_loader, val_loader, experiment):
         device_map=args['device'],      # send to the right device
     )
     model.to(args['device'])
-    print(model)
-
-    # tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    # tokenizer.pad_token = tokenizer.eos_token
-    # model.config.pad_token_id = model.config.eos_token_id
-    # tokenizer.padding_side = "right"
-
     # run training and validation
-    val_losses = run_epochs(args, model, train_loader, val_loader, experiment)
-
-    return val_losses
+    best_model = run_epochs(args, model, train_loader, val_loader, experiment)
+    torch.save(best_model.state_dict(), f'../models/{model_name}_best.pt')
 
 
 if __name__ == "__main__":
