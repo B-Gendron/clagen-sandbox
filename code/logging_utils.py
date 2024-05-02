@@ -1,53 +1,14 @@
-# This script gathers all auxiliary functions related to saving stuff and logging info from training/finetuning
-
 import os
-from owlready2 import *
-from termcolor import colored
-from pprint import pprint
-from datetime import datetime
 import torch
-import numpy as np
-import logging
-from datasets import Dataset, DatasetDict
-from collections import Counter
-import multiprocess as mp
-import threading
+from datasets import DatasetDict
 import json
-import re
 import csv
-from numpy import random as rd
-import random
-from math import sqrt
-import matplotlib.pyplot as plt
-from sklearn.metrics import classification_report, roc_auc_score, f1_score
-from nltk.tokenize import TweetTokenizer
-tokenizer = TweetTokenizer()
 
 import warnings
 warnings.filterwarnings('ignore')
 
 # set default tensor type
 torch.set_default_dtype(torch.float16)
-
-from models import BabyLanguageModel, TrainableHead
-from utils import get_datetime
-
-def set_logger(target):
-    '''
-        Set a logger to be used when running experiments. 
-    '''
-    experiment = f'{target}_{get_datetime()}'
-    logging.getLogger(__name__).setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)-8s - %(message)s')
-    fh = logging.FileHandler(f'./logs/{experiment}.log', mode="w")
-    fh.setFormatter(formatter)
-    fh.setLevel(logging.INFO)
-    logging.getLogger().addHandler(fh)
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    logging.debug(f"Experiment name : {experiment}")
-    return logger
-
 
 
 # -----------------------------------------------------------------------------------------
@@ -87,10 +48,10 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
     else:
         print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json")
 
+
 # -----------------------------------------------------------------------------------------
 # Save info from fine-tuning
 # -----------------------------------------------------------------------------------------
-
 
 def save_batch_generations(batch_generations, batch_index, experiment):
     file_path = f'../objects/batch_generations_{batch_index}_{experiment}.tsv'
@@ -128,29 +89,6 @@ def store_split_generations(split, file_paths, trues, experiment):
             os.remove(abs_path)
 
 
-# -----------------------------------------------------------------------------------------
-# Save for training
-# -----------------------------------------------------------------------------------------
-
-def vocab_dicts(vocab):
-    stoi, itos = vocab.get_stoi(), vocab.get_itos()
-
-    # dump stoi dict
-    with open("../objects/vocab_stoi.json", "w") as f:
-        json.dump(stoi, f)
-
-    # dump itos dict
-    with open("../objects/vocab_itos.json", "w") as f:
-        json.dump(itos, f)
-
-    # return dicts to be used in training (encode function)
-    return stoi, itos
-
-
-# -----------------------------------------------------------------------------------------
-# Fine-tuning results logging utils
-# -----------------------------------------------------------------------------------------
-
 def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
     '''
         This function saves the trues and preds at each epoch for train and validation and for each run on test set (several runs are performed to ensure stability)
@@ -167,25 +105,6 @@ def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
         for i in range(len(trues)):
             write.writerow([ trues[i], preds[i], epoch_or_iter ])
 
-
-def log_all_metrics(experiment):
-    '''
-        This function browses the files containing trues and preds for each set (train, val, test) and computes standard classification metrics + MCC on it
-
-        @param experiment (str):        name of the experiment
-
-        @return metrics (dict)
-    '''
-    # train set
-    for target in ['train', 'validation', 'test']:
-
-        with open(f'../results/{experiment}/predictions_{target}.csv', 'rb', newline='') as f:
-            
-            pass
-    # val set
-
-    # test set
-        
 
 def display_lora_config(config):
     print(40*"-")
