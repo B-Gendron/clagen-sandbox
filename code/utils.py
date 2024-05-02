@@ -315,6 +315,7 @@ def generate_from_random_prompts(args, hf=False):
             generation = result[result.find(':')+1:result.find('\n')]
             output_ids = get_and_pad_ids(tokenizer(generation, return_tensors="pt").to(args['device'])['input_ids'], args, padding_length=40)
             batch_ids.append(output_ids)
+            # print(f"Sample {i}: \t | Asked {label} | \t {generation}")
             # store result
             batch_generations.append(generation)
 
@@ -390,7 +391,7 @@ def get_sentiment_labels(file_path, args):
             tensor_utterance = torch.tensor(encoded_utterance, device=args['device']).unsqueeze(0)
             sentiment_probas = annotator(tensor_utterance).logits
             sentiment = torch.argmax(sentiment_probas, dim=-1)
-            batch_sentiments.append(sentiment)
+            batch_sentiments.append(sentiment.item())
 
     return batch_sentiments
 
