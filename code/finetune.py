@@ -66,20 +66,15 @@ def train(args, epoch, experiment):
 
         # training step (loss computation w/ autocast to handle tensor type consistency)
         with torch.autocast('cuda'):
-            loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device'])) # is it better to use gold labels or generation labels (=preds)? 
+            loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device'])) 
         loss.backward()
         optimizer.step()
         loss_it.append(loss.item())
         optimizer.zero_grad()
-        # print(loss_it)
-
-        # TODO display asked and actual labels for each sentence to check if all this is coherent
-        # print(f"Sample {i}: \t | Asked {label} | \t {generation}")
 
         # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
         update_adapter_weights(args, generation_model, classification_model)
 
-    # print(trues, preds)
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
     all_train_losses.extend(loss_it) # save all the losses of this epoch
@@ -131,7 +126,6 @@ def test(args, target, experiment):
             with torch.autocast('cuda'):
                 loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device']))
             loss_it.append(loss.item())
-            # print(loss_it)
 
     # all_val_losses.extend(loss_it) # save all the losses of this epoch
     loss_it_avg = sum(loss_it)/len(loss_it)

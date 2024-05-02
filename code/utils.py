@@ -124,7 +124,7 @@ def random_prompt(concept, classes):
 
 def generate_from_random_prompts(args):
     concept = 'Sentiment'
-    classes = [f'{concept}{i}' for i in range(2)]
+    classes = [f'{concept}{i}' for i in range(2)] # Sentiment0 or Sentiment1
     batch_labels, batch_generations, batch_ids = [], [], []
 
     tokenizer = args['tokenizer']
@@ -172,15 +172,18 @@ def get_sentiment_labels(file_path, args):
     '''
     batch_sentiments = []
     ml = args['max_length']
+
     # get annotator model and tokenizer
     annotator = args['ann_model']
     tok = args['ann_tokenizer']
 
     # read the file containing the generations
     with open(f'../{file_path}', 'r') as f:
+
         # for each utterance in the file
-        for i, utterance in enumerate(f):
+        for _ , utterance in enumerate(f):
             utterance = utterance.strip()
+
             # process sentence (tokenization + padding)
             encoded_utterance = tok(utterance)['input_ids']
             n = len(encoded_utterance)
@@ -188,6 +191,7 @@ def get_sentiment_labels(file_path, args):
                 encoded_utterance.extend([0 for _ in range(ml-n)])
             elif n > ml:
                 encoded_utterance = encoded_utterance[:ml]
+
             # apply model and store label
             tensor_utterance = torch.tensor(encoded_utterance, device=args['device']).unsqueeze(0)
             sentiment_probas = annotator(tensor_utterance).logits
@@ -199,7 +203,7 @@ def get_sentiment_labels(file_path, args):
 
 def update_adapter_weights(args, g, c):
     '''
-        À priori pas en cause étant donné que la classification ne fonctionne déjà pas (avant le transfert de poids, donc)
+        Moche, mais à priori pas en cause étant donné que la classification ne fonctionne déjà pas (avant le transfert de poids, donc)
     '''
     lora_config = args['config']
     layers_from_config = lora_config.layers_to_transform
