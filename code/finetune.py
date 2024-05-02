@@ -71,6 +71,9 @@ def train(args, epoch, experiment):
         optimizer.zero_grad()
         print(loss_it)
 
+        # TODO display asked and actual labels for each sentence to check if all this is coherent
+        # print(f"Sample {i}: \t | Asked {label} | \t {generation}")
+
         # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
         update_adapter_weights(args, generation_model, classification_model)
 
