@@ -1,4 +1,4 @@
-# A sandbox to test a classification-generation fine-tuning on basic tasks for LLMs
+# Classification-generation Large Language Models fine-tuning
 
 ## How to use it very quickly
 
