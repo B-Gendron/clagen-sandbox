@@ -4,9 +4,6 @@ import torch
 import numpy as np
 from numpy import random as rd
 
-import warnings
-warnings.filterwarnings('ignore')
-
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 

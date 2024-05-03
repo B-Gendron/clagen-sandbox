@@ -4,9 +4,6 @@ from datasets import DatasetDict
 import json
 import csv
 
-import warnings
-warnings.filterwarnings('ignore')
-
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 
