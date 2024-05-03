@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification, logging
-logging.set_verbosity_error()
-from peft import LoraConfig, get_peft_model, peft_model, TaskType
+from transformers import AutoModelForCausalLM, AutoTokenizer, AutoModelForSequenceClassification
+from peft import LoraConfig, get_peft_model 
 import os
 from tqdm import tqdm
 import argparse
@@ -15,16 +13,15 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from utils import *
 from logging_utils import *
 
-# disable hf tokenizer parallelism warning
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
 # set default tensor type
 torch.set_default_dtype(torch.float16)
 torch.set_printoptions(precision=10)
 
-# can't recall why I setup these
+# this helps on the following error: RuntimeError: CUDA error: invalid configuration argument.
+# source: https://stackoverflow.com/questions/77343471/pytorch-cuda-error-invalid-configuration-argument 
 torch.backends.cuda.enable_mem_efficient_sdp(False)
 torch.backends.cuda.enable_flash_sdp(False)
+torch.backends.cuda.enable_math_sdp(True)
 
 # to display loss values for each iterations
 all_train_losses, all_val_losses = [], []
@@ -74,6 +71,9 @@ def train(args, epoch, experiment):
 
         # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
         update_adapter_weights(args, generation_model, classification_model)
+
+        # update the models where they are stored, otherwise it is always the initial model that is used for generation
+        args['clf_model'], args['gen_model'] = classification_model, generation_model
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
