@@ -46,7 +46,7 @@ def save_dataset(dataset, dataset_name, output_format='huggingface'):
         with open(f"data/{dataset_name}.json", 'w') as f:
             json.dump(dataset, f)
     else:
-        print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json")
+        print("The given output format is not recognized. Please note that accepted formats are 'huggingface' and 'json'")
 
 
 # -----------------------------------------------------------------------------------------
@@ -62,31 +62,30 @@ def save_batch_generations(batch_generations, batch_index, experiment):
             row = row.replace('\n', '\\n')
             tsv_writer.writerow([row])
 
-    return file_path[3:] # remove ../ to make it relative
+    return file_path # remove ../ to make it relative (this is strange, should check it out)
+
 
 def store_split_generations(split, file_paths, trues, experiment):
     '''
-        This function concatenate generated sentences from all batches of the split 'split' into one tsv file. 
+        This function stores generated sentences from all batches of the split 'split' into one tsv file. 
 
         @param split (str):             the name of the split, either 'train', 'validation' or 'test'. Note that these are not proper splits as there is no dataset in this fine-tuning procedure
         @param file_paths (list):       the list of paths to the generated sentences in each batch
         @param trues (list):            all the gold readability level labels
         @param experiment (str):        the name of the experiment (=folder where all logs are saved)
     '''
-    # readability_levels_mapping = {0:'EasilyReadableText', 1:'StandardReadableText', 2:'HardlyReadableText'}
     sentence_length_mapping = {0:'Negative', 1:'Positive'}
     with open(f'../results/{experiment}/generations_{split}.tsv', 'a') as all_gens:
         tsv_writer = csv.writer(all_gens, delimiter='\t')
         # iterate through batch files
         for i, path in enumerate(file_paths):
             # store gold labels and generations for this batch
-            abs_path = f'../{path}'
-            with open(abs_path, 'r') as batch_gens:
+            with open(path, 'r') as batch_gens:
                 for j, row in enumerate(batch_gens):
                     tsv_writer.writerow([sentence_length_mapping[trues[i+j]], row])
 
             # remove batch-wise generations file path
-            os.remove(abs_path)
+            os.remove(path)
 
 
 def save_epoch_data(target, trues, preds, epoch_or_iter, experiment):
