@@ -53,17 +53,23 @@ def train(args, epoch, experiment):
         file_path = save_batch_generations(batch_generations, batch_index, experiment)
         file_paths.append(file_path)
 
-        # trues are the sentiments that the generated sentence should have
-        trues.extend(batch_labels)
         gen_sentiments = get_sentiment_labels(file_path, args)
-        preds.extend(gen_sentiments)
+        # trues are the sentiments that the generated sentences have according to the annotator model
+        trues.extend(gen_sentiments)
 
         # get classification model output
-        output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
+        model_input = torch.stack(batch_ids).squeeze()
+        output_logits = classification_model(input_ids=model_input).logits
+        batch_preds = torch.argmax(output_logits, dim=-1)
+        preds.extend([bp.item() for bp in batch_preds])
+
+        # for i, s in enumerate(batch_generations):
+        #     print(f"Sample #{i} | Asked {batch_labels[i]} | Got {gen_sentiments[i]} | Predicted {batch_preds[i]}")
 
         # training step (loss computation w/ autocast to handle tensor type consistency)
         with torch.autocast('cuda'):
             loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device'])) 
+
         loss.backward()
         optimizer.step()
         loss_it.append(loss.item())
@@ -100,7 +106,6 @@ def test(args, target, experiment):
         @return preds (list):              list of the associated predictions to be stored later
     '''
     classification_model = args['clf_model']
-
     ce_loss = nn.CrossEntropyLoss()
     loss_it = []
     trues, preds = [], []
@@ -114,13 +119,15 @@ def test(args, target, experiment):
             file_path = save_batch_generations(batch_generations, batch_index, experiment)
             file_paths.append(file_path)
 
-            # trues are the sentiments that the generated sentence should have
-            trues.extend(batch_labels)
             gen_sentiments = get_sentiment_labels(file_path, args)
-            preds.extend(gen_sentiments)
+            # trues are the sentiments that the generated sentences have according to the annotator model
+            trues.extend(gen_sentiments)
 
             # get classification model output
-            output_logits = classification_model(input_ids=torch.stack(batch_ids).squeeze()).logits
+            model_input = torch.stack(batch_ids).squeeze()
+            output_logits = classification_model(input_ids=model_input).logits
+            batch_preds = torch.argmax(output_logits, dim=-1)
+            preds.extend([bp.item() for bp in batch_preds])
 
             # training step (loss computation w/ autocast to handle tensor type consistency)
             with torch.autocast('cuda'):
