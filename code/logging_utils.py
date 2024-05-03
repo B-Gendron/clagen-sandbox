@@ -62,7 +62,7 @@ def save_batch_generations(batch_generations, batch_index, experiment):
             row = row.replace('\n', '\\n')
             tsv_writer.writerow([row])
 
-    return file_path # remove ../ to make it relative (this is strange, should check it out)
+    return file_path
 
 
 def store_split_generations(split, file_paths, trues, experiment):

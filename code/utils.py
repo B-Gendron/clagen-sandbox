@@ -37,27 +37,6 @@ def args2filename(dico):
     return filename
 
 
-def custom_flatten(ll):
-    '''
-        A function to flatten a list of lists where sub lists are of heterogeneous sizes.
-        @param ll (list): the input list of lists
-        @return l (list): the flattened list   
-    '''
-    l = []
-    for sl in ll:
-        if type(sl) is not list:
-            sl = [sl]
-        l.extend(sl)
-    return l
-
-
-def concatenate(iterable, sep=""):
-    sentence = iterable[0]
-    for word in iterable[1:]:
-        sentence += (sep + word)
-    return sentence
-
-
 def activate_gpu(force_cpu=False):
     '''
         A function to return the right device depending on GPU availability
@@ -178,7 +157,7 @@ def get_sentiment_labels(file_path, args):
     tok = args['ann_tokenizer']
 
     # read the file containing the generations
-    with open(f'../{file_path}', 'r') as f:
+    with open(file_path, 'r') as f:
 
         # for each utterance in the file
         for _ , utterance in enumerate(f):
