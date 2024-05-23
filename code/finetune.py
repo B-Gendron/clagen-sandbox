@@ -40,9 +40,11 @@ def train(args, epoch, experiment):
         @return preds (list):              list of the associated predictions to be stored later
     '''
     classification_model, generation_model = args['clf_model'], args['gen_model']
-    classification_model.train()
-    optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
-    ce_loss = nn.CrossEntropyLoss()
+    # ---------- CLASSIFICATION PART - DISABLED SINCE WE TEST PPO ONLY ---------- #
+    # classification_model.train()
+    # optimizer = torch.optim.AdamW(classification_model.parameters(), lr=args['lr'], fused=torch.float16)
+    # ce_loss = nn.CrossEntropyLoss()
+    # -------------------------------------------------------------------------- #
     loss_it = []
     trues, preds = [], []
     file_paths = []
@@ -57,29 +59,30 @@ def train(args, epoch, experiment):
         # trues are the sentiments that the generated sentences have according to the annotator model
         trues.extend(gen_sentiments)
 
-        # get classification model output
-        model_input = torch.stack(batch_ids).squeeze()
-        output_logits = classification_model(input_ids=model_input).logits
-        batch_preds = torch.argmax(output_logits, dim=-1)
-        preds.extend([bp.item() for bp in batch_preds])
+        # ---------- CLASSIFICATION PART - DISABLED SINCE WE TEST PPO ONLY ---------- #
 
-        # for i, s in enumerate(batch_generations):
-        #     print(f"Sample #{i} | Asked {batch_labels[i]} | Got {gen_sentiments[i]} | Predicted {batch_preds[i]}")
+        # # get classification model output
+        # model_input = torch.stack(batch_ids).squeeze()
+        # output_logits = classification_model(input_ids=model_input).logits
+        # batch_preds = torch.argmax(output_logits, dim=-1)
+        # preds.extend([bp.item() for bp in batch_preds])
 
-        # training step (loss computation w/ autocast to handle tensor type consistency)
-        with torch.autocast('cuda'):
-            loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device'])) 
+        # # training step (loss computation w/ autocast to handle tensor type consistency)
+        # with torch.autocast('cuda'):
+        #     loss = ce_loss(output_logits, torch.tensor(gen_sentiments, device=args['device'])) 
 
-        loss.backward()
-        optimizer.step()
-        loss_it.append(loss.item())
-        optimizer.zero_grad()
+        # loss.backward()
+        # optimizer.step()
+        # loss_it.append(loss.item())
+        # optimizer.zero_grad()
 
         # at this point, the weights of the adapters in clf_models have been updated. The generation model should contain new weights
-        update_adapter_weights(args, generation_model, classification_model)
+        # update_adapter_weights(args, generation_model, classification_model)
 
         # update the models where they are stored, otherwise it is always the initial model that is used for generation
-        args['clf_model'], args['gen_model'] = classification_model, generation_model
+        # args['clf_model'], args['gen_model'] = classification_model, generation_model
+
+        # -------------------------------------------------------------------------- #
 
     # append batch generations to split generations
     store_split_generations('train', file_paths, trues, experiment)
