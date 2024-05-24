@@ -282,8 +282,6 @@ def run_exp(args, model_name, annotator_model_name, experiment, episodes=10):
         target_modules=target_modules,        # which attention modules to put adapters in
         bias="lora_only",                     # should be better than default setting in our case
         lora_dropout=0.1,                     # conventional setting
-        # task_type=TaskType.SEQ_CLS,         # I don't think this is useful
-        # use_rslora=True                     # things get worse when I enable this
     )
 
     # display config details
