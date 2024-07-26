@@ -339,7 +339,7 @@ if __name__ == "__main__":
     annotator_model_name = 'google-bert/bert-base-uncased'
     
     # HUGGINGFACE MODELS
-    model_name = "meta-llama/Llama-2-7b-chat-hf"
+    model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
     # model_name = "google/flan-t5-xl"
     # model_name = "meta-llama/Llama-2-13b-chat-hf"
     # model_name = "HuggingFaceH4/zephyr-7b-beta"
